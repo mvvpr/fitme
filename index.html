@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>FitMe</title>
+<link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0Ij4KICA8cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHJ4PSIxNiIgZmlsbD0iIzJlNmI0ZiIvPgogIDxwYXRoIGQ9Ik0xMyAxOSBDMjIgMTkgMjQgNDEgMzMgNDEgTDUxIDIxIiBmaWxsPSJub25lIiBzdHJva2U9IiM4ZmIzMzkiIHN0cm9rZS13aWR0aD0iNyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+CiAgPGNpcmNsZSBjeD0iMTMiIGN5PSIxOSIgcj0iMy41IiBmaWxsPSIjZjBlZWU5Ii8+Cjwvc3ZnPgo=">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Layout mirrors Growth Horizon: an inputs rail beside a results column (headline, chart, weekly ledger); stacks on phones. */
+:root {
+  --bg: #f0eee9;        /* Cloud Dancer */
+  --surface: #fbfaf7;
+  --ink: #1e1c1a;       /* Espresso */
+  --muted: #6b655e;
+  --line: #ddd8cf;
+  --accent: #2e6b4f;    /* Deep sage */
+  --accent-ink: #ffffff;
+  --lost: #8fb339;      /* Matcha */
+  --body: #cdbba7;      /* Mocha sand */
+  --range: #c0674a;     /* Terracotta */
+  --warn-bg: #fbe9e6;   /* Cherry tint (warnings only) */
+  --warn-line: #e8b4ab;
+  --field: #f5f3ee;
+  --mark-line: #8fb339;
+  --font-display: "Bricolage Grotesque", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #141311;
+    --surface: #1d1b18;
+    --ink: #f0eee9;
+    --muted: #a39c92;
+    --line: #2f2c27;
+    --accent: #7fb894;
+    --accent-ink: #10211a;
+    --lost: #a9cf4e;
+    --body: #5e5246;
+    --range: #e08a6a;
+    --warn-bg: #2e1c19;
+    --warn-line: #6b3a32;
+    --field: #181714;
+    --mark-line: #10211a;
+    color-scheme: dark;
+  }
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.5;
+  padding-top: calc(24px + env(safe-area-inset-top, 0px));
+  padding-bottom: calc(40px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+[hidden] { display: none !important; }
+.wrap { max-width: 1120px; margin: 0 auto; }
+header { display: flex; flex-direction: column; gap: 4px; margin-bottom: 20px; }
+.brand { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+.brand .mark { width: clamp(36px, 5vw, 44px); height: auto; flex: none; }
+h1 span { color: var(--accent); }
+h1 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(26px, 4vw, 34px);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  margin: 0;
+  text-wrap: balance;
+}
+header p { margin: 0; color: var(--muted); max-width: 64ch; }
+
+.app { display: grid; grid-template-columns: minmax(0, 330px) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 860px) { .app { grid-template-columns: minmax(0, 1fr); } }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; }
+.rail { position: sticky; top: 16px; display: flex; flex-direction: column; gap: 16px; }
+@media (max-width: 860px) { .rail { position: static; } }
+.rail h2, .ledger h2, .sec h2 {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin: 0;
+}
+.rail-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 12px; }
+.field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.field.wide { grid-column: 1 / -1; }
+.lbl { font-size: 13px; color: var(--muted); }
+.box {
+  display: flex;
+  align-items: center;
+  background: var(--field);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0 10px;
+  min-width: 0;
+}
+.box:focus-within { border-color: var(--accent); outline: 2px solid var(--accent); outline-offset: 1px; }
+.box input, .box select {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-data);
+  font-size: 15px;
+  padding: 9px 0;
+  outline: none;
+  font-variant-numeric: tabular-nums;
+}
+.box select { font-family: var(--font-body); }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.unit { color: var(--muted); font-family: var(--font-data); font-size: 13px; padding-left: 6px; white-space: nowrap; }
+.note { font-size: 12.5px; color: var(--muted); margin: 0; }
+.divider { border: 0; border-top: 1px solid var(--line); margin: 2px 0; }
+
+.results { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.lead { display: flex; flex-direction: column; gap: 14px; }
+.lead-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.eyebrow { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.big {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(38px, 7vw, 60px);
+  letter-spacing: -0.03em;
+  line-height: 1.02;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.sub { margin: 0; color: var(--muted); max-width: 64ch; }
+.sub strong { color: var(--ink); font-weight: 600; }
+
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; padding: 3px; background: var(--field); }
+.seg button {
+  font: inherit;
+  font-size: 13px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  padding: 6px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.seg.sm button { padding: 4px 10px; font-size: 12.5px; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; padding-top: 14px; border-top: 1px solid var(--line); }
+@media (max-width: 720px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.stat { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.stat .k { font-size: 12.5px; color: var(--muted); }
+.stat .v { font-family: var(--font-data); font-size: 17px; font-weight: 500; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+
+.sugg { display: flex; flex-direction: column; gap: 6px; }
+.sugg-head { font-size: 12.5px; color: var(--muted); display: flex; justify-content: space-between; gap: 8px; }
+.chips { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.chip {
+  font: inherit; text-align: left; cursor: pointer; min-width: 0;
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+  border-radius: 6px; padding: 6px 8px; display: flex; flex-direction: column; gap: 1px;
+}
+.chip .t { font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chip .n { font-family: var(--font-data); font-size: 13.5px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.chip .p { font-size: 11px; color: var(--muted); }
+.chip.rec { border-color: var(--accent); }
+.chip.rec .t { color: var(--accent); font-weight: 600; }
+.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.chip[aria-pressed="true"] .t, .chip[aria-pressed="true"] .p { color: var(--accent-ink); opacity: 0.9; }
+.chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.energy { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+@media (max-width: 720px) { .energy { grid-template-columns: repeat(2, minmax(0, 1fr)); } .energy .cell:last-child { grid-column: 1 / -1; } }
+.energy .cell { padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; min-width: 0; background: var(--field); border-right: 1px solid var(--line); }
+.energy .cell:last-child { border-right: 0; background: var(--surface); }
+.energy .k { font-size: 12px; color: var(--muted); }
+.energy .v { font-family: var(--font-data); font-size: 16px; font-weight: 500; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.energy .op { color: var(--muted); font-family: var(--font-data); margin-right: 3px; }
+.energy .cell.bmr .v { color: var(--accent); }
+.energy .d { font-size: 11.5px; color: var(--muted); }
+.warn {
+  background: var(--warn-bg);
+  border: 1px solid var(--warn-line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13.5px;
+}
+.warn ul { margin: 0; padding-left: 18px; }
+.warn li + li { margin-top: 4px; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 12px; height: 12px; border-radius: 2px; display: inline-block; }
+.sw.b { background: var(--body); }
+.sw.l { background: var(--lost); }
+.sw.r { width: 16px; height: 0; border-top: 2px dashed var(--range); border-radius: 0; }
+.sw.g { width: 16px; height: 0; border-top: 2px solid var(--ink); border-radius: 0; }
+
+.chartwrap { position: relative; width: 100%; margin-top: 10px; }
+.chartwrap svg { display: block; width: 100%; touch-action: pan-y; }
+.chartwrap text { font-family: var(--font-data); font-size: 11px; fill: var(--muted); }
+.tip {
+  position: absolute;
+  top: 8px;
+  pointer-events: none;
+  background: var(--ink);
+  color: var(--bg);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  min-width: 170px;
+  max-width: 240px;
+  z-index: 2;
+}
+.tip b { font-family: var(--font-display); font-size: 14px; }
+.tip .row { display: flex; justify-content: space-between; gap: 12px; font-family: var(--font-data); font-variant-numeric: tabular-nums; }
+
+.ledger-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+.tablewrap { max-height: 380px; overflow: auto; border: 1px solid var(--line); border-radius: 6px; }
+table { border-collapse: collapse; width: 100%; min-width: 640px; font-family: var(--font-data); font-size: 13px; font-variant-numeric: tabular-nums; }
+th, td { text-align: right; padding: 8px 12px; white-space: nowrap; }
+th:first-child, td:first-child, th:nth-child(2), td:nth-child(2) { text-align: left; }
+thead th {
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+}
+tbody tr + tr td { border-top: 1px solid var(--line); }
+tbody tr.goal td { font-weight: 500; color: var(--accent); }
+.foot { font-size: 12.5px; color: var(--muted); margin: 0; max-width: 84ch; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand"><svg class="mark" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16" fill="var(--accent)"/><path d="M13 19 C22 19 24 41 33 41 L51 21" fill="none" stroke="var(--mark-line)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="13" cy="19" r="3.5" fill="#f0eee9"/></svg><h1>Fit<span>Me</span></h1></div>
+    <p>Enter your details and a daily calorie deficit to see when you could reach your goal weight. The figures start from example values, so replace them with your own.</p>
+  </header>
+
+  <div class="app">
+    <aside class="rail">
+      <section class="panel" aria-labelledby="h-you" style="display:flex;flex-direction:column;gap:14px">
+        <div class="rail-head">
+          <h2 id="h-you">About you</h2>
+          <div class="seg sm" role="group" aria-label="Units">
+            <button type="button" id="u-met" aria-pressed="true">Metric</button>
+            <button type="button" id="u-imp" aria-pressed="false">Imperial</button>
+          </div>
+        </div>
+        <div class="fields">
+          <label class="field"><span class="lbl">Sex</span>
+            <span class="box"><select id="sex">
+              <option value="f">Female</option>
+              <option value="m">Male</option>
+            </select></span>
+          </label>
+          <label class="field"><span class="lbl">Age</span>
+            <span class="box"><input id="age" type="number" inputmode="numeric" min="18" max="90" step="1"><span class="unit">yrs</span></span>
+          </label>
+          <div class="field wide">
+            <span class="lbl" id="l-height">Height</span>
+            <span class="box" id="h-met"><input id="hcm" type="number" inputmode="decimal" min="120" max="230" step="1" aria-labelledby="l-height"><span class="unit">cm</span></span>
+            <span class="pair" id="h-imp" hidden>
+              <span class="box"><input id="hft" type="number" inputmode="numeric" min="3" max="7" step="1" aria-label="Height, feet"><span class="unit">ft</span></span>
+              <span class="box"><input id="hin" type="number" inputmode="decimal" min="0" max="11.9" step="1" aria-label="Height, inches"><span class="unit">in</span></span>
+            </span>
+          </div>
+          <label class="field"><span class="lbl">Current weight</span>
+            <span class="box"><input id="w0" type="number" inputmode="decimal" step="0.1"><span class="unit" data-wu>kg</span></span>
+          </label>
+          <label class="field"><span class="lbl">Goal weight</span>
+            <span class="box"><input id="goal" type="number" inputmode="decimal" step="0.1"><span class="unit" data-wu>kg</span></span>
+          </label>
+          <label class="field wide"><span class="lbl">Activity level</span>
+            <span class="box"><select id="act">
+              <option value="1.2">Sedentary (desk job)</option>
+              <option value="1.375">Light (1–3 workouts/wk)</option>
+              <option value="1.55">Moderate (3–5 workouts/wk)</option>
+              <option value="1.725">Very active (6–7 workouts/wk)</option>
+              <option value="1.9">Athlete (physical job + training)</option>
+            </select></span>
+          </label>
+        </div>
+        <hr class="divider">
+        <h2>Your plan</h2>
+        <div class="fields">
+          <label class="field"><span class="lbl">Daily deficit</span>
+            <span class="box"><input id="deficit" type="number" inputmode="numeric" min="0" max="1500" step="25"><span class="unit">kcal</span></span>
+          </label>
+          <label class="field"><span class="lbl">Deficit range</span>
+            <span class="box"><input id="spread" type="number" inputmode="numeric" min="0" max="500" step="25"><span class="unit">± kcal</span></span>
+          </label>
+          <div class="field wide sugg">
+            <div class="sugg-head"><span>Suggested deficit</span><span id="sug-def-note"></span></div>
+            <div class="chips" id="sug-def" role="group" aria-label="Suggested daily deficit"></div>
+          </div>
+          <div class="field wide sugg">
+            <div class="sugg-head"><span>How consistent will you be?</span><span>sets the range</span></div>
+            <div class="chips" id="sug-rng" role="group" aria-label="Suggested deficit range"></div>
+          </div>
+          <label class="field wide"><span class="lbl">Start date</span>
+            <span class="box"><input id="start" type="date"></span>
+          </label>
+        </div>
+        <p class="note">Basal calories (BMR) are what your body burns at complete rest, estimated from sex, age, height and weight with the Mifflin-St Jeor equation. Maintenance is BMR times your activity level. The range shows outcomes if your real daily deficit lands that many calories above or below your plan. Suggested deficits aim for a weekly loss of a share of body weight that eases with age (to protect muscle), capped at 30% of maintenance and above the minimum intake.</p>
+      </section>
+    </aside>
+
+    <main class="results">
+      <section class="panel lead" aria-live="polite">
+        <div class="lead-top">
+          <div>
+            <div class="eyebrow" id="eyebrow">Goal reached</div>
+            <div class="big" id="big">–</div>
+          </div>
+          <div class="seg" role="group" aria-label="How intake changes">
+            <button type="button" id="m-int" aria-pressed="true">Same intake</button>
+            <button type="button" id="m-def" aria-pressed="false">Same deficit</button>
+          </div>
+        </div>
+        <p class="sub" id="sub"></p>
+        <div class="energy" aria-label="Daily energy breakdown at your current weight">
+          <div class="cell bmr"><span class="k">Basal (BMR)</span><span class="v" id="e-bmr"></span><span class="d">Just staying alive</span></div>
+          <div class="cell"><span class="k">Activity &amp; digestion</span><span class="v"><span class="op">+</span><span id="e-act"></span></span><span class="d" id="e-actd"></span></div>
+          <div class="cell"><span class="k">Maintenance</span><span class="v"><span class="op">=</span><span id="e-maint"></span></span><span class="d">Weight stays the same</span></div>
+          <div class="cell"><span class="k">Your deficit</span><span class="v"><span class="op">−</span><span id="e-def"></span></span><span class="d">Planned shortfall</span></div>
+          <div class="cell"><span class="k">You eat</span><span class="v"><span class="op">=</span><span id="e-int"></span></span><span class="d">Starting intake</span></div>
+        </div>
+        <div class="warn" id="warn" hidden><ul id="warn-list"></ul></div>
+        <div class="stats">
+          <div class="stat"><span class="k">To lose</span><span class="v" id="s-lose"></span></div>
+          <div class="stat"><span class="k">Average per week</span><span class="v" id="s-rate"></span></div>
+          <div class="stat"><span class="k">BMI now → goal</span><span class="v" id="s-bmi"></span></div>
+          <div class="stat"><span class="k">Basal kcal → at goal</span><span class="v" id="s-maint"></span></div>
+        </div>
+      </section>
+
+      <section class="panel sec" aria-labelledby="h-chart">
+        <div class="ledger-head">
+          <h2 id="h-chart">Weight over time</h2>
+          <div class="legend">
+            <span><i class="sw b"></i>Body weight</span>
+            <span><i class="sw l"></i>Lost</span>
+            <span><i class="sw g"></i>Goal</span>
+            <span><i class="sw r"></i>Range</span>
+          </div>
+        </div>
+        <div class="chartwrap" id="chartwrap">
+          <svg id="chart" role="img" aria-label="Area chart of projected weight by week"></svg>
+          <div class="tip" id="tip" hidden></div>
+        </div>
+      </section>
+
+      <section class="panel ledger" aria-labelledby="h-ledger">
+        <div class="ledger-head">
+          <h2 id="h-ledger">Week by week</h2>
+          <span class="note" id="mode-note"></span>
+        </div>
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th scope="col">Week</th><th scope="col">Date</th><th scope="col">Weight</th><th scope="col">Lost</th><th scope="col">Intake</th><th scope="col">Basal</th><th scope="col">Maintenance</th><th scope="col">BMI</th></tr></thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <p class="foot">This is an estimate built from the figures you entered, not medical advice. It assumes about 7,700 kcal per kg of body weight (3,500 per lb) and recalculates maintenance every day as your weight falls. Real loss is rarely a straight line: water, glycogen and metabolic adaptation make weekly numbers bounce around, and long-term loss is usually a little slower than this model shows. Once the goal is reached the projection switches to maintenance. For very low intakes or medical conditions, plan with a doctor or registered dietitian.</p>
+    </main>
+  </div>
+</div>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var LB = 0.45359237;
+  var KCAL_PER_KG = 7700;
+  var MAX_WEEKS = 104;
+
+  // Internal state is always metric.
+  var DEFAULTS = { units: 'metric', sex: 'f', age: 35, h: 168, w0: 82, goal: 72, act: '1.55', deficit: 500, spread: 150, mode: 'intake' };
+  var LIMITS = { age: [18, 90], h: [120, 230], w0: [35, 300], goal: [35, 300], deficit: [0, 1500], spread: [0, 500] };
+  var state = Object.assign({}, DEFAULTS);
+
+  try {
+    var saved = JSON.parse(localStorage.getItem('deficit-horizon') || 'null');
+    if (saved && typeof saved === 'object') {
+      Object.keys(DEFAULTS).forEach(function (k) { if (k in saved && typeof saved[k] === typeof DEFAULTS[k]) state[k] = saved[k]; });
+    }
+  } catch (e) {}
+
+  function clamp(v, lo, hi) { return Math.min(hi, Math.max(lo, v)); }
+  function num(id, fallback) { var v = parseFloat($(id).value); return Number.isFinite(v) ? v : fallback; }
+  var imp = function () { return state.units === 'imperial'; };
+
+  function todayISO() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+
+  // ---- Inputs <-> state ----
+  function writeInputs() {
+    $('sex').value = state.sex;
+    $('age').value = state.age;
+    $('act').value = state.act;
+    $('deficit').value = state.deficit;
+    $('spread').value = state.spread;
+    if (imp()) {
+      var totalIn = state.h / 2.54;
+      var ft = Math.floor(totalIn / 12);
+      var inch = Math.round(totalIn - ft * 12);
+      if (inch === 12) { ft += 1; inch = 0; }
+      $('hft').value = ft; $('hin').value = inch;
+      $('w0').value = +(state.w0 / LB).toFixed(1);
+      $('goal').value = +(state.goal / LB).toFixed(1);
+    } else {
+      $('hcm').value = Math.round(state.h);
+      $('w0').value = +state.w0.toFixed(1);
+      $('goal').value = +state.goal.toFixed(1);
+    }
+  }
+
+  function readInputs() {
+    state.sex = $('sex').value;
+    state.act = $('act').value;
+    state.age = Math.round(clamp(num('age', DEFAULTS.age), LIMITS.age[0], LIMITS.age[1]));
+    state.deficit = clamp(num('deficit', DEFAULTS.deficit), LIMITS.deficit[0], LIMITS.deficit[1]);
+    state.spread = clamp(num('spread', DEFAULTS.spread), LIMITS.spread[0], LIMITS.spread[1]);
+    var f = imp() ? LB : 1;
+    var h = imp() ? (num('hft', 5) * 12 + num('hin', 0)) * 2.54 : num('hcm', DEFAULTS.h);
+    state.h = clamp(h, LIMITS.h[0], LIMITS.h[1]);
+    state.w0 = clamp(num('w0', DEFAULTS.w0 / f) * f, LIMITS.w0[0], LIMITS.w0[1]);
+    state.goal = clamp(num('goal', DEFAULTS.goal / f) * f, LIMITS.goal[0], LIMITS.goal[1]);
+  }
+
+  // ---- Model ----
+  function bmr(s, w) { return 10 * w + 6.25 * s.h - 5 * s.age + (s.sex === 'm' ? 5 : -161); }
+  function tdee(s, w) { return bmr(s, w) * parseFloat(s.act); }
+
+  // Day-by-day simulation. "intake" mode eats the same calories every day (the deficit shrinks as
+  // maintenance drops); "deficit" mode lowers intake to keep the deficit constant. Holds at goal once reached.
+  function simulate(s, deficit) {
+    var w = s.w0, fixedIntake = tdee(s, s.w0) - deficit;
+    var reach = null, minIntake = Infinity, maxPct = 0, weekStart = w;
+    var weeks = [{ wk: 0, w: w, intake: s.mode === 'intake' ? fixedIntake : tdee(s, w) - deficit, maint: tdee(s, w), bmr: bmr(s, w) }];
+    var intake;
+    for (var d = 1; d <= MAX_WEEKS * 7; d++) {
+      var t = tdee(s, w);
+      if (reach !== null) intake = t;
+      else {
+        intake = s.mode === 'intake' ? fixedIntake : t - deficit;
+        if (intake < minIntake) minIntake = intake;
+      }
+      w += (intake - t) / KCAL_PER_KG;
+      if (reach === null && w <= s.goal) { w = s.goal; reach = d; }
+      if (d % 7 === 0) {
+        var pct = (weekStart - w) / weekStart;
+        if (pct > maxPct) maxPct = pct;
+        weekStart = w;
+        weeks.push({ wk: d / 7, w: w, intake: intake, maint: tdee(s, w), bmr: bmr(s, w) });
+      }
+    }
+    return { weeks: weeks, reach: reach, minIntake: minIntake, maxPct: maxPct, startIntake: weeks[0].intake };
+  }
+
+  // ---- Formatting ----
+  var nf0 = new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 });
+  var nf1 = new Intl.NumberFormat(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  function wu() { return imp() ? 'lb' : 'kg'; }
+  function wt(kg) { return nf1.format(imp() ? kg / LB : kg) + ' ' + wu(); }
+  function wtShort(kg) { return nf0.format(imp() ? kg / LB : kg); }
+  function kcal(v) { return nf0.format(Math.round(v / 10) * 10) + ' kcal'; }
+  function bmi(s, w) { var m = s.h / 100; return w / (m * m); }
+  function startDate() {
+    var v = $('start').value || todayISO();
+    var p = v.split('-');
+    return new Date(+p[0], +p[1] - 1, +p[2]);
+  }
+  function addDays(d, n) { var x = new Date(d); x.setDate(x.getDate() + n); return x; }
+  var dfLong = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+  var dfShort = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short' });
+  function weeksText(days) { var n = Math.ceil(days / 7); return n + (n === 1 ? ' week' : ' weeks'); }
+  function reachText(sim, sd) { return sim.reach ? dfLong.format(addDays(sd, sim.reach)) + ' (' + weeksText(sim.reach) + ')' : 'not within 2 years'; }
+
+  function niceTicks(lo, hi) {
+    var span = Math.max(hi - lo, 1);
+    var raw = span / 5;
+    var mag = Math.pow(10, Math.floor(Math.log10(raw)));
+    var norm = raw / mag;
+    var step = (norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 5 ? 5 : 10) * mag;
+    return { step: step, lo: Math.floor(lo / step) * step, hi: Math.ceil(hi / step) * step };
+  }
+
+  // ---- Chart ----
+  var view = null;
+  function drawChart(s, base, low, high, H, sd) {
+    var wrap = $('chartwrap'), svg = $('chart');
+    var W = Math.max(280, wrap.clientWidth || 720);
+    var Ht = W < 520 ? 260 : 340;
+    var m = { l: W < 520 ? 44 : 54, r: 12, t: 10, b: 28 };
+    var iw = W - m.l - m.r, ih = Ht - m.t - m.b;
+    var f = function (n) { return n.toFixed(1); };
+    var conv = function (kg) { return imp() ? kg / LB : kg; };
+
+    var top = conv(s.w0), bottom = conv(s.goal);
+    var pad = Math.max((top - bottom) * 0.12, imp() ? 2 : 1);
+    var tk = niceTicks(bottom - pad, top + pad * 0.5);
+    var x = function (i) { return m.l + (H === 0 ? 0 : iw * i / H); };
+    var y = function (kg) { return m.t + ih * (1 - (conv(kg) - tk.lo) / (tk.hi - tk.lo)); };
+    var yv = function (v) { return m.t + ih * (1 - (v - tk.lo) / (tk.hi - tk.lo)); };
+
+    var parts = [];
+    for (var t = tk.lo; t <= tk.hi + tk.step / 2; t += tk.step) {
+      parts.push('<line x1="' + m.l + '" x2="' + (W - m.r) + '" y1="' + f(yv(t)) + '" y2="' + f(yv(t)) + '" stroke="var(--line)" stroke-width="1"/>');
+      parts.push('<text x="' + (m.l - 8) + '" y="' + f(yv(t) + 4) + '" text-anchor="end">' + nf0.format(t) + '</text>');
+    }
+    var xs = H <= 12 ? 1 : H <= 26 ? 2 : H <= 52 ? 4 : 8;
+    for (var k = 0; k <= H; k += xs) {
+      parts.push('<text x="' + f(x(k)) + '" y="' + (Ht - 8) + '" text-anchor="' + (k === 0 ? 'start' : 'middle') + '">' + (k === 0 ? 'wk 0' : k) + '</text>');
+    }
+
+    var bw = base.weeks;
+    var i2, floorY = m.t + ih;
+    // Body weight area (from axis floor up to the curve)
+    var bPath = 'M' + f(x(0)) + ',' + f(floorY);
+    for (i2 = 0; i2 <= H; i2++) bPath += ' L' + f(x(i2)) + ',' + f(y(bw[i2].w));
+    bPath += ' L' + f(x(H)) + ',' + f(floorY) + ' Z';
+    // Lost area (between starting weight and the curve)
+    var lPath = 'M' + f(x(0)) + ',' + f(y(s.w0));
+    for (i2 = 0; i2 <= H; i2++) lPath += ' L' + f(x(i2)) + ',' + f(y(bw[i2].w));
+    lPath += ' L' + f(x(H)) + ',' + f(y(s.w0)) + ' Z';
+    parts.push('<path d="' + bPath + '" fill="var(--body)"/>');
+    parts.push('<path d="' + lPath + '" fill="var(--lost)"/>');
+
+    function line(sim) {
+      var d = '';
+      for (var j = 0; j <= H; j++) d += (j ? ' L' : 'M') + f(x(j)) + ',' + f(y(sim.weeks[j].w));
+      return '<path d="' + d + '" fill="none" stroke="var(--range)" stroke-width="1.75" stroke-dasharray="5 4"/>';
+    }
+    parts.push(line(low));
+    parts.push(line(high));
+    // Goal line
+    var gy = f(y(s.goal));
+    parts.push('<line x1="' + m.l + '" x2="' + (W - m.r) + '" y1="' + gy + '" y2="' + gy + '" stroke="var(--ink)" stroke-width="1.5"/>');
+    parts.push('<text x="' + (W - m.r - 4) + '" y="' + (+gy - 6) + '" text-anchor="end" style="fill:var(--ink);font-weight:500">Goal ' + wtShort(s.goal) + ' ' + wu() + '</text>');
+
+    parts.push('<g id="cursor" hidden><line id="cl" y1="' + m.t + '" y2="' + (m.t + ih) + '" stroke="var(--ink)" stroke-width="1"/><circle id="cd" r="4.5" fill="var(--surface)" stroke="var(--ink)" stroke-width="2"/></g>');
+    parts.push('<rect x="' + m.l + '" y="' + m.t + '" width="' + iw + '" height="' + ih + '" fill="transparent"/>');
+
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + Ht);
+    svg.setAttribute('height', Ht);
+    svg.innerHTML = parts.join('');
+    $('tip').hidden = true;
+    view = { s: s, base: base, low: low, high: high, H: H, m: m, iw: iw, W: W, x: x, y: y, sd: sd };
+  }
+
+  function showTip(clientX) {
+    if (!view) return;
+    var svg = $('chart'), rect = svg.getBoundingClientRect();
+    var px = (clientX - rect.left) * (view.W / rect.width);
+    var i = view.H === 0 ? 0 : Math.round((px - view.m.l) / view.iw * view.H);
+    i = clamp(i, 0, view.H);
+    var b = view.base.weeks[i];
+    var cx = view.x(i);
+    $('cursor').hidden = false;
+    var cl = $('cl'); cl.setAttribute('x1', cx); cl.setAttribute('x2', cx);
+    var cd = $('cd'); cd.setAttribute('cx', cx); cd.setAttribute('cy', view.y(b.w));
+    var tip = $('tip');
+    var lo = view.high.weeks[i].w, hi = view.low.weeks[i].w;
+    tip.innerHTML = '<b>Week ' + i + ' · ' + dfShort.format(addDays(view.sd, i * 7)) + '</b>' +
+      '<div class="row"><span>Weight</span><span>' + wt(b.w) + '</span></div>' +
+      '<div class="row"><span>Lost</span><span>' + wt(view.s.w0 - b.w) + '</span></div>' +
+      '<div class="row"><span>Intake</span><span>' + kcal(b.intake) + '</span></div>' +
+      '<div class="row"><span>Basal</span><span>' + kcal(b.bmr) + '</span></div>' +
+      '<div class="row"><span>Range</span><span>' + wtShort(lo) + '–' + wtShort(hi) + ' ' + wu() + '</span></div>';
+    tip.hidden = false;
+    var wrapW = $('chartwrap').clientWidth;
+    var tw = tip.offsetWidth;
+    var left = (cx / view.W) * wrapW + 12;
+    if (left + tw > wrapW) left = (cx / view.W) * wrapW - tw - 12;
+    tip.style.left = Math.max(0, left) + 'px';
+  }
+  function hideTip() { var c = $('cursor'); if (c) c.hidden = true; $('tip').hidden = true; }
+
+  // ---- Render ----
+  function render() {
+    readInputs();
+    var s = Object.assign({}, state);
+    var sd = startDate();
+
+    $('u-met').setAttribute('aria-pressed', String(!imp()));
+    $('u-imp').setAttribute('aria-pressed', String(imp()));
+    $('h-met').hidden = imp();
+    $('h-imp').hidden = !imp();
+    document.querySelectorAll('[data-wu]').forEach(function (el) { el.textContent = wu(); });
+    $('m-int').setAttribute('aria-pressed', String(s.mode === 'intake'));
+    $('m-def').setAttribute('aria-pressed', String(s.mode === 'deficit'));
+    $('mode-note').textContent = s.mode === 'intake' ? 'Eating the same calories every day' : 'Lowering intake to keep the deficit';
+
+    renderSuggestions(s);
+    var maint0 = tdee(s, s.w0);
+    var bmr0 = bmr(s, s.w0);
+    var ACT_NAMES = { '1.2': 'Sedentary', '1.375': 'Light', '1.55': 'Moderate', '1.725': 'Very active', '1.9': 'Athlete' };
+    $('e-bmr').textContent = kcal(bmr0);
+    $('e-act').textContent = kcal(maint0 - bmr0);
+    $('e-actd').textContent = (ACT_NAMES[s.act] || '') + ' × ' + s.act;
+    $('e-maint').textContent = kcal(maint0);
+    $('e-def').textContent = kcal(s.deficit);
+    $('e-int').textContent = s.goal < s.w0 ? kcal(maint0 - s.deficit) : '–';
+    var warns = [];
+
+    if (s.goal >= s.w0) {
+      $('eyebrow').textContent = 'Check your goal';
+      $('big').textContent = '–';
+      $('sub').innerHTML = 'Set a goal weight below your current weight. Your maintenance is about <strong>' + kcal(maint0) + '</strong> a day.';
+      ['s-lose', 's-rate', 's-bmi'].forEach(function (id) { $(id).textContent = '–'; });
+      $('s-maint').textContent = kcal(bmr0);
+      $('warn').hidden = true;
+      $('rows').innerHTML = '';
+      $('chart').innerHTML = '';
+      view = null;
+      save();
+      return;
+    }
+
+    var base = simulate(s, s.deficit);
+    var low = simulate(s, Math.max(0, s.deficit - s.spread));
+    var high = simulate(s, s.deficit + s.spread);
+    var reachWk = base.reach ? Math.ceil(base.reach / 7) : MAX_WEEKS;
+    var H = base.reach ? Math.min(MAX_WEEKS, Math.max(6, Math.ceil(reachWk * 1.15) + 2)) : MAX_WEEKS;
+
+    if (base.reach) {
+      $('eyebrow').textContent = 'Reach ' + wt(s.goal) + ' in ' + weeksText(base.reach);
+      $('big').textContent = dfLong.format(addDays(sd, base.reach));
+    } else {
+      var endW = base.weeks[MAX_WEEKS].w;
+      $('eyebrow').textContent = 'Goal not reached within 2 years';
+      $('big').textContent = wt(endW);
+    }
+
+    var lines = 'Start by eating about <strong>' + kcal(base.startIntake) + '</strong> a day (maintenance ' + kcal(maint0) + ' minus your ' + nf0.format(s.deficit) + ' kcal deficit). ';
+    if (s.mode === 'intake') {
+      lines += 'Holding that intake steady, loss slows as your maintenance drops with your weight. ';
+    } else if (base.reach) {
+      lines += 'To keep the deficit, intake steps down to about <strong>' + kcal(base.minIntake) + '</strong> by the goal. ';
+    }
+    if (!base.reach) {
+      lines += 'At this intake your weight levels off before the goal, so raise the deficit or switch to <strong>Same deficit</strong>. ';
+    }
+    if (s.spread > 0) {
+      lines += 'If your real deficit lands ' + nf0.format(s.spread) + ' kcal either side, you would arrive between <strong>' + reachText(high, sd) + '</strong> and <strong>' + reachText(low, sd) + '</strong>.';
+    }
+    $('sub').innerHTML = lines;
+
+    var toLose = s.w0 - s.goal;
+    $('s-lose').textContent = wt(toLose);
+    $('s-rate').textContent = base.reach ? wt(toLose / (base.reach / 7)) : wt((s.w0 - base.weeks[MAX_WEEKS].w) / MAX_WEEKS);
+    $('s-bmi').textContent = bmi(s, s.w0).toFixed(1) + ' → ' + bmi(s, s.goal).toFixed(1);
+    $('s-maint').textContent = kcal(bmr(s, s.w0)).replace(' kcal', '') + ' → ' + kcal(bmr(s, s.goal)).replace(' kcal', '');
+
+    // Safety checks
+    var floor = s.sex === 'm' ? 1500 : 1200;
+    if (base.minIntake < floor) warns.push('Intake drops to about ' + kcal(base.minIntake) + ', below the ' + nf0.format(floor) + ' kcal a day often given as a minimum without medical supervision.');
+    if (base.minIntake < bmr0 * 0.98 && base.minIntake >= floor) warns.push('Intake dips to about ' + kcal(base.minIntake) + ', under your basal rate of ' + kcal(bmr0) + '. That is common in a deficit, but staying above your BMR is easier to sustain.');
+    if (base.maxPct > 0.01) warns.push('Your fastest week loses ' + (base.maxPct * 100).toFixed(1) + '% of body weight. Around 0.5–1% a week is usually easier to sustain and protects muscle.');
+    if (bmi(s, s.goal) < 18.5) warns.push('A goal BMI of ' + bmi(s, s.goal).toFixed(1) + ' is below the healthy range (18.5–24.9).');
+    $('warn-list').innerHTML = warns.map(function (w) { return '<li>' + w + '</li>'; }).join('');
+    $('warn').hidden = warns.length === 0;
+
+    // Ledger
+    var rows = [], last = base.reach ? reachWk : MAX_WEEKS;
+    for (var i = 1; i <= last; i++) {
+      var p = base.weeks[i];
+      var isGoal = base.reach && i === reachWk;
+      rows.push('<tr' + (isGoal ? ' class="goal"' : '') + '><td>' + i + '</td><td>' + dfShort.format(addDays(sd, i * 7)) + '</td><td>' + wt(p.w) + '</td><td>' + wt(s.w0 - p.w) + '</td><td>' + kcal(isGoal ? base.weeks[i - 1].intake : p.intake) + '</td><td>' + kcal(p.bmr) + '</td><td>' + kcal(p.maint) + '</td><td>' + bmi(s, p.w).toFixed(1) + '</td></tr>');
+    }
+    $('rows').innerHTML = rows.join('');
+
+    $('chart').setAttribute('aria-label', 'Projected weight over ' + H + ' weeks, from ' + wt(s.w0) + (base.reach ? ' to the ' + wt(s.goal) + ' goal in ' + weeksText(base.reach) : ' to ' + wt(base.weeks[MAX_WEEKS].w)) + '.');
+    drawChart(s, base, low, high, H, sd);
+    save();
+  }
+
+  // ---- Suggestions ----
+  function round25(v) { return Math.round(v / 25) * 25; }
+  function suggestions(s) {
+    var bands = s.age < 30 ? [0.5, 0.75, 1.0] : s.age < 50 ? [0.4, 0.6, 0.85] : s.age < 65 ? [0.35, 0.5, 0.7] : [0.25, 0.4, 0.55];
+    var maint = tdee(s, s.w0), floor = s.sex === 'm' ? 1500 : 1200;
+    var cap = Math.max(100, Math.min(maint * 0.3, maint - floor));
+    var names = ['Gentle', 'Balanced ★', 'Faster'];
+    var def = bands.map(function (pct, i) {
+      var d = round25(clamp(s.w0 * pct / 100 * KCAL_PER_KG / 7, 100, cap));
+      return { t: names[i], v: d, p: '≈ ' + wt(d * 7 / KCAL_PER_KG) + '/wk' };
+    });
+    var rng = [[0.05, 'Very', 'Weigh & log daily'], [0.10, 'Mostly', 'Some weekend slips'], [0.15, 'On and off', 'Rough estimates']].map(function (x, i) {
+      return { t: x[1], v: round25(maint * x[0]), p: x[2], rec: i === 1 };
+    });
+    def[1].rec = true;
+    return { def: def, rng: rng, band: bands[1] };
+  }
+  function chipsHTML(list, current, prefix) {
+    return list.map(function (c) {
+      return '<button type="button" class="chip' + (c.rec ? ' rec' : '') + '" data-v="' + c.v + '" aria-pressed="' + (Math.abs(current - c.v) < 0.5) + '">' +
+        '<span class="t">' + c.t + '</span><span class="n">' + prefix + nf0.format(c.v) + '</span><span class="p">' + c.p + '</span></button>';
+    }).join('');
+  }
+  function renderSuggestions(s) {
+    var sg = suggestions(s);
+    $('sug-def').innerHTML = chipsHTML(sg.def, s.deficit, '');
+    $('sug-rng').innerHTML = chipsHTML(sg.rng, s.spread, '±');
+    $('sug-def-note').textContent = 'age ' + s.age + ': ~' + sg.band + '% of weight/wk';
+  }
+
+  function save() { try { localStorage.setItem('deficit-horizon', JSON.stringify(state)); } catch (e) {} }
+
+  // ---- Wire up ----
+  $('start').value = todayISO();
+  writeInputs();
+  ['age', 'hcm', 'hft', 'hin', 'w0', 'goal', 'deficit', 'spread', 'start'].forEach(function (id) { $(id).addEventListener('input', render); });
+  ['sex', 'act'].forEach(function (id) { $(id).addEventListener('change', render); });
+  function setUnits(u) { if (state.units === u) return; readInputs(); state.units = u; writeInputs(); render(); }
+  $('u-met').addEventListener('click', function () { setUnits('metric'); });
+  $('u-imp').addEventListener('click', function () { setUnits('imperial'); });
+  $('m-int').addEventListener('click', function () { state.mode = 'intake'; render(); });
+  $('m-def').addEventListener('click', function () { state.mode = 'deficit'; render(); });
+
+  $('sug-def').addEventListener('click', function (e) { var b = e.target.closest('.chip'); if (b) { $('deficit').value = b.dataset.v; render(); } });
+  $('sug-rng').addEventListener('click', function (e) { var b = e.target.closest('.chip'); if (b) { $('spread').value = b.dataset.v; render(); } });
+
+  var svg = $('chart');
+  svg.addEventListener('pointermove', function (e) { showTip(e.clientX); });
+  svg.addEventListener('pointerdown', function (e) { showTip(e.clientX); });
+  svg.addEventListener('pointerleave', hideTip);
+
+  var lastW = 0;
+  if (window.ResizeObserver) {
+    new ResizeObserver(function () {
+      var w = $('chartwrap').clientWidth;
+      if (w && Math.abs(w - lastW) > 1) { lastW = w; render(); }
+    }).observe($('chartwrap'));
+  }
+  render();
+})();
+</script>
+</body>
+</html>
