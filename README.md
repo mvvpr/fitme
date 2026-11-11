@@ -14,9 +14,24 @@ A calorie-deficit weight loss calculator. Enter your details and a daily deficit
 - Weekly high-protein meal plan: 4 meals a day (breakfast, lunch, snack, dinner) with ingredients and method, portions scaled to the user's intake, plus a weekly shopping list
 - Metric and imperial units; light and dark themes
 
+- Daily meal-plan email: double opt-in sign-up, sent at 07:00 in each subscriber's time zone, one-click unsubscribe
+
 ## Stack
 
-A single static `index.html` (HTML, CSS and vanilla JS) with no build step. Deployed on Netlify; `netlify.toml` publishes the repo root.
+- `public/`: the static site (`index.html`, shared recipe and portion logic in `meals.js`, brand assets). No build step.
+- `netlify/functions/`: `subscribe`, `confirm`, `unsubscribe` and the hourly scheduled `send-daily`.
+- Subscribers are stored in Netlify Blobs (store `fitme-subscribers`, EU region `eu-central-1`). Emails are sent through the Mailgun API.
+
+## Email setup (Netlify environment variables, scope: Functions)
+
+| Variable | Value |
+|---|---|
+| `MAILGUN_API_KEY` | Mailgun sending API key |
+| `MAILGUN_DOMAIN` | Verified sending domain, e.g. `mg.yourdomain.com` |
+| `MAILGUN_REGION` | `eu` (default) or `us` |
+| `MAIL_FROM` | Optional, e.g. `FitMe <plan@mg.yourdomain.com>` |
+
+Until `MAILGUN_API_KEY` and `MAILGUN_DOMAIN` are set, sign-up shows "opens soon" and the scheduled send does nothing.
 
 ## Brand
 

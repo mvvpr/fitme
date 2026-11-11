@@ -1,0 +1,174 @@
+// Shared backend helpers: subscriber storage (Netlify Blobs, EU region), Mailgun sending, email rendering.
+import { getStore } from "@netlify/blobs";
+import "../../public/meals.js";
+
+export const M: any = (globalThis as any).FITME_MEALS;
+
+// ---------- Storage ----------
+// Site-wide store kept in the EU. The region must be passed on every call or reads silently miss.
+export function subscribers() {
+  return getStore({ name: "fitme-subscribers", region: "eu-central-1", consistency: "strong" });
+}
+
+export type Subscriber = {
+  email: string;
+  status: "pending" | "active";
+  tz: string;
+  intake: number;
+  prot: number;
+  units: "metric" | "imperial";
+  pending?: { tz: string; intake: number; prot: number; units: "metric" | "imperial" } | null;
+  confirmToken: string | null;
+  unsubToken: string;
+  createdAt: string;
+  consentAt: string;
+  consentText: string;
+  confirmedAt?: string;
+  lastConfirmMailAt?: string;
+  lastSentDate?: string;
+};
+
+export async function sha256(text: string) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+export const subKey = (hash: string) => `sub/${hash}`;
+export const tokKey = (token: string) => `tok/${token}`;
+export const unsKey = (token: string) => `uns/${token}`;
+
+export function newToken() {
+  return crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "").slice(0, 16);
+}
+
+export function validTimeZone(tz: unknown): tz is string {
+  if (typeof tz !== "string" || tz.length > 64) return false;
+  try { new Intl.DateTimeFormat("en", { timeZone: tz }); return true; } catch { return false; }
+}
+
+// ---------- Mailgun ----------
+export function mailConfig() {
+  const apiKey = Netlify.env.get("MAILGUN_API_KEY");
+  const domain = Netlify.env.get("MAILGUN_DOMAIN");
+  const region = (Netlify.env.get("MAILGUN_REGION") || "eu").toLowerCase();
+  if (!apiKey || !domain) return null;
+  return {
+    apiKey,
+    domain,
+    base: region === "us" ? "https://api.mailgun.net" : "https://api.eu.mailgun.net",
+    from: Netlify.env.get("MAIL_FROM") || `FitMe <plan@${domain}>`,
+  };
+}
+
+type Mail = { to: string; subject: string; html: string; text: string; unsubUrl?: string; tag: string };
+
+export async function sendMail(cfg: NonNullable<ReturnType<typeof mailConfig>>, mail: Mail) {
+  const body = new URLSearchParams();
+  body.set("from", cfg.from);
+  body.set("to", mail.to);
+  body.set("subject", mail.subject);
+  body.set("html", mail.html);
+  body.set("text", mail.text);
+  body.set("o:tag", mail.tag);
+  if (mail.unsubUrl) {
+    body.set("h:List-Unsubscribe", `<${mail.unsubUrl}>`);
+    body.set("h:List-Unsubscribe-Post", "List-Unsubscribe=One-Click");
+  }
+  const res = await fetch(`${cfg.base}/v3/${cfg.domain}/messages`, {
+    method: "POST",
+    headers: { Authorization: "Basic " + btoa(`api:${cfg.apiKey}`) },
+    body,
+  });
+  if (!res.ok) throw new Error(`Mailgun ${res.status}: ${(await res.text()).slice(0, 300)}`);
+}
+
+// ---------- Rendering ----------
+export const COLORS = { bg: "#f0eee9", card: "#fbfaf7", ink: "#1e1c1a", muted: "#6b655e", line: "#ddd8cf", accent: "#2e6b4f", matcha: "#8fb339" };
+
+export function esc(t: unknown) {
+  return String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+const kcal = (v: number) => (Math.round(v / 10) * 10).toLocaleString("en") + " kcal";
+
+function shell(siteUrl: string, inner: string, footer: string) {
+  const c = COLORS;
+  return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"></head>
+<body style="margin:0;padding:0;background:${c.bg};font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:${c.ink};">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${c.bg};"><tr><td align="center" style="padding:24px 12px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;">
+<tr><td style="padding:0 4px 16px;"><a href="${esc(siteUrl)}" style="text-decoration:none;color:${c.ink};">
+<img src="${esc(siteUrl)}/brand/fitme-icon-512.png" width="36" height="36" alt="" style="vertical-align:middle;border-radius:9px;border:0;">
+<span style="font-size:24px;font-weight:700;letter-spacing:-0.5px;vertical-align:middle;margin-left:8px;">Fit<span style="color:${c.accent};">Me</span></span></a></td></tr>
+${inner}
+<tr><td style="padding:18px 4px 0;font-size:12px;line-height:1.5;color:${c.muted};">${footer}</td></tr>
+</table></td></tr></table></body></html>`;
+}
+
+export function renderConfirmEmail(siteUrl: string, confirmUrl: string, isUpdate: boolean) {
+  const c = COLORS;
+  const title = isUpdate ? "Confirm your updated meal plan" : "Confirm your daily meal plan";
+  const lead = isUpdate
+    ? "You asked to update the calories behind your daily FitMe meal plan. Confirm to apply the new portions."
+    : "Tap the button below to start getting your FitMe meal plan every morning at 7:00: four high-protein meals with ingredients and method, sized to your calories.";
+  const inner = `<tr><td style="background:${c.card};border:1px solid ${c.line};border-radius:12px;padding:28px 24px;">
+<h1 style="margin:0 0 10px;font-size:22px;line-height:1.25;">${title}</h1>
+<p style="margin:0 0 22px;font-size:15px;line-height:1.55;color:${c.muted};">${lead}</p>
+<a href="${esc(confirmUrl)}" style="display:inline-block;background:${c.accent};color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:12px 22px;border-radius:8px;">${isUpdate ? "Confirm update" : "Confirm subscription"}</a>
+<p style="margin:22px 0 0;font-size:13px;line-height:1.5;color:${c.muted};">If you didn't sign up, ignore this email and nothing will happen.</p>
+</td></tr>`;
+  const text = `${title}\n\n${lead}\n\nConfirm: ${confirmUrl}\n\nIf you didn't sign up, ignore this email and nothing will happen.`;
+  return { subject: title, html: shell(siteUrl, inner, "You're receiving this because this address was entered on FitMe."), text };
+}
+
+export function renderDailyEmail(opts: { siteUrl: string; unsubUrl: string; dayIndex: number; dateLabel: string; intake: number; prot: number; imperial: boolean }) {
+  const c = COLORS;
+  const meals = M.buildDay(opts.dayIndex, opts.intake);
+  const tot = M.dayTotals(meals);
+  const dayName = M.DAY_NAMES[opts.dayIndex];
+  const summary = `<tr><td style="background:${c.card};border:1px solid ${c.line};border-radius:12px;padding:20px 22px;">
+<div style="font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:${c.muted};">${esc(opts.dateLabel)}</div>
+<h1 style="margin:4px 0 12px;font-size:24px;line-height:1.2;">Your ${dayName} meal plan</h1>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:13px;color:${c.muted};"><tr>
+<td style="padding-right:10px;">Calories<br><b style="font-size:16px;color:${c.ink};">${kcal(tot.k)}</b> <span>/ ${kcal(opts.intake)}</span></td>
+<td style="padding-right:10px;">Protein<br><b style="font-size:16px;color:${c.ink};">${Math.round(tot.p)} g</b> <span>/ ${opts.prot} g</span></td>
+<td style="padding-right:10px;">Carbs<br><b style="font-size:16px;color:${c.ink};">${Math.round(tot.c)} g</b></td>
+<td>Fat<br><b style="font-size:16px;color:${c.ink};">${Math.round(tot.f)} g</b></td></tr></table></td></tr>`;
+  const cards = meals.map((m: any) => {
+    const ing = m.lines.map((l: any) => {
+      if (l[0] === "~") return `<tr><td></td><td style="padding:3px 0;color:${c.muted};font-size:13px;">${esc(l[1])}</td></tr>`;
+      const a = M.amountText(l, opts.imperial);
+      return `<tr><td style="padding:3px 12px 3px 0;white-space:nowrap;font-family:Menlo,Consolas,monospace;font-size:13px;vertical-align:top;">${esc(a.q)}</td><td style="padding:3px 0;font-size:14px;">${esc(a.n)}</td></tr>`;
+    }).join("");
+    const steps = m.rec.steps.map((st: string) => `<li style="margin:0 0 6px;">${esc(st)}</li>`).join("");
+    return `<tr><td style="height:14px;"></td></tr><tr><td style="background:${c.card};border:1px solid ${c.line};border-radius:12px;padding:20px 22px;">
+<div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:${c.accent};">${esc(m.slot.label)} · ${esc(m.rec.time)}</div>
+<h2 style="margin:4px 0 8px;font-size:19px;line-height:1.25;">${esc(m.rec.name)}</h2>
+<div style="font-size:12px;margin:0 0 12px;"><span style="background:${c.matcha};color:${c.ink};border-radius:20px;padding:2px 9px;font-weight:600;">${kcal(m.n.k)}</span>
+<span style="color:${c.muted};margin-left:6px;">P ${Math.round(m.n.p)} g · C ${Math.round(m.n.c)} g · F ${Math.round(m.n.f)} g</span></div>
+<div style="font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:${c.muted};margin:0 0 4px;">Ingredients</div>
+<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 12px;">${ing}</table>
+<div style="font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:${c.muted};margin:0 0 4px;">Method</div>
+<ol style="margin:0;padding-left:20px;font-size:14px;line-height:1.5;">${steps}</ol></td></tr>`;
+  }).join("");
+  const cta = `<tr><td style="padding:18px 4px 0;font-size:14px;"><a href="${esc(opts.siteUrl)}/#meal-plan" style="color:${c.accent};font-weight:600;">See the full week and shopping list on FitMe →</a></td></tr>`;
+  const footer = `Portions are sized for your daily intake of ${kcal(opts.intake)}. Nutrition is estimated from standard ingredient values, so check labels if you have allergies. This is not medical advice.<br>
+To change your calories, recalculate on <a href="${esc(opts.siteUrl)}" style="color:${c.muted};">FitMe</a> and sign up again with the same email. <a href="${esc(opts.unsubUrl)}" style="color:${c.muted};">Unsubscribe</a>.`;
+  const subject = `Your ${dayName} meal plan: ${meals.map((m: any) => m.rec.name).slice(1, 2)[0]} & more`;
+  const text = [`Your ${dayName} meal plan (${opts.dateLabel})`, `Calories ${kcal(tot.k)} / ${kcal(opts.intake)} · Protein ${Math.round(tot.p)} g`, ""]
+    .concat(meals.map((m: any) => {
+      const ing = m.lines.map((l: any) => (l[0] === "~" ? `  - ${l[1]}` : `  - ${M.amountText(l, opts.imperial).q} ${M.amountText(l, opts.imperial).n}`)).join("\n");
+      const steps = m.rec.steps.map((s: string, i: number) => `  ${i + 1}. ${s}`).join("\n");
+      return `${m.slot.label.toUpperCase()}: ${m.rec.name} (${kcal(m.n.k)}, ${Math.round(m.n.p)} g protein)\nIngredients:\n${ing}\nMethod:\n${steps}\n`;
+    }))
+    .concat([`Full week: ${opts.siteUrl}/#meal-plan`, `Unsubscribe: ${opts.unsubUrl}`]).join("\n");
+  return { subject, html: shell(opts.siteUrl, summary + cards + cta, footer), text };
+}
+
+export function htmlPage(siteUrl: string, title: string, body: string, status = 200) {
+  const c = COLORS;
+  return new Response(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)} · FitMe</title><link rel="icon" href="/favicon.svg"></head>
+<body style="margin:0;background:${c.bg};color:${c.ink};font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;">
+<main style="max-width:480px;margin:12vh auto;padding:0 18px;"><a href="${esc(siteUrl)}" style="text-decoration:none;color:${c.ink};font-size:26px;font-weight:700;">Fit<span style="color:${c.accent};">Me</span></a>
+<div style="background:${c.card};border:1px solid ${c.line};border-radius:12px;padding:24px;margin-top:16px;"><h1 style="margin:0 0 10px;font-size:21px;">${esc(title)}</h1>${body}</div></main></body></html>`,
+    { status, headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store", "x-robots-tag": "noindex" } });
+}

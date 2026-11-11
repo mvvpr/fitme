@@ -1,0 +1,9 @@
+{
+  "name": "fitme",
+  "private": true,
+  "description": "FitMe calorie-deficit calculator, meal plan and daily meal-plan emails",
+  "dependencies": {
+    "@netlify/blobs": "^11.1.9",
+    "@netlify/functions": "^6.1.1"
+  }
+}
