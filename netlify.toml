@@ -10,12 +10,8 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
 
-# Portuguese site: /pt/ serves the same page (language is picked from the path); assets resolve to the root files.
-[[redirects]]
-  from = "/pt"
-  to = "/pt/"
-  status = 301
-
+# Portuguese site: /pt and /pt/ serve the same page (language is picked from the path); assets resolve to the root files.
+# No /pt -> /pt/ redirect: Netlify ignores trailing slashes when matching, so it would loop.
 [[redirects]]
   from = "/pt/*"
   to = "/:splat"
