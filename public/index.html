@@ -833,10 +833,10 @@ tbody tr.goal td { font-weight: 500; color: var(--accent); }
   function renderMeals(s, T) {
     var day = clamp(state.day | 0, 0, 6);
     $('days').innerHTML = DAYS.map(function (d, i) { return '<button type="button" data-d="' + i + '" aria-pressed="' + (i === day) + '" aria-label="' + DAY_NAMES[i] + '">' + d + '</button>'; }).join('');
-    var protTarget = Math.round(1.6 * s.goal);
+    var protTarget = M.proteinTarget(s.goal);
     $('meals-sub').innerHTML = 'Four high-protein meals a day, with portions scaled to your starting intake of <strong>' + kcal(T) + '</strong>. ' +
-      (s.mode === 'deficit' ? 'Your intake steps down over time, so revisit portions as you go. ' : '') + 'Protein goal: about ' + protTarget + ' g a day (1.6 g per kg of goal weight).';
-    var meals = buildDay(day, T);
+      (s.mode === 'deficit' ? 'Your intake steps down over time, so revisit portions as you go. ' : '') + 'Protein goal: about ' + protTarget + ' g a day (' + M.PROTEIN_PER_KG + ' g per kg of goal weight).';
+    var meals = buildDay(day, T, protTarget);
     var tot = M.dayTotals(meals);
     $('daytot').innerHTML =
       '<div><span class="k">' + DAY_NAMES[day] + ' total</span><span class="v">' + kcal(tot.k) + ' <small>/ ' + nf0.format(Math.round(T / 10) * 10) + '</small></span></div>' +
@@ -856,13 +856,13 @@ tbody tr.goal td { font-weight: 500; color: var(--accent); }
         '<div><h4>Ingredients · 1 serving</h4><ul class="ing">' + ing + '</ul></div>' +
         '<div><h4>Method</h4><ol>' + steps + '</ol></div></article>';
     }).join('');
-    renderShop(T);
+    renderShop(T, protTarget);
     subState = { intake: Math.round(T), prot: protTarget, units: state.units };
     $('sub-kcal').textContent = kcal(T) + ' a day';
   }
-  function renderShop(T) {
+  function renderShop(T, P) {
     var totals = {}, extras = {};
-    for (var i = 0; i < 7; i++) buildDay(i, T).forEach(function (m) {
+    for (var i = 0; i < 7; i++) buildDay(i, T, P).forEach(function (m) {
       m.lines.forEach(function (l) {
         if (l[0] === '~') { extras[l[1]] = 1; return; }
         var t = totals[l[0]] || (totals[l[0]] = { g: 0, pc: 0, tsp: 0, ml: 0 });

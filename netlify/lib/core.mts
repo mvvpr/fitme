@@ -122,7 +122,7 @@ export function renderConfirmEmail(siteUrl: string, confirmUrl: string, isUpdate
 
 export function renderDailyEmail(opts: { siteUrl: string; unsubUrl: string; dayIndex: number; dateLabel: string; intake: number; prot: number; imperial: boolean }) {
   const c = COLORS;
-  const meals = M.buildDay(opts.dayIndex, opts.intake);
+  const meals = M.buildDay(opts.dayIndex, opts.intake, opts.prot);
   const tot = M.dayTotals(meals);
   const dayName = M.DAY_NAMES[opts.dayIndex];
   const summary = `<tr><td style="background:${c.card};border:1px solid ${c.line};border-radius:12px;padding:20px 22px;">

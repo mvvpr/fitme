@@ -209,16 +209,42 @@ function nutrition(lines) {
   });
   return t;
 }
-function buildDay(i, T) {
-  return SLOTS.map(function (slot) {
+// Protein-rich = at least 35% of the ingredient's calories come from protein (meat, fish, eggs, egg whites, Greek yogurt, cottage cheese, whey...).
+function isProteinRich(key) { var d = DB[key]; return d && d[1] > 0 && (d[2] * 4) / d[1] >= 0.35; }
+var PROTEIN_PER_KG = 1.5; // grams per kg of goal weight
+function proteinTarget(goalKg) { return Math.round(PROTEIN_PER_KG * goalKg); }
+// Build a day's four meals for an intake of T kcal. If P (grams of protein) is given and the
+// calorie-scaled day falls short, protein-rich ingredients are scaled up and the rest scaled down
+// so the day keeps its calories and reaches P.
+function buildDay(i, T, P) {
+  var meals = SLOTS.map(function (slot) {
     var rec = RECIPES[slot.key][i];
     var base = nutrition(rec.ing);
-    var f = mClamp((T * slot.share) / base.k, 0.5, 2.2);
-    var lines = rec.ing.map(function (l) { return l[0] === '~' ? l : scaleLine(l, f); });
-    return { slot: slot, rec: rec, lines: lines, n: nutrition(lines) };
+    return { slot: slot, rec: rec, f: mClamp((T * slot.share) / base.k, 0.5, 2.2) };
+  });
+  var a = 1, b = 1;
+  if (P) {
+    var Kp = 0, Ko = 0, Pp = 0, Po = 0;
+    meals.forEach(function (m) {
+      m.rec.ing.forEach(function (l) {
+        if (l[0] === '~') return;
+        var d = DB[l[0]], g = lineGrams(l) * m.f / 100;
+        if (isProteinRich(l[0])) { Kp += g * d[1]; Pp += g * d[2]; } else { Ko += g * d[1]; Po += g * d[2]; }
+      });
+    });
+    if (Pp + Po < P && Kp > 0 && Ko > 0) {
+      var det = Kp * Po - Ko * Pp;
+      if (det !== 0) { a = (T * Po - Ko * P) / det; b = (Kp * P - Pp * T) / det; }
+      a = mClamp(a, 1, 2.2);
+      b = mClamp((T - a * Kp) / Ko, 0.6, 1);
+    }
+  }
+  return meals.map(function (m) {
+    var lines = m.rec.ing.map(function (l) { return l[0] === '~' ? l : scaleLine(l, m.f * (isProteinRich(l[0]) ? a : b)); });
+    return { slot: m.slot, rec: m.rec, lines: lines, n: nutrition(lines) };
   });
 }
 function dayTotals(meals) {
   return meals.reduce(function (a, m) { a.k += m.n.k; a.p += m.n.p; a.c += m.n.c; a.f += m.n.f; return a; }, { k: 0, p: 0, c: 0, f: 0 });
 }
-globalThis.FITME_MEALS = { DB: DB, RECIPES: RECIPES, SLOTS: SLOTS, DAY_NAMES: DAY_NAMES, lineGrams: lineGrams, frac: frac, scaleLine: scaleLine, amountText: amountText, nutrition: nutrition, buildDay: buildDay, dayTotals: dayTotals };
+globalThis.FITME_MEALS = { DB: DB, RECIPES: RECIPES, SLOTS: SLOTS, DAY_NAMES: DAY_NAMES, lineGrams: lineGrams, frac: frac, scaleLine: scaleLine, amountText: amountText, nutrition: nutrition, buildDay: buildDay, dayTotals: dayTotals, proteinTarget: proteinTarget, PROTEIN_PER_KG: PROTEIN_PER_KG };
