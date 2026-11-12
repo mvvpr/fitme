@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>FitMe</title>
+<link rel="alternate" hreflang="en" href="https://fitmeplan.com/">
+<link rel="alternate" hreflang="pt-PT" href="https://fitmeplan.com/pt/">
+<link rel="alternate" hreflang="x-default" href="https://fitmeplan.com/">
 <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0Ij4KICA8cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHJ4PSIxNiIgZmlsbD0iIzJlNmI0ZiIvPgogIDxwYXRoIGQ9Ik0xMyAxOSBDMjIgMTkgMjQgNDEgMzMgNDEgTDUxIDIxIiBmaWxsPSJub25lIiBzdHJva2U9IiM4ZmIzMzkiIHN0cm9rZS13aWR0aD0iNyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+CiAgPGNpcmNsZSBjeD0iMTMiIGN5PSIxOSIgcj0iMy41IiBmaWxsPSIjZjBlZWU5Ii8+Cjwvc3ZnPgo=">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -398,6 +401,12 @@ header.topbar { flex-direction: row; align-items: center; justify-content: space
 .how-body { padding: 0 18px 18px; display: flex; flex-direction: column; gap: 14px; }
 .sub-h { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 4px 0 8px; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.lang-switch { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 2px; background: var(--surface); order: 3; }
+.lang-switch a { font-size: 12.5px; font-weight: 600; color: var(--muted); text-decoration: none; padding: 4px 10px; border-radius: 999px; }
+.lang-switch a[aria-current="true"] { background: var(--accent); color: var(--accent-ink); }
+.lang-switch a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.topbar .progress { order: 2; margin-left: auto; }
+@media (max-width: 640px) { .topbar .progress { order: 4; width: 100%; margin-left: 0; } }
 .foot { font-size: 12.5px; color: var(--muted); margin: 0; max-width: 84ch; }
 </style>
 </head>
@@ -405,6 +414,7 @@ header.topbar { flex-direction: row; align-items: center; justify-content: space
 <div class="wrap">
   <header class="topbar">
     <a class="brand" href="#start" aria-label="FitMe home"><svg class="mark" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16" fill="var(--accent)"/><path d="M13 19 C22 19 24 41 33 41 L51 21" fill="none" stroke="var(--mark-line)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="13" cy="19" r="3.5" fill="#f0eee9"/></svg><span class="wordmark">Fit<span>Me</span></span></a>
+    <div class="lang-switch" role="group" aria-label="Language / Idioma"><a href="/" data-lang="en" hreflang="en">EN</a><a href="/pt/" data-lang="pt" hreflang="pt-PT">PT</a></div>
     <nav class="progress" id="progress" aria-label="Steps" hidden>
       <ol>
         <li><a href="#about" data-step="about"><span class="num">1</span><span class="lab">About you</span></a></li>
@@ -660,9 +670,31 @@ header.topbar { flex-direction: row; align-items: center; justify-content: space
 
 
 <script src="meals.js"></script>
+<script src="meals.pt.js"></script>
+<script src="i18n.js"></script>
 <script>
 (function () {
   var $ = function (id) { return document.getElementById(id); };
+  var I18N = globalThis.FITME_I18N, L = I18N.L, LANG = I18N.lang;
+  // First visit on the English page from a Portuguese browser: go to /pt/ (unless the visitor chose a language before).
+  try {
+    var chosen = localStorage.getItem('fitme-lang');
+    if (LANG === 'en' && !chosen && /^pt\b/i.test(navigator.language || '') && location.protocol !== 'file:' && !/claude|artifact/.test(location.hostname)) {
+      location.replace('/pt/' + location.hash); return;
+    }
+  } catch (e) {}
+  I18N.translateStatic(document.body);
+  document.documentElement.lang = L.htmlLang;
+  document.title = L.title;
+  document.querySelectorAll('.lang-switch a').forEach(function (a) {
+    a.setAttribute('aria-current', String(a.dataset.lang === LANG));
+    a.addEventListener('click', function (e) {
+      try { localStorage.setItem('fitme-lang', a.dataset.lang); } catch (err) {}
+      if (a.dataset.lang === LANG) { e.preventDefault(); return; }
+      if (location.protocol === 'file:' || /claude|artifact/.test(location.hostname)) return;
+      e.preventDefault(); location.href = a.getAttribute('href') + location.hash;
+    });
+  });
   var LB = 0.45359237;
   var KCAL_PER_KG = 7700;
   var MAX_WEEKS = 104;
@@ -756,8 +788,8 @@ header.topbar { flex-direction: row; align-items: center; justify-content: space
   }
 
   // ---- Formatting ----
-  var nf0 = new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 });
-  var nf1 = new Intl.NumberFormat(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  var nf0 = new Intl.NumberFormat(L.locale, { maximumFractionDigits: 0 });
+  var nf1 = new Intl.NumberFormat(L.locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   function wu() { return imp() ? 'lb' : 'kg'; }
   function wt(kg) { return nf1.format(imp() ? kg / LB : kg) + ' ' + wu(); }
   function wtShort(kg) { return nf0.format(imp() ? kg / LB : kg); }
@@ -769,10 +801,10 @@ header.topbar { flex-direction: row; align-items: center; justify-content: space
     return new Date(+p[0], +p[1] - 1, +p[2]);
   }
   function addDays(d, n) { var x = new Date(d); x.setDate(x.getDate() + n); return x; }
-  var dfLong = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
-  var dfShort = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short' });
-  function weeksText(days) { var n = Math.ceil(days / 7); return n + (n === 1 ? ' week' : ' weeks'); }
-  function reachText(sim, sd) { return sim.reach ? dfLong.format(addDays(sd, sim.reach)) + ' (' + weeksText(sim.reach) + ')' : 'not within 2 years'; }
+  var dfLong = new Intl.DateTimeFormat(L.locale, { day: 'numeric', month: LANG === 'pt' ? 'long' : 'short', year: 'numeric' });
+  var dfShort = new Intl.DateTimeFormat(L.locale, { day: 'numeric', month: 'short' });
+  function weeksText(days) { return L.weeks(Math.ceil(days / 7)); }
+  function reachText(sim, sd) { return sim.reach ? dfLong.format(addDays(sd, sim.reach)) + ' (' + weeksText(sim.reach) + ')' : L.notWithin; }
 
   function niceTicks(lo, hi) {
     var span = Math.max(hi - lo, 1);
@@ -834,7 +866,7 @@ header.topbar { flex-direction: row; align-items: center; justify-content: space
     // Goal line
     var gy = f(y(s.goal));
     parts.push('<line x1="' + m.l + '" x2="' + (W - m.r) + '" y1="' + gy + '" y2="' + gy + '" stroke="var(--ink)" stroke-width="1.5"/>');
-    parts.push('<text x="' + (W - m.r - 4) + '" y="' + (+gy - 6) + '" text-anchor="end" style="fill:var(--ink);font-weight:500">Goal ' + wtShort(s.goal) + ' ' + wu() + '</text>');
+    parts.push('<text x="' + (W - m.r - 4) + '" y="' + (+gy - 6) + '" text-anchor="end" style="fill:var(--ink);font-weight:500">' + (LANG === 'pt' ? 'Objetivo ' : 'Goal ') + wtShort(s.goal) + ' ' + wu() + '</text>');
 
     parts.push('<g id="cursor" hidden><line id="cl" y1="' + m.t + '" y2="' + (m.t + ih) + '" stroke="var(--ink)" stroke-width="1"/><circle id="cd" r="4.5" fill="var(--surface)" stroke="var(--ink)" stroke-width="2"/></g>');
     parts.push('<rect x="' + m.l + '" y="' + m.t + '" width="' + iw + '" height="' + ih + '" fill="transparent"/>');
@@ -859,12 +891,12 @@ header.topbar { flex-direction: row; align-items: center; justify-content: space
     var cd = $('cd'); cd.setAttribute('cx', cx); cd.setAttribute('cy', view.y(b.w));
     var tip = $('tip');
     var lo = view.high.weeks[i].w, hi = view.low.weeks[i].w;
-    tip.innerHTML = '<b>Week ' + i + ' · ' + dfShort.format(addDays(view.sd, i * 7)) + '</b>' +
-      '<div class="row"><span>Weight</span><span>' + wt(b.w) + '</span></div>' +
-      '<div class="row"><span>Lost</span><span>' + wt(view.s.w0 - b.w) + '</span></div>' +
-      '<div class="row"><span>Intake</span><span>' + kcal(b.intake) + '</span></div>' +
-      '<div class="row"><span>Basal</span><span>' + kcal(b.bmr) + '</span></div>' +
-      '<div class="row"><span>Range</span><span>' + wtShort(lo) + '–' + wtShort(hi) + ' ' + wu() + '</span></div>';
+    tip.innerHTML = '<b>' + L.tipWeek(i, dfShort.format(addDays(view.sd, i * 7))) + '</b>' +
+      '<div class="row"><span>' + L.tipWeight + '</span><span>' + wt(b.w) + '</span></div>' +
+      '<div class="row"><span>' + L.tipLost + '</span><span>' + wt(view.s.w0 - b.w) + '</span></div>' +
+      '<div class="row"><span>' + L.tipIntake + '</span><span>' + kcal(b.intake) + '</span></div>' +
+      '<div class="row"><span>' + L.tipBasal + '</span><span>' + kcal(b.bmr) + '</span></div>' +
+      '<div class="row"><span>' + L.tipRange + '</span><span>' + wtShort(lo) + '–' + wtShort(hi) + ' ' + wu() + '</span></div>';
     tip.hidden = false;
     var wrapW = $('chartwrap').clientWidth;
     var tw = tip.offsetWidth;
@@ -891,7 +923,7 @@ header.topbar { flex-direction: row; align-items: center; justify-content: space
     $('goal-err').hidden = s.goal < s.w0;
     var maint0 = tdee(s, s.w0);
     var bmr0 = bmr(s, s.w0);
-    var ACT_NAMES = { '1.2': 'Sedentary', '1.375': 'Light', '1.55': 'Moderate', '1.725': 'Very active', '1.9': 'Athlete' };
+    var ACT_NAMES = L.actNames;
     $('e-bmr').textContent = kcal(bmr0);
     $('e-act').textContent = kcal(maint0 - bmr0);
     $('e-actd').textContent = (ACT_NAMES[s.act] || '') + ' × ' + s.act;
@@ -901,9 +933,9 @@ header.topbar { flex-direction: row; align-items: center; justify-content: space
     var warns = [];
 
     if (s.goal >= s.w0) {
-      $('eyebrow').textContent = 'Check your goal';
+      $('eyebrow').textContent = L.checkGoal;
       $('big').textContent = '–';
-      $('sub').innerHTML = 'Set a goal weight below your current weight. Your maintenance is about <strong>' + kcal(maint0) + '</strong> a day.';
+      $('sub').innerHTML = L.setGoalBelow(kcal(maint0));
       ['s-lose', 's-rate', 's-bmi'].forEach(function (id) { $(id).textContent = '–'; });
       $('s-maint').textContent = kcal(bmr0);
       $('warn').hidden = true;
@@ -922,38 +954,38 @@ header.topbar { flex-direction: row; align-items: center; justify-content: space
     var H = base.reach ? Math.min(MAX_WEEKS, Math.max(6, Math.ceil(reachWk * 1.15) + 2)) : MAX_WEEKS;
 
     if (base.reach) {
-      $('eyebrow').textContent = 'Reach ' + wt(s.goal) + ' in ' + weeksText(base.reach);
+      $('eyebrow').textContent = L.reachIn(wt(s.goal), weeksText(base.reach));
       $('big').textContent = dfLong.format(addDays(sd, base.reach));
     } else {
       var endW = base.weeks[MAX_WEEKS].w;
-      $('eyebrow').textContent = 'Goal not reached within 2 years';
+      $('eyebrow').textContent = L.notReached;
       $('big').textContent = wt(endW);
     }
 
-    var lines = 'That\u2019s your maintenance of ' + kcal(maint0) + ' minus a ' + nf0.format(s.deficit) + ' kcal daily deficit. ';
+    var lines = L.maintMinus(kcal(maint0), nf0.format(s.deficit));
     if (!base.reach) {
-      lines += 'At this intake your weight levels off before the goal, so choose a faster pace in <a href="#goal">Your goal</a>. ';
+      lines += L.levelsOff;
     }
     if (s.spread > 0) {
-      lines += 'If your real deficit lands ' + nf0.format(s.spread) + ' kcal either side, you would arrive between <strong>' + reachText(high, sd) + '</strong> and <strong>' + reachText(low, sd) + '</strong>.';
+      lines += L.rangeLine(nf0.format(s.spread), reachText(high, sd), reachText(low, sd));
     }
     $('sub').innerHTML = lines;
 
     var floorK = s.sex === 'm' ? 1500 : 1200;
-    $('plan-kcal').textContent = kcal(Math.max(base.startIntake, floorK)) + ' a day';
-    $('plan-prot').textContent = M.proteinTarget(s.goal) + ' g a day';
+    $('plan-kcal').textContent = kcal(Math.max(base.startIntake, floorK)) + L.aDay;
+    $('plan-prot').textContent = M.proteinTarget(s.goal) + ' g' + L.aDay;
     var toLose = s.w0 - s.goal;
     $('s-lose').textContent = wt(toLose);
     $('s-rate').textContent = base.reach ? wt(toLose / (base.reach / 7)) : wt((s.w0 - base.weeks[MAX_WEEKS].w) / MAX_WEEKS);
-    $('s-bmi').textContent = bmi(s, s.w0).toFixed(1) + ' → ' + bmi(s, s.goal).toFixed(1);
+    $('s-bmi').textContent = nf1.format(bmi(s, s.w0)) + ' → ' + nf1.format(bmi(s, s.goal));
     $('s-maint').textContent = kcal(bmr(s, s.w0)).replace(' kcal', '') + ' → ' + kcal(bmr(s, s.goal)).replace(' kcal', '');
 
     // Safety checks
     var floor = s.sex === 'm' ? 1500 : 1200;
-    if (base.minIntake < floor) warns.push('Intake drops to about ' + kcal(base.minIntake) + ', below the ' + nf0.format(floor) + ' kcal a day often given as a minimum without medical supervision.');
-    if (base.minIntake < bmr0 * 0.98 && base.minIntake >= floor) warns.push('Intake dips to about ' + kcal(base.minIntake) + ', under your basal rate of ' + kcal(bmr0) + '. That is common in a deficit, but staying above your BMR is easier to sustain.');
-    if (base.maxPct > 0.01) warns.push('Your fastest week loses ' + (base.maxPct * 100).toFixed(1) + '% of body weight. Around 0.5–1% a week is usually easier to sustain and protects muscle.');
-    if (bmi(s, s.goal) < 18.5) warns.push('A goal BMI of ' + bmi(s, s.goal).toFixed(1) + ' is below the healthy range (18.5–24.9).');
+    if (base.minIntake < floor) warns.push(L.warnFloor(kcal(base.minIntake), nf0.format(floor)));
+    if (base.minIntake < bmr0 * 0.98 && base.minIntake >= floor) warns.push(L.warnBmr(kcal(base.minIntake), kcal(bmr0)));
+    if (base.maxPct > 0.01) warns.push(L.warnFast(nf1.format(base.maxPct * 100)));
+    if (bmi(s, s.goal) < 18.5) warns.push(L.warnBmi(nf1.format(bmi(s, s.goal))));
     $('warn-list').innerHTML = warns.map(function (w) { return '<li>' + w + '</li>'; }).join('');
     $('warn').hidden = warns.length === 0;
 
@@ -962,28 +994,28 @@ header.topbar { flex-direction: row; align-items: center; justify-content: space
     for (var i = 1; i <= last; i++) {
       var p = base.weeks[i];
       var isGoal = base.reach && i === reachWk;
-      rows.push('<tr' + (isGoal ? ' class="goal"' : '') + '><td>' + i + '</td><td>' + dfShort.format(addDays(sd, i * 7)) + '</td><td>' + wt(p.w) + '</td><td>' + wt(s.w0 - p.w) + '</td><td>' + kcal(isGoal ? base.weeks[i - 1].intake : p.intake) + '</td><td>' + kcal(p.bmr) + '</td><td>' + kcal(p.maint) + '</td><td>' + bmi(s, p.w).toFixed(1) + '</td></tr>');
+      rows.push('<tr' + (isGoal ? ' class="goal"' : '') + '><td>' + i + '</td><td>' + dfShort.format(addDays(sd, i * 7)) + '</td><td>' + wt(p.w) + '</td><td>' + wt(s.w0 - p.w) + '</td><td>' + kcal(isGoal ? base.weeks[i - 1].intake : p.intake) + '</td><td>' + kcal(p.bmr) + '</td><td>' + kcal(p.maint) + '</td><td>' + nf1.format(bmi(s, p.w)) + '</td></tr>');
     }
     $('rows').innerHTML = rows.join('');
 
-    $('chart').setAttribute('aria-label', 'Projected weight over ' + H + ' weeks, from ' + wt(s.w0) + (base.reach ? ' to the ' + wt(s.goal) + ' goal in ' + weeksText(base.reach) : ' to ' + wt(base.weeks[MAX_WEEKS].w)) + '.');
+    $('chart').setAttribute('aria-label', L.chartAria(H, wt(s.w0), base.reach ? wt(s.goal) : wt(base.weeks[MAX_WEEKS].w)));
     drawChart(s, base, low, high, H, sd);
     renderMeals(s, Math.max(base.startIntake, s.sex === 'm' ? 1500 : 1200));
     save();
   }
 
   // ---- Summary bar (plan + meals) ----
-  var ACT_SHORT = { '1.2': 'Sedentary', '1.375': 'Light activity', '1.55': 'Moderate activity', '1.725': 'Very active', '1.9': 'Athlete' };
+  var ACT_SHORT = L.actShort;
   function paceName(s) {
-    var sg = suggestions(s), names = ['Gentle pace', 'Balanced pace', 'Faster pace'];
+    var sg = suggestions(s), names = L.paceNames;
     for (var i = 0; i < sg.def.length; i++) if (Math.abs(sg.def[i].v - s.deficit) < 0.5) return names[i];
-    return nf0.format(s.deficit) + ' kcal deficit';
+    return L.customDeficit(nf0.format(s.deficit));
   }
   function renderSummary(s) {
     var html = '<span class="chip-s">' + wtShort(s.w0) + ' → ' + wtShort(s.goal) + ' ' + wu() + '</span>' +
       '<span class="chip-s">' + (ACT_SHORT[s.act] || '') + '</span>' +
       '<span class="chip-s">' + paceName(s) + '</span>' +
-      '<a href="#about">Edit details</a>';
+      '<a href="#about">' + L.editDetails + '</a>';
     $('summary').innerHTML = html;
     $('summary-meals').innerHTML = html;
   }
@@ -994,12 +1026,12 @@ header.topbar { flex-direction: row; align-items: center; justify-content: space
     var bands = s.age < 30 ? [0.5, 0.75, 1.0] : s.age < 50 ? [0.4, 0.6, 0.85] : s.age < 65 ? [0.35, 0.5, 0.7] : [0.25, 0.4, 0.55];
     var maint = tdee(s, s.w0), floor = s.sex === 'm' ? 1500 : 1200;
     var cap = Math.max(100, Math.min(maint * 0.3, maint - floor));
-    var names = ['Gentle', 'Balanced ★', 'Faster'];
+    var names = L.chipNames;
     var def = bands.map(function (pct, i) {
       var d = round25(clamp(s.w0 * pct / 100 * KCAL_PER_KG / 7, 100, cap));
-      return { t: names[i], v: d, p: '≈ ' + wt(d * 7 / KCAL_PER_KG) + '/wk' };
+      return { t: names[i], v: d, p: '≈ ' + wt(d * 7 / KCAL_PER_KG) + L.perWk };
     });
-    var rng = [[0.05, 'Very', 'Weigh & log daily'], [0.10, 'Mostly', 'Some weekend slips'], [0.15, 'On and off', 'Rough estimates']].map(function (x, i) {
+    var rng = [[0.05].concat(L.rng[0]), [0.10].concat(L.rng[1]), [0.15].concat(L.rng[2])].map(function (x, i) {
       return { t: x[1], v: round25(maint * x[0]), p: x[2], rec: i === 1 };
     });
     def[1].rec = true;
@@ -1015,32 +1047,33 @@ header.topbar { flex-direction: row; align-items: center; justify-content: space
     var sg = suggestions(s);
     $('sug-def').innerHTML = sg.def.map(function (c) {
       return '<button type="button" class="chip' + (c.rec ? ' rec' : '') + '" data-v="' + c.v + '" aria-pressed="' + (Math.abs(s.deficit - c.v) < 0.5) + '">' +
-        '<span class="t">' + c.t + '</span><span class="n">' + c.p.replace('≈ ', '') + '</span><span class="p">−' + nf0.format(c.v) + ' kcal a day</span></button>';
+        '<span class="t">' + c.t + '</span><span class="n">' + c.p.replace('≈ ', '') + '</span><span class="p">−' + nf0.format(c.v) + L.kcalADay + '</span></button>';
     }).join('');
     $('sug-rng').innerHTML = chipsHTML(sg.rng, s.spread, '±');
-    $('sug-def-note').textContent = 'Balanced suits most people';
+    $('sug-def-note').textContent = L.balancedNote;
   }
 
   // ---- Meal plan ----
   var subState = null;
   var M = globalThis.FITME_MEALS;
   var DB = M.DB, RECIPES = M.RECIPES, DAY_NAMES = M.DAY_NAMES, frac = M.frac, buildDay = M.buildDay;
-  var DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  function amountText(l) { return M.amountText(l, imp()); }
+  var DAYS = L.daysShort;
+  if (LANG === 'pt') DAY_NAMES = globalThis.FITME_MEALS_PT.days;
+  function amountText(l) { return M.amountText(l, imp(), LANG); }
   function esc(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
   function renderMeals(s, T) {
     var day = clamp(state.day | 0, 0, 6);
     $('days').innerHTML = DAYS.map(function (d, i) { return '<button type="button" data-d="' + i + '" aria-pressed="' + (i === day) + '" aria-label="' + DAY_NAMES[i] + '">' + d + '</button>'; }).join('');
     var protTarget = M.proteinTarget(s.goal);
-    $('meals-sub').innerHTML = 'Four high-protein meals a day, with portions scaled to your starting intake of <strong>' + kcal(T) + '</strong>. ' +
-      'Protein goal: about ' + protTarget + ' g a day (' + M.PROTEIN_PER_KG + ' g per kg of goal weight).';
-    var meals = buildDay(day, T, protTarget);
+    $('meals-sub').innerHTML = L.mealsSub(kcal(T)) +
+      L.protGoal(protTarget, nf1.format(M.PROTEIN_PER_KG));
+    var meals = buildDay(day, T, protTarget, LANG);
     var tot = M.dayTotals(meals);
     $('daytot').innerHTML =
-      '<div><span class="k">' + DAY_NAMES[day] + ' total</span><span class="v">' + kcal(tot.k) + ' <small>/ ' + nf0.format(Math.round(T / 10) * 10) + '</small></span></div>' +
-      '<div><span class="k">Protein</span><span class="v">' + Math.round(tot.p) + ' g <small>/ ' + protTarget + ' g</small></span></div>' +
-      '<div><span class="k">Carbs</span><span class="v">' + Math.round(tot.c) + ' g</span></div>' +
-      '<div><span class="k">Fat</span><span class="v">' + Math.round(tot.f) + ' g</span></div>';
+      '<div><span class="k">' + L.dayTotal(DAY_NAMES[day]) + '</span><span class="v">' + kcal(tot.k) + ' <small>/ ' + nf0.format(Math.round(T / 10) * 10) + '</small></span></div>' +
+      '<div><span class="k">' + L.protein + '</span><span class="v">' + Math.round(tot.p) + ' g <small>/ ' + protTarget + ' g</small></span></div>' +
+      '<div><span class="k">' + L.carbs + '</span><span class="v">' + Math.round(tot.c) + ' g</span></div>' +
+      '<div><span class="k">' + L.fat + '</span><span class="v">' + Math.round(tot.f) + ' g</span></div>';
     $('meal-grid').innerHTML = meals.map(function (m) {
       var ing = m.lines.map(function (l) {
         if (l[0] === '~') return '<li class="x"><span class="q"></span><span>' + esc(l[1]) + '</span></li>';
@@ -1050,17 +1083,17 @@ header.topbar { flex-direction: row; align-items: center; justify-content: space
       var steps = m.rec.steps.map(function (st) { return '<li>' + esc(st) + '</li>'; }).join('');
       return '<article class="meal"><div class="meal-top"><span class="slot">' + m.slot.label + '</span><span class="time">' + m.rec.time + '</span></div>' +
         '<h3>' + esc(m.rec.name) + '</h3>' +
-        '<div class="macros"><span class="kc">' + kcal(m.n.k) + '</span><span>P ' + Math.round(m.n.p) + ' g</span><span>C ' + Math.round(m.n.c) + ' g</span><span>F ' + Math.round(m.n.f) + ' g</span></div>' +
-        '<div><h4>Ingredients · 1 serving</h4><ul class="ing">' + ing + '</ul></div>' +
-        '<div><h4>Method</h4><ol>' + steps + '</ol></div></article>';
+        '<div class="macros"><span class="kc">' + kcal(m.n.k) + '</span><span>' + L.macro[0] + ' ' + Math.round(m.n.p) + ' g</span><span>' + L.macro[1] + ' ' + Math.round(m.n.c) + ' g</span><span>' + L.macro[2] + ' ' + Math.round(m.n.f) + ' g</span></div>' +
+        '<div><h4>' + L.ingredients + '</h4><ul class="ing">' + ing + '</ul></div>' +
+        '<div><h4>' + L.method + '</h4><ol>' + steps + '</ol></div></article>';
     }).join('');
     renderShop(T, protTarget);
-    subState = { intake: Math.round(T), prot: protTarget, units: state.units };
-    document.querySelectorAll('.sub-kcal').forEach(function (el) { el.textContent = kcal(T) + ' a day'; });
+    subState = { intake: Math.round(T), prot: protTarget, units: state.units, lang: LANG };
+    document.querySelectorAll('.sub-kcal').forEach(function (el) { el.textContent = kcal(T) + L.aDay; });
   }
   function renderShop(T, P) {
     var totals = {}, extras = {};
-    for (var i = 0; i < 7; i++) buildDay(i, T, P).forEach(function (m) {
+    for (var i = 0; i < 7; i++) buildDay(i, T, P, LANG).forEach(function (m) {
       m.lines.forEach(function (l) {
         if (l[0] === '~') { extras[l[1]] = 1; return; }
         var t = totals[l[0]] || (totals[l[0]] = { g: 0, pc: 0, tsp: 0, ml: 0 });
@@ -1079,19 +1112,19 @@ header.topbar { flex-direction: row; align-items: center; justify-content: space
       if (t.pc) {
         var n = (d[5] === 'Fruit & veg' || k === 'egg') ? Math.ceil(t.pc - 1e-9) : Math.ceil(t.pc * 2) / 2;
         var unit = '';
-        if (k === 'bread') unit = n === 1 ? ' slice' : ' slices';
-        if (k === 'garlic') unit = n === 1 ? ' clove' : ' cloves';
+        if (k === 'bread') unit = ' ' + (n === 1 ? L.slice[0] : L.slice[1]);
+        if (k === 'garlic') unit = ' ' + (n === 1 ? L.clove[0] : L.clove[1]);
         parts.push(frac(n) + unit);
       }
       if (t.g) parts.push(imp() ? (Math.ceil(t.g / 28.35 * 2) / 2) + ' oz' : big(t.g, 'g', 'kg'));
       if (t.ml) parts.push(imp() ? (Math.ceil(t.ml / 29.57 * 2) / 2) + ' fl oz' : big(t.ml, 'ml', 'l'));
-      if (t.tsp) parts.push(t.tsp >= 3 ? frac(Math.ceil(t.tsp / 3 * 2) / 2) + ' tbsp' : frac(t.tsp) + ' tsp');
-      (groups[d[5]] || (groups[d[5]] = [])).push({ n: d[0], q: parts.join(' + ') });
+      if (t.tsp) parts.push(t.tsp >= 3 ? frac(Math.ceil(t.tsp / 3 * 2) / 2) + ' ' + L.tbsp : frac(t.tsp) + ' ' + L.tsp);
+      (groups[d[5]] || (groups[d[5]] = [])).push({ n: M.ingName(k, LANG), q: parts.join(' + ') });
     });
     var order = ['Fruit & veg', 'Meat & fish', 'Dairy & eggs', 'Grains & bread', 'Pantry'];
     var html = order.filter(function (g) { return groups[g]; }).map(function (g) {
-      groups[g].sort(function (a, b) { return a.n.localeCompare(b.n); });
-      return '<div><h4>' + g + '</h4><ul>' + groups[g].map(function (it) { return '<li><span>' + esc(it.n) + '</span><span class="q">' + esc(it.q) + '</span></li>'; }).join('') + '</ul></div>';
+      groups[g].sort(function (a, b) { return a.n.localeCompare(b.n, L.locale); });
+      return '<div><h4>' + (LANG === 'pt' ? globalThis.FITME_MEALS_PT.aisles[g] : g) + '</h4><ul>' + groups[g].map(function (it) { return '<li><span>' + esc(it.n) + '</span><span class="q">' + esc(it.q) + '</span></li>'; }).join('') + '</ul></div>';
     }).join('');
     var seen = {}, exList = [];
     Object.keys(extras).forEach(function (e) {
@@ -1104,10 +1137,10 @@ header.topbar { flex-direction: row; align-items: center; justify-content: space
       });
     });
     exList.sort();
-    var ex = exList.join(', ');
-    html += '<div><h4>Herbs, spices & extras</h4><ul><li><span style="color:var(--muted);font-size:13px">' + esc(ex) + '</span></li></ul></div>';
+    var ex = LANG === 'pt' ? globalThis.FITME_MEALS_PT.shopExtras : exList.join(', ');
+    html += '<div><h4>' + L.extrasHead + '</h4><ul><li><span style="color:var(--muted);font-size:13px">' + esc(ex) + '</span></li></ul></div>';
     $('shop-body').innerHTML = html;
-    $('shop-note').textContent = '· 1 person, 7 days';
+    $('shop-note').textContent = L.shopNote;
   }
 
   function save() { try { localStorage.setItem('deficit-horizon', JSON.stringify(state)); } catch (e) {} }
@@ -1125,13 +1158,7 @@ header.topbar { flex-direction: row; align-items: center; justify-content: space
   $('sug-rng').addEventListener('click', function (e) { var b = e.target.closest('.chip'); if (b) { $('spread').value = b.dataset.v; render(); } });
 
   // ---- Daily email sign-up ----
-  var MSG = {
-    invalid_email: 'Please enter a valid email address.',
-    consent_required: 'Please tick the box to agree to the daily email.',
-    invalid_intake: 'Your daily intake looks off. Check your details above.',
-    not_configured: 'Email sign-up opens soon. Please check back in a few days.',
-    send_failed: 'We couldn’t send the confirmation email. Please try again in a moment.'
-  };
+  var MSG = L.msg;
   document.querySelectorAll('.sub-form').forEach(function (form) {
     var q = function (c) { return form.querySelector(c); };
     function subMsg(text, kind) { var el = q('.sub-msg'); el.textContent = text; el.className = 'sub-msg' + (kind ? ' ' + kind : ''); }
@@ -1142,15 +1169,15 @@ header.topbar { flex-direction: row; align-items: center; justify-content: space
       if (!q('.sub-consent').checked) { subMsg(MSG.consent_required, 'err'); return; }
       var tz = 'Europe/Lisbon';
       try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || tz; } catch (err) {}
-      var payload = { email: email, consent: true, website: q('.sub-web').value, tz: tz, intake: subState ? subState.intake : 0, prot: subState ? subState.prot : 0, units: state.units };
-      q('.sub-btn').disabled = true; subMsg('Sending…');
+      var payload = { email: email, consent: true, website: q('.sub-web').value, tz: tz, intake: subState ? subState.intake : 0, prot: subState ? subState.prot : 0, units: state.units, lang: LANG };
+      q('.sub-btn').disabled = true; subMsg(MSG.sending);
       fetch('/api/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
         .then(function (res) { return res.json().catch(function () { return { ok: false, error: res.status === 429 ? 'rate' : 'unknown' }; }); })
         .then(function (data) {
-          if (data && data.ok) { subMsg('Almost done: check your inbox and tap the link to confirm.', 'ok'); form.reset(); }
-          else subMsg(data && data.error === 'rate' ? 'Too many tries. Please wait a minute and try again.' : (MSG[data && data.error] || 'Something went wrong. Please try again.'), 'err');
+          if (data && data.ok) { subMsg(MSG.ok, 'ok'); form.reset(); }
+          else subMsg(data && data.error === 'rate' ? MSG.rate : (MSG[data && data.error] || MSG.error), 'err');
         })
-        .catch(function () { subMsg('Sign-up works on the live FitMe site (fitmeplan.com). It isn’t available in this preview.', 'err'); })
+        .catch(function () { subMsg(MSG.preview, 'err'); })
         .then(function () { q('.sub-btn').disabled = false; });
     });
   });
@@ -1192,7 +1219,7 @@ header.topbar { flex-direction: row; align-items: center; justify-content: space
     var h = (location.hash || '').slice(1);
     var b = $('sub-banner');
     if (h === 'subscribed' || h === 'unsubscribed') {
-      b.textContent = h === 'subscribed' ? 'You’re subscribed. Your first meal plan arrives tomorrow at 7:00.' : 'You’ve been unsubscribed and your details deleted.';
+      b.textContent = h === 'subscribed' ? L.subscribed : L.unsubscribed;
       b.hidden = false;
       history.replaceState(null, '', state.done ? '#meals' : '#start');
       return showStep(state.done ? 'meals' : 'start');

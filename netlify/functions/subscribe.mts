@@ -22,6 +22,7 @@ export default async (req: Request, context: Context) => {
     intake,
     prot: prot >= 40 && prot <= 400 ? prot : Math.round(intake * 0.3 / 4),
     units: input?.units === "imperial" ? "imperial" as const : "metric" as const,
+    lang: input?.lang === "pt" ? "pt" as const : "en" as const,
   };
 
   const cfg = mailConfig();
@@ -61,8 +62,8 @@ export default async (req: Request, context: Context) => {
   await store.set(unsKey(record.unsubToken), hash);
 
   const siteUrl = context.site.url || new URL(req.url).origin;
-  const confirmUrl = `${siteUrl}/api/confirm?t=${confirmToken}`;
-  const mail = renderConfirmEmail(siteUrl, confirmUrl, isUpdate);
+  const confirmUrl = `${siteUrl}/api/confirm?t=${confirmToken}${settings.lang === "pt" ? "&l=pt" : ""}`;
+  const mail = renderConfirmEmail(siteUrl, confirmUrl, isUpdate, settings.lang);
   try {
     await sendMail(cfg, { to: email, ...mail, tag: "confirm" });
   } catch (err) {

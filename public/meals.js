@@ -190,15 +190,20 @@ function scaleLine(l, f) {
   else q = q < 20 ? Math.max(1, Math.round(q)) : Math.round(q / 5) * 5;
   return [l[0], q, u];
 }
-function amountText(l, imperial) {
-  var d = DB[l[0]], q = l[1], u = l[2];
-  if (u === 'pc') { var lab = (d[7] || '|').split('|'); return { q: frac(q), n: q > 1 ? lab[1] : lab[0] }; }
-  if (u === 'tsp' || u === 'tbsp') return { q: frac(q) + ' ' + u, n: d[0].toLowerCase() };
+function ptData(lang) { return lang === 'pt' && globalThis.FITME_MEALS_PT ? globalThis.FITME_MEALS_PT : null; }
+function ingName(key, lang) { var pt = ptData(lang); return pt && pt.db[key] ? pt.db[key][0] : DB[key][0]; }
+function pieceLabels(key, lang) { var pt = ptData(lang); return ((pt && pt.db[key] && pt.db[key][1]) || DB[key][7] || '|').split('|'); }
+function amountText(l, imperial, lang) {
+  var q = l[1], u = l[2], pt = ptData(lang);
+  var loc = pt ? 'pt-PT' : 'en', dec = function (v) { return v.toLocaleString(loc); };
+  var name = ingName(l[0], lang).toLowerCase();
+  if (u === 'pc') { var lab = pieceLabels(l[0], lang); return { q: frac(q), n: q > 1 ? lab[1] : lab[0] }; }
+  if (u === 'tsp' || u === 'tbsp') return { q: frac(q) + ' ' + (pt ? pt.units[u] : u), n: name };
   if (imperial) {
-    if (u === 'ml') return { q: (Math.round(q / 29.57 * 4) / 4) + ' fl oz', n: d[0].toLowerCase() };
-    return { q: (q < 15 ? Math.round(q / 28.35 * 8) / 8 : Math.round(q / 28.35 * 4) / 4) + ' oz', n: d[0].toLowerCase() };
+    if (u === 'ml') return { q: dec(Math.round(q / 29.57 * 4) / 4) + ' fl oz', n: name };
+    return { q: dec(q < 15 ? Math.round(q / 28.35 * 8) / 8 : Math.round(q / 28.35 * 4) / 4) + ' oz', n: name };
   }
-  return { q: Math.round(q).toLocaleString('en') + ' ' + u, n: d[0].toLowerCase() };
+  return { q: dec(Math.round(q)) + ' ' + u, n: name };
 }
 function nutrition(lines) {
   var t = { k: 0, p: 0, c: 0, f: 0 };
@@ -216,7 +221,7 @@ function proteinTarget(goalKg) { return Math.round(PROTEIN_PER_KG * goalKg); }
 // Build a day's four meals for an intake of T kcal. If P (grams of protein) is given and the
 // calorie-scaled day falls short, protein-rich ingredients are scaled up and the rest scaled down
 // so the day keeps its calories and reaches P.
-function buildDay(i, T, P) {
+function buildDay(i, T, P, lang) {
   var meals = SLOTS.map(function (slot) {
     var rec = RECIPES[slot.key][i];
     var base = nutrition(rec.ing);
@@ -240,12 +245,20 @@ function buildDay(i, T, P) {
       b = mClamp((T - a * Kp) / Ko, 0.6, 1);
     }
   }
+  var pt = ptData(lang);
   return meals.map(function (m) {
     var lines = m.rec.ing.map(function (l) { return l[0] === '~' ? l : scaleLine(l, m.f * (isProteinRich(l[0]) ? a : b)); });
-    return { slot: m.slot, rec: m.rec, lines: lines, n: nutrition(lines) };
+    var out = { slot: m.slot, rec: m.rec, lines: lines, n: nutrition(lines) };
+    if (pt) {
+      var tr = pt.recipes[m.slot.key][i], xi = 0;
+      out.rec = { name: tr.name, time: tr.time, steps: tr.steps, ing: m.rec.ing };
+      out.slot = { key: m.slot.key, label: pt.slots[m.slot.key], share: m.slot.share };
+      out.lines = lines.map(function (l) { return l[0] === '~' ? ['~', tr.x[xi++] || l[1]] : l; });
+    }
+    return out;
   });
 }
 function dayTotals(meals) {
   return meals.reduce(function (a, m) { a.k += m.n.k; a.p += m.n.p; a.c += m.n.c; a.f += m.n.f; return a; }, { k: 0, p: 0, c: 0, f: 0 });
 }
-globalThis.FITME_MEALS = { DB: DB, RECIPES: RECIPES, SLOTS: SLOTS, DAY_NAMES: DAY_NAMES, lineGrams: lineGrams, frac: frac, scaleLine: scaleLine, amountText: amountText, nutrition: nutrition, buildDay: buildDay, dayTotals: dayTotals, proteinTarget: proteinTarget, PROTEIN_PER_KG: PROTEIN_PER_KG };
+globalThis.FITME_MEALS = { DB: DB, RECIPES: RECIPES, SLOTS: SLOTS, DAY_NAMES: DAY_NAMES, lineGrams: lineGrams, frac: frac, scaleLine: scaleLine, amountText: amountText, nutrition: nutrition, buildDay: buildDay, dayTotals: dayTotals, ingName: ingName, pieceLabels: pieceLabels, ptData: ptData, proteinTarget: proteinTarget, PROTEIN_PER_KG: PROTEIN_PER_KG };

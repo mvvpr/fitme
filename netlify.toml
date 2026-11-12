@@ -9,3 +9,14 @@
   [headers.values]
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
+
+# Portuguese site: /pt/ serves the same page (language is picked from the path); assets resolve to the root files.
+[[redirects]]
+  from = "/pt"
+  to = "/pt/"
+  status = 301
+
+[[redirects]]
+  from = "/pt/*"
+  to = "/:splat"
+  status = 200
