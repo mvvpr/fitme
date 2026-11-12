@@ -319,52 +319,148 @@ tbody tr.goal td { font-weight: 500; color: var(--accent); }
 .hdr-links { margin-top: 6px; font-size: 13.5px; }
 .hdr-links a { color: var(--accent); font-weight: 600; text-decoration: none; }
 .hdr-links a:hover { text-decoration: underline; }
+/* ---- Staged journey ---- */
+header.topbar { flex-direction: row; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
+.topbar .brand { text-decoration: none; color: var(--ink); margin: 0; }
+.wordmark { font-family: var(--font-display); font-weight: 700; font-size: 26px; letter-spacing: -0.02em; }
+.wordmark span { color: var(--accent); }
+.progress ol { display: flex; gap: 4px; list-style: none; margin: 0; padding: 0; }
+.progress a { display: flex; align-items: center; gap: 7px; padding: 6px 10px 6px 6px; border-radius: 999px; text-decoration: none; color: var(--muted); font-size: 13.5px; font-weight: 500; }
+.progress .num { width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 12.5px; font-weight: 600; border: 1.5px solid var(--line); background: var(--surface); }
+.progress a.done .num { background: var(--lost); border-color: var(--lost); color: #1e1c1a; }
+.progress a.current { color: var(--ink); background: var(--surface); box-shadow: 0 0 0 1px var(--line); }
+.progress a.current .num { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.progress a.locked { pointer-events: none; opacity: 0.55; }
+.progress a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 640px) { .progress .lab { display: none; } .progress a.current .lab { display: inline; } .progress a { padding: 4px; } .progress a.current { padding-right: 10px; } }
+.step.narrow { max-width: 620px; margin: 0 auto; }
+.step { display: flex; flex-direction: column; gap: 18px; }
+.step[hidden] { display: none !important; }
+.step-panel { display: flex; flex-direction: column; gap: 14px; padding: 22px; }
+.step-title { font-family: var(--font-display); font-size: 24px; font-weight: 700; letter-spacing: -0.02em; margin: 0; text-transform: none; color: var(--ink); }
+.step-title:focus, #h-meals:focus, #h-plan:focus { outline: none; }
+.step-intro { margin: -4px 0 0; color: var(--muted); font-size: 14px; }
+.welcome { padding: 6vh 0 4vh; text-align: left; gap: 16px; }
+.welcome h1 { font-size: clamp(30px, 5.4vw, 46px); line-height: 1.08; letter-spacing: -0.03em; }
+.welcome .lede { margin: 0; font-size: 17px; color: var(--muted); max-width: 54ch; }
+.perks { list-style: none; margin: 4px 0 6px; padding: 0; display: grid; gap: 8px; }
+.perks li { display: flex; gap: 10px; align-items: baseline; font-size: 15.5px; color: var(--muted); }
+.perks li::before { content: ''; flex: none; width: 9px; height: 9px; border-radius: 50%; background: var(--lost); transform: translateY(-1px); }
+.perks b { color: var(--ink); font-weight: 600; }
+.hint { margin: 0; font-size: 13px; color: var(--muted); }
+.btn { font: inherit; font-weight: 600; font-size: 15px; border-radius: 8px; padding: 12px 22px; cursor: pointer; border: 1px solid transparent; }
+.btn.primary { background: var(--accent); color: var(--accent-ink); }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+.btn.ghost:hover { background: var(--surface); }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.big-btn { align-self: flex-start; font-size: 17px; padding: 14px 34px; }
+.step-nav { display: flex; justify-content: space-between; gap: 10px; }
+.step-nav .btn.primary { margin-left: auto; min-width: 150px; }
+@media (max-width: 640px) {
+  .step-nav { position: sticky; bottom: 0; z-index: 5; background: var(--bg); padding: 10px 0 calc(10px + env(safe-area-inset-bottom, 0px)); margin-top: -6px; }
+  .step-nav .btn.primary { flex: 1; }
+  .big-btn { align-self: stretch; }
+}
+.chips.big .chip { padding: 12px 12px; gap: 3px; }
+.chips.big .chip .t { font-size: 13px; }
+.chips.big .chip .n { font-size: 15px; }
+.chips.big .chip .t { white-space: normal; }
+@media (max-width: 640px) {
+  .chips.big { grid-template-columns: minmax(0, 1fr); }
+  .chips.big .chip { display: grid; grid-template-columns: 1fr auto; grid-template-areas: "t n" "p n"; align-items: center; column-gap: 12px; padding: 12px 14px; }
+  .chips.big .chip .t { grid-area: t; font-size: 14px; }
+  .chips.big .chip .n { grid-area: n; font-size: 17px; }
+  .chips.big .chip .p { grid-area: p; }
+}
+.field-err { grid-column: 1 / -1; font-size: 13px; color: var(--range); font-weight: 500; margin-top: -6px; }
+.advanced { border-top: 1px solid var(--line); padding-top: 12px; }
+.advanced summary { cursor: pointer; font-size: 14px; font-weight: 600; color: var(--accent); }
+.advanced[open] summary { margin-bottom: 14px; }
+.adv-fields { margin-bottom: 12px; }
+.summary { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: 13.5px; color: var(--muted); }
+.summary .chip-s { background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; color: var(--ink); }
+.summary a { color: var(--accent); font-weight: 600; text-decoration: none; }
+.summary a:hover { text-decoration: underline; }
+.plan-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 320px); gap: 20px; align-items: start; }
+@media (max-width: 900px) { .plan-grid { grid-template-columns: minmax(0, 1fr); } }
+.plan-main { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.plan-side { position: sticky; top: 16px; }
+@media (max-width: 900px) { .plan-side { position: static; } }
+.plan-side .sub-box { margin-top: 0; grid-template-columns: minmax(0, 1fr); }
+.today { display: flex; flex-wrap: wrap; gap: 10px; }
+.today > div { background: var(--field); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; display: flex; flex-direction: column; flex: 1 1 130px; max-width: 260px; }
+@media (max-width: 640px) { .today .v { font-size: 21px; } }
+.today .k { font-size: 12.5px; color: var(--muted); }
+.today .v { font-family: var(--font-display); font-weight: 700; font-size: 24px; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.how { padding: 0; }
+.how summary { cursor: pointer; padding: 16px 18px; font-weight: 600; font-size: 14.5px; }
+.how-body { padding: 0 18px 18px; display: flex; flex-direction: column; gap: 14px; }
+.sub-h { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 4px 0 8px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .foot { font-size: 12.5px; color: var(--muted); margin: 0; max-width: 84ch; }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <header>
-    <div class="brand"><svg class="mark" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16" fill="var(--accent)"/><path d="M13 19 C22 19 24 41 33 41 L51 21" fill="none" stroke="var(--mark-line)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="13" cy="19" r="3.5" fill="#f0eee9"/></svg><h1>Fit<span>Me</span></h1></div>
-    <p>Enter your details and a daily calorie deficit to see when you could reach your goal weight. The figures start from example values, so replace them with your own.</p>
-    <div class="hdr-links"><a href="#meal-plan">Your weekly meal plan ↓</a></div>
+  <header class="topbar">
+    <a class="brand" href="#start" aria-label="FitMe home"><svg class="mark" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16" fill="var(--accent)"/><path d="M13 19 C22 19 24 41 33 41 L51 21" fill="none" stroke="var(--mark-line)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="13" cy="19" r="3.5" fill="#f0eee9"/></svg><span class="wordmark">Fit<span>Me</span></span></a>
+    <nav class="progress" id="progress" aria-label="Steps" hidden>
+      <ol>
+        <li><a href="#about" data-step="about"><span class="num">1</span><span class="lab">About you</span></a></li>
+        <li><a href="#goal" data-step="goal"><span class="num">2</span><span class="lab">Your goal</span></a></li>
+        <li><a href="#plan" data-step="plan"><span class="num">3</span><span class="lab">Your plan</span></a></li>
+        <li><a href="#meals" data-step="meals"><span class="num">4</span><span class="lab">Your meals</span></a></li>
+      </ol>
+    </nav>
   </header>
 
-  <div class="app">
-    <aside class="rail">
-      <section class="panel" aria-labelledby="h-you" style="display:flex;flex-direction:column;gap:14px">
-        <div class="rail-head">
-          <h2 id="h-you">About you</h2>
-          <div class="seg sm" role="group" aria-label="Units">
-            <button type="button" id="u-met" aria-pressed="true">Metric</button>
-            <button type="button" id="u-imp" aria-pressed="false">Imperial</button>
-          </div>
+  <!-- Step 0: Welcome -->
+  <section class="step narrow welcome" id="step-start" data-step="start" aria-labelledby="h-welcome">
+    <h1 id="h-welcome">Find out when you'll reach your goal, and what to eat to get there.</h1>
+    <p class="lede">Answer a few questions about you and your goal. FitMe works out your daily calories and protein, shows when you'll get there, and builds a weekly meal plan with a shopping list.</p>
+    <ul class="perks">
+      <li><span><b>Your goal date</b> with a realistic range</span></li>
+      <li><span><b>Daily calories and protein</b> sized to your body</span></li>
+      <li><span><b>A 7-day meal plan</b> with recipes and a shopping list</span></li>
+    </ul>
+    <button type="button" class="btn primary big-btn" data-go="about">Start</button>
+    <p class="hint">3 quick steps · about 1 minute · free, no sign-up</p>
+  </section>
+
+  <!-- Step 1: About you -->
+  <section class="step narrow" id="step-about" data-step="about" aria-labelledby="h-you" hidden>
+    <div class="panel step-panel">
+      <div class="rail-head">
+        <h2 class="step-title" id="h-you" tabindex="-1">About you</h2>
+        <div class="seg sm" role="group" aria-label="Units">
+          <button type="button" id="u-met" aria-pressed="true">Metric</button>
+          <button type="button" id="u-imp" aria-pressed="false">Imperial</button>
         </div>
-        <div class="fields">
-          <label class="field"><span class="lbl">Sex</span>
-            <span class="box"><select id="sex">
-              <option value="f">Female</option>
-              <option value="m">Male</option>
-            </select></span>
-          </label>
-          <label class="field"><span class="lbl">Age</span>
-            <span class="box"><input id="age" type="number" inputmode="numeric" min="18" max="90" step="1"><span class="unit">yrs</span></span>
-          </label>
-          <div class="field wide">
-            <span class="lbl" id="l-height">Height</span>
-            <span class="box" id="h-met"><input id="hcm" type="number" inputmode="decimal" min="120" max="230" step="1" aria-labelledby="l-height"><span class="unit">cm</span></span>
-            <span class="pair" id="h-imp" hidden>
-              <span class="box"><input id="hft" type="number" inputmode="numeric" min="3" max="7" step="1" aria-label="Height, feet"><span class="unit">ft</span></span>
-              <span class="box"><input id="hin" type="number" inputmode="decimal" min="0" max="11.9" step="1" aria-label="Height, inches"><span class="unit">in</span></span>
-            </span>
-          </div>
-          <label class="field"><span class="lbl">Current weight</span>
-            <span class="box"><input id="w0" type="number" inputmode="decimal" step="0.1"><span class="unit" data-wu>kg</span></span>
-          </label>
-          <label class="field"><span class="lbl">Goal weight</span>
-            <span class="box"><input id="goal" type="number" inputmode="decimal" step="0.1"><span class="unit" data-wu>kg</span></span>
-          </label>
-          <div class="field wide has-pop"><div class="lbl-row"><label class="lbl" for="act">Activity level</label><button type="button" class="info-btn" id="act-info" aria-expanded="false" aria-controls="act-pop" aria-label="What do the activity levels mean?">i</button></div>
+      </div>
+      <p class="step-intro">We use these to estimate how many calories your body burns.</p>
+      <div class="fields">
+        <label class="field"><span class="lbl">Sex</span>
+          <span class="box"><select id="sex">
+            <option value="f">Female</option>
+            <option value="m">Male</option>
+          </select></span>
+        </label>
+        <label class="field"><span class="lbl">Age</span>
+          <span class="box"><input id="age" type="number" inputmode="numeric" min="18" max="90" step="1"><span class="unit">yrs</span></span>
+        </label>
+        <div class="field wide">
+          <span class="lbl" id="l-height">Height</span>
+          <span class="box" id="h-met"><input id="hcm" type="number" inputmode="decimal" min="120" max="230" step="1" aria-labelledby="l-height"><span class="unit">cm</span></span>
+          <span class="pair" id="h-imp" hidden>
+            <span class="box"><input id="hft" type="number" inputmode="numeric" min="3" max="7" step="1" aria-label="Height, feet"><span class="unit">ft</span></span>
+            <span class="box"><input id="hin" type="number" inputmode="decimal" min="0" max="11.9" step="1" aria-label="Height, inches"><span class="unit">in</span></span>
+          </span>
+        </div>
+        <label class="field wide"><span class="lbl">Current weight</span>
+          <span class="box"><input id="w0" type="number" inputmode="decimal" step="0.1"><span class="unit" data-wu>kg</span></span>
+        </label>
+        <div class="field wide has-pop"><div class="lbl-row"><label class="lbl" for="act">Activity level</label><button type="button" class="info-btn" id="act-info" aria-expanded="false" aria-controls="act-pop" aria-label="What do the activity levels mean?">i</button></div>
             <div class="pop" id="act-pop" role="dialog" aria-label="Activity levels explained" hidden>
               <button type="button" class="pop-close" id="act-pop-close" aria-label="Close">×</button>
               <h4>Choosing your activity level</h4>
@@ -386,10 +482,31 @@ tbody tr.goal td { font-weight: 500; color: var(--accent); }
               <option value="1.9">Athlete (physical job + training)</option>
             </select></span>
           </div>
+      </div>
+    </div>
+    <div class="step-nav">
+      <button type="button" class="btn ghost" data-go="start">Back</button>
+      <button type="button" class="btn primary" data-go="goal">Next</button>
+    </div>
+  </section>
+
+  <!-- Step 2: Your goal -->
+  <section class="step narrow" id="step-goal" data-step="goal" aria-labelledby="h-goal" hidden>
+    <div class="panel step-panel">
+      <h2 class="step-title" id="h-goal" tabindex="-1">Your goal</h2>
+      <div class="fields">
+        <label class="field wide"><span class="lbl">Goal weight</span>
+          <span class="box"><input id="goal-w" type="number" inputmode="decimal" step="0.1"><span class="unit" data-wu>kg</span></span>
+        </label>
+        <div class="field-err" id="goal-err" role="alert" hidden>Your goal weight needs to be below your current weight.</div>
+        <div class="field wide sugg">
+          <div class="sugg-head"><span class="lbl">Choose your pace</span><span id="sug-def-note"></span></div>
+          <div class="chips big" id="sug-def" role="group" aria-label="Pace"></div>
         </div>
-        <hr class="divider">
-        <h2>Your plan</h2>
-        <div class="fields">
+      </div>
+      <details class="advanced">
+        <summary>Advanced settings</summary>
+        <div class="fields adv-fields">
           <label class="field"><span class="lbl">Daily deficit</span>
             <span class="box"><input id="deficit" type="number" inputmode="numeric" min="0" max="1500" step="25"><span class="unit">kcal</span></span>
           </label>
@@ -397,115 +514,150 @@ tbody tr.goal td { font-weight: 500; color: var(--accent); }
             <span class="box"><input id="spread" type="number" inputmode="numeric" min="0" max="500" step="25"><span class="unit">± kcal</span></span>
           </label>
           <div class="field wide sugg">
-            <div class="sugg-head"><span>Suggested deficit</span><span id="sug-def-note"></span></div>
-            <div class="chips" id="sug-def" role="group" aria-label="Suggested daily deficit"></div>
-          </div>
-          <div class="field wide sugg">
             <div class="sugg-head"><span>How consistent will you be?</span><span>sets the range</span></div>
             <div class="chips" id="sug-rng" role="group" aria-label="Suggested deficit range"></div>
           </div>
           <label class="field wide"><span class="lbl">Start date</span>
-            <span class="box"><input id="start" type="date"></span>
+            <span class="box"><input id="start-date" type="date"></span>
           </label>
         </div>
-        <p class="note">Basal calories (BMR) are what your body burns at complete rest, estimated from sex, age, height and weight with the Mifflin-St Jeor equation. Maintenance is BMR times your activity level. The range shows outcomes if your real daily deficit lands that many calories above or below your plan. Suggested deficits aim for a weekly loss of a share of body weight that eases with age (to protect muscle), capped at 30% of maintenance and above the minimum intake.</p>
-      </section>
-    </aside>
+        <p class="note">The pace sets your daily calorie deficit: how far below maintenance you eat. Paces ease with age to protect muscle, and never go above 30% of maintenance or below the minimum intake. The range shows how your goal date shifts if your real deficit lands that many calories above or below plan.</p>
+      </details>
+    </div>
+    <div class="step-nav">
+      <button type="button" class="btn ghost" data-go="about">Back</button>
+      <button type="button" class="btn primary" data-go="plan" id="to-plan">See my plan</button>
+    </div>
+  </section>
 
-    <main class="results">
-      <section class="panel lead" aria-live="polite">
-        <div class="lead-top">
-          <div>
-            <div class="eyebrow" id="eyebrow">Goal reached</div>
-            <div class="big" id="big">–</div>
+  <!-- Step 3: Your plan -->
+  <section class="step" id="step-plan" data-step="plan" aria-labelledby="h-plan" hidden>
+    <div class="summary" id="summary"></div>
+    <div class="plan-grid">
+      <div class="plan-main">
+        <section class="panel lead" aria-live="polite">
+          <h2 class="sr-only" id="h-plan" tabindex="-1">Your plan</h2>
+          <div class="eyebrow" id="eyebrow">Goal reached</div>
+          <div class="big" id="big">–</div>
+          <div class="today">
+            <div><span class="k">Eat about</span><span class="v" id="plan-kcal">–</span></div>
+            <div><span class="k">Protein</span><span class="v" id="plan-prot">–</span></div>
           </div>
-          <div class="seg" role="group" aria-label="How intake changes">
-            <button type="button" id="m-int" aria-pressed="true">Same intake</button>
-            <button type="button" id="m-def" aria-pressed="false">Same deficit</button>
+          <p class="sub" id="sub"></p>
+          <div class="warn" id="warn" hidden><ul id="warn-list"></ul></div>
+          <div class="stats">
+            <div class="stat"><span class="k">To lose</span><span class="v" id="s-lose"></span></div>
+            <div class="stat"><span class="k">Average per week</span><span class="v" id="s-rate"></span></div>
+            <div class="stat"><span class="k">BMI now → goal</span><span class="v" id="s-bmi"></span></div>
+            <div class="stat"><span class="k">Basal kcal → at goal</span><span class="v" id="s-maint"></span></div>
           </div>
-        </div>
-        <p class="sub" id="sub"></p>
-        <div class="energy" aria-label="Daily energy breakdown at your current weight">
-          <div class="cell bmr"><span class="k">Basal (BMR)</span><span class="v" id="e-bmr"></span><span class="d">Just staying alive</span></div>
-          <div class="cell"><span class="k">Activity &amp; digestion</span><span class="v"><span class="op">+</span><span id="e-act"></span></span><span class="d" id="e-actd"></span></div>
-          <div class="cell"><span class="k">Maintenance</span><span class="v"><span class="op">=</span><span id="e-maint"></span></span><span class="d">Weight stays the same</span></div>
-          <div class="cell"><span class="k">Your deficit</span><span class="v"><span class="op">−</span><span id="e-def"></span></span><span class="d">Planned shortfall</span></div>
-          <div class="cell"><span class="k">You eat</span><span class="v"><span class="op">=</span><span id="e-int"></span></span><span class="d">Starting intake</span></div>
-        </div>
-        <div class="warn" id="warn" hidden><ul id="warn-list"></ul></div>
-        <div class="stats">
-          <div class="stat"><span class="k">To lose</span><span class="v" id="s-lose"></span></div>
-          <div class="stat"><span class="k">Average per week</span><span class="v" id="s-rate"></span></div>
-          <div class="stat"><span class="k">BMI now → goal</span><span class="v" id="s-bmi"></span></div>
-          <div class="stat"><span class="k">Basal kcal → at goal</span><span class="v" id="s-maint"></span></div>
-        </div>
-      </section>
+        </section>
 
-      <section class="panel sec" aria-labelledby="h-chart">
-        <div class="ledger-head">
-          <h2 id="h-chart">Weight over time</h2>
-          <div class="legend">
-            <span><i class="sw b"></i>Body weight</span>
-            <span><i class="sw l"></i>Lost</span>
-            <span><i class="sw g"></i>Goal</span>
-            <span><i class="sw r"></i>Range</span>
-          </div>
-        </div>
-        <div class="chartwrap" id="chartwrap">
-          <svg id="chart" role="img" aria-label="Area chart of projected weight by week"></svg>
-          <div class="tip" id="tip" hidden></div>
-        </div>
-      </section>
-
-      <section class="panel ledger" aria-labelledby="h-ledger">
-        <div class="ledger-head">
-          <h2 id="h-ledger">Week by week</h2>
-          <span class="note" id="mode-note"></span>
-        </div>
-        <div class="tablewrap">
-          <table>
-            <thead><tr><th scope="col">Week</th><th scope="col">Date</th><th scope="col">Weight</th><th scope="col">Lost</th><th scope="col">Intake</th><th scope="col">Basal</th><th scope="col">Maintenance</th><th scope="col">BMI</th></tr></thead>
-            <tbody id="rows"></tbody>
-          </table>
-        </div>
-      </section>
-
-      <section class="panel" id="meal-plan" aria-labelledby="h-meals">
-        <div class="meals-head">
-          <div>
-            <h2 id="h-meals">Weekly meal plan</h2>
-            <p id="meals-sub"></p>
-          </div>
-          <div class="days" role="group" aria-label="Day of the week" id="days"></div>
-        </div>
-        <div class="banner" id="sub-banner" hidden></div>
-        <div class="daytot" id="daytot"></div>
-        <div class="meal-grid" id="meal-grid"></div>
-        <div class="sub-box" id="subscribe">
-          <div>
-            <h3>Get each day's plan by email</h3>
-            <p>Every morning at 7:00 your time: four meals with ingredients and method, sized to <strong id="sub-kcal">your calories</strong>.</p>
-          </div>
-          <form class="sub-form" id="sub-form" novalidate>
-            <div class="sub-row">
-              <label class="box"><input id="sub-email" type="email" autocomplete="email" placeholder="you@example.com" aria-label="Email address" required></label>
-              <button type="submit" id="sub-btn">Subscribe</button>
+        <section class="panel sec" aria-labelledby="h-chart">
+          <div class="ledger-head">
+            <h2 id="h-chart">Weight over time</h2>
+            <div class="legend">
+              <span><i class="sw b"></i>Body weight</span>
+              <span><i class="sw l"></i>Lost</span>
+              <span><i class="sw g"></i>Goal</span>
+              <span><i class="sw r"></i>Range</span>
             </div>
-            <label class="hp" aria-hidden="true">Website <input id="sub-web" tabindex="-1" autocomplete="off"></label>
-            <label class="consent"><input type="checkbox" id="sub-consent"> <span>I agree to receive a daily meal-plan email from FitMe. We store only your email, time zone and calorie settings to send it, and you can unsubscribe at any time.</span></label>
-            <div class="sub-msg" id="sub-msg" role="status" aria-live="polite"></div>
+          </div>
+          <div class="chartwrap" id="chartwrap">
+            <svg id="chart" role="img" aria-label="Area chart of projected weight by week"></svg>
+            <div class="tip" id="tip" hidden></div>
+          </div>
+        </section>
+
+        <details class="panel how">
+          <summary>How we calculated this</summary>
+          <div class="how-body">
+            <div class="energy" aria-label="Daily energy breakdown at your current weight">
+              <div class="cell bmr"><span class="k">Basal (BMR)</span><span class="v" id="e-bmr"></span><span class="d">Just staying alive</span></div>
+              <div class="cell"><span class="k">Activity &amp; digestion</span><span class="v"><span class="op">+</span><span id="e-act"></span></span><span class="d" id="e-actd"></span></div>
+              <div class="cell"><span class="k">Maintenance</span><span class="v"><span class="op">=</span><span id="e-maint"></span></span><span class="d">Weight stays the same</span></div>
+              <div class="cell"><span class="k">Your deficit</span><span class="v"><span class="op">−</span><span id="e-def"></span></span><span class="d">Planned shortfall</span></div>
+              <div class="cell"><span class="k">You eat</span><span class="v"><span class="op">=</span><span id="e-int"></span></span><span class="d">Daily intake</span></div>
+            </div>
+            <p class="note">Basal calories (BMR) are what your body burns at complete rest, estimated from your sex, age, height and weight with the Mifflin-St Jeor equation. Maintenance is BMR times your activity level. You eat the same calories every day, so weight loss slows gently as your body gets lighter and burns less.</p>
+            <div class="ledger">
+              <h3 class="sub-h">Week by week</h3>
+              <div class="tablewrap">
+                <table>
+                  <thead><tr><th scope="col">Week</th><th scope="col">Date</th><th scope="col">Weight</th><th scope="col">Lost</th><th scope="col">Intake</th><th scope="col">Basal</th><th scope="col">Maintenance</th><th scope="col">BMI</th></tr></thead>
+                  <tbody id="rows"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </details>
+      </div>
+      <aside class="plan-side">
+        <div class="sub-box">
+          <div>
+            <h3>Get each day's meals by email</h3>
+            <p>Every morning at 7:00 your time: four meals with ingredients and method, sized to <strong class="sub-kcal">your calories</strong>.</p>
+          </div>
+          <form class="sub-form" novalidate>
+            <div class="sub-row">
+              <label class="box"><input class="sub-email" type="email" autocomplete="email" placeholder="you@example.com" aria-label="Email address" required></label>
+              <button type="submit" class="sub-btn">Subscribe</button>
+            </div>
+            <label class="hp" aria-hidden="true">Website <input class="sub-web" tabindex="-1" autocomplete="off"></label>
+            <label class="consent"><input type="checkbox" class="sub-consent"> <span>I agree to receive a daily meal-plan email from FitMe. We store only your email, time zone and calorie settings to send it, and you can unsubscribe at any time.</span></label>
+            <div class="sub-msg" role="status" aria-live="polite"></div>
           </form>
         </div>
-        <details class="shop">
-          <summary>Shopping list for the week <span id="shop-note"></span></summary>
-          <div class="shop-body" id="shop-body"></div>
-        </details>
-      </section>
+      </aside>
+    </div>
+    <div class="step-nav">
+      <button type="button" class="btn ghost" data-go="goal">Back</button>
+      <button type="button" class="btn primary" data-go="meals">See my meal plan</button>
+    </div>
+    <p class="foot">This is an estimate built from the figures you entered, not medical advice. It assumes about 7,700 kcal per kg of body weight (3,500 per lb) and recalculates maintenance every day as your weight falls. Real loss is rarely a straight line: water, glycogen and metabolic adaptation make weekly numbers bounce around, and long-term loss is usually a little slower than this model shows. Once the goal is reached the projection switches to maintenance. For very low intakes or medical conditions, plan with a doctor or registered dietitian.</p>
+  </section>
 
-      <p class="foot">This is an estimate built from the figures you entered, not medical advice. It assumes about 7,700 kcal per kg of body weight (3,500 per lb) and recalculates maintenance every day as your weight falls. Real loss is rarely a straight line: water, glycogen and metabolic adaptation make weekly numbers bounce around, and long-term loss is usually a little slower than this model shows. Once the goal is reached the projection switches to maintenance. For very low intakes or medical conditions, plan with a doctor or registered dietitian. Meal plan nutrition is estimated from standard ingredient values; portions are rounded for real kitchens, so daily totals land near, not exactly on, your target. Check labels if you have allergies.</p>
-    </main>
-  </div>
+  <!-- Step 4: Your meals -->
+  <section class="step" id="step-meals" data-step="meals" aria-labelledby="h-meals" hidden>
+    <div class="summary" id="summary-meals"></div>
+    <section class="panel" id="meal-plan">
+      <div class="meals-head">
+        <div>
+          <h2 id="h-meals" tabindex="-1">Your weekly meal plan</h2>
+          <p id="meals-sub"></p>
+        </div>
+        <div class="days" role="group" aria-label="Day of the week" id="days"></div>
+      </div>
+      <div class="banner" id="sub-banner" hidden></div>
+      <div class="daytot" id="daytot"></div>
+      <div class="meal-grid" id="meal-grid"></div>
+      <div class="sub-box">
+          <div>
+            <h3>Get each day's meals by email</h3>
+            <p>Every morning at 7:00 your time: four meals with ingredients and method, sized to <strong class="sub-kcal">your calories</strong>.</p>
+          </div>
+          <form class="sub-form" novalidate>
+            <div class="sub-row">
+              <label class="box"><input class="sub-email" type="email" autocomplete="email" placeholder="you@example.com" aria-label="Email address" required></label>
+              <button type="submit" class="sub-btn">Subscribe</button>
+            </div>
+            <label class="hp" aria-hidden="true">Website <input class="sub-web" tabindex="-1" autocomplete="off"></label>
+            <label class="consent"><input type="checkbox" class="sub-consent"> <span>I agree to receive a daily meal-plan email from FitMe. We store only your email, time zone and calorie settings to send it, and you can unsubscribe at any time.</span></label>
+            <div class="sub-msg" role="status" aria-live="polite"></div>
+          </form>
+        </div>
+      <details class="shop">
+        <summary>Shopping list for the week <span id="shop-note"></span></summary>
+        <div class="shop-body" id="shop-body"></div>
+      </details>
+    </section>
+    <div class="step-nav">
+      <button type="button" class="btn ghost" data-go="plan">Back to my plan</button>
+    </div>
+    <p class="foot">Meal plan nutrition is estimated from standard ingredient values; portions are rounded for real kitchens, so daily totals land near, not exactly on, your target. Check labels if you have allergies. Not medical advice.</p>
+  </section>
 </div>
+
 
 <script src="meals.js"></script>
 <script>
@@ -516,7 +668,7 @@ tbody tr.goal td { font-weight: 500; color: var(--accent); }
   var MAX_WEEKS = 104;
 
   // Internal state is always metric.
-  var DEFAULTS = { units: 'metric', sex: 'f', age: 35, h: 168, w0: 82, goal: 72, act: '1.55', deficit: 500, spread: 150, mode: 'intake', day: 0 };
+  var DEFAULTS = { units: 'metric', sex: 'f', age: 35, h: 168, w0: 82, goal: 72, act: '1.55', deficit: 500, spread: 150, mode: 'intake', day: 0, done: false };
   var LIMITS = { age: [18, 90], h: [120, 230], w0: [35, 300], goal: [35, 300], deficit: [0, 1500], spread: [0, 500] };
   var state = Object.assign({}, DEFAULTS);
 
@@ -526,6 +678,8 @@ tbody tr.goal td { font-weight: 500; color: var(--accent); }
       Object.keys(DEFAULTS).forEach(function (k) { if (k in saved && typeof saved[k] === typeof DEFAULTS[k]) state[k] = saved[k]; });
     }
   } catch (e) {}
+
+  state.mode = 'intake';
 
   function clamp(v, lo, hi) { return Math.min(hi, Math.max(lo, v)); }
   function num(id, fallback) { var v = parseFloat($(id).value); return Number.isFinite(v) ? v : fallback; }
@@ -550,11 +704,11 @@ tbody tr.goal td { font-weight: 500; color: var(--accent); }
       if (inch === 12) { ft += 1; inch = 0; }
       $('hft').value = ft; $('hin').value = inch;
       $('w0').value = +(state.w0 / LB).toFixed(1);
-      $('goal').value = +(state.goal / LB).toFixed(1);
+      $('goal-w').value = +(state.goal / LB).toFixed(1);
     } else {
       $('hcm').value = Math.round(state.h);
       $('w0').value = +state.w0.toFixed(1);
-      $('goal').value = +state.goal.toFixed(1);
+      $('goal-w').value = +state.goal.toFixed(1);
     }
   }
 
@@ -568,7 +722,7 @@ tbody tr.goal td { font-weight: 500; color: var(--accent); }
     var h = imp() ? (num('hft', 5) * 12 + num('hin', 0)) * 2.54 : num('hcm', DEFAULTS.h);
     state.h = clamp(h, LIMITS.h[0], LIMITS.h[1]);
     state.w0 = clamp(num('w0', DEFAULTS.w0 / f) * f, LIMITS.w0[0], LIMITS.w0[1]);
-    state.goal = clamp(num('goal', DEFAULTS.goal / f) * f, LIMITS.goal[0], LIMITS.goal[1]);
+    state.goal = clamp(num('goal-w', DEFAULTS.goal / f) * f, LIMITS.goal[0], LIMITS.goal[1]);
   }
 
   // ---- Model ----
@@ -610,7 +764,7 @@ tbody tr.goal td { font-weight: 500; color: var(--accent); }
   function kcal(v) { return nf0.format(Math.round(v / 10) * 10) + ' kcal'; }
   function bmi(s, w) { var m = s.h / 100; return w / (m * m); }
   function startDate() {
-    var v = $('start').value || todayISO();
+    var v = $('start-date').value || todayISO();
     var p = v.split('-');
     return new Date(+p[0], +p[1] - 1, +p[2]);
   }
@@ -731,11 +885,10 @@ tbody tr.goal td { font-weight: 500; color: var(--accent); }
     $('h-met').hidden = imp();
     $('h-imp').hidden = !imp();
     document.querySelectorAll('[data-wu]').forEach(function (el) { el.textContent = wu(); });
-    $('m-int').setAttribute('aria-pressed', String(s.mode === 'intake'));
-    $('m-def').setAttribute('aria-pressed', String(s.mode === 'deficit'));
-    $('mode-note').textContent = s.mode === 'intake' ? 'Eating the same calories every day' : 'Lowering intake to keep the deficit';
 
     renderSuggestions(s);
+    renderSummary(s);
+    $('goal-err').hidden = s.goal < s.w0;
     var maint0 = tdee(s, s.w0);
     var bmr0 = bmr(s, s.w0);
     var ACT_NAMES = { '1.2': 'Sedentary', '1.375': 'Light', '1.55': 'Moderate', '1.725': 'Very active', '1.9': 'Athlete' };
@@ -777,20 +930,18 @@ tbody tr.goal td { font-weight: 500; color: var(--accent); }
       $('big').textContent = wt(endW);
     }
 
-    var lines = 'Start by eating about <strong>' + kcal(base.startIntake) + '</strong> a day (maintenance ' + kcal(maint0) + ' minus your ' + nf0.format(s.deficit) + ' kcal deficit). ';
-    if (s.mode === 'intake') {
-      lines += 'Holding that intake steady, loss slows as your maintenance drops with your weight. ';
-    } else if (base.reach) {
-      lines += 'To keep the deficit, intake steps down to about <strong>' + kcal(base.minIntake) + '</strong> by the goal. ';
-    }
+    var lines = 'That\u2019s your maintenance of ' + kcal(maint0) + ' minus a ' + nf0.format(s.deficit) + ' kcal daily deficit. ';
     if (!base.reach) {
-      lines += 'At this intake your weight levels off before the goal, so raise the deficit or switch to <strong>Same deficit</strong>. ';
+      lines += 'At this intake your weight levels off before the goal, so choose a faster pace in <a href="#goal">Your goal</a>. ';
     }
     if (s.spread > 0) {
       lines += 'If your real deficit lands ' + nf0.format(s.spread) + ' kcal either side, you would arrive between <strong>' + reachText(high, sd) + '</strong> and <strong>' + reachText(low, sd) + '</strong>.';
     }
     $('sub').innerHTML = lines;
 
+    var floorK = s.sex === 'm' ? 1500 : 1200;
+    $('plan-kcal').textContent = kcal(Math.max(base.startIntake, floorK)) + ' a day';
+    $('plan-prot').textContent = M.proteinTarget(s.goal) + ' g a day';
     var toLose = s.w0 - s.goal;
     $('s-lose').textContent = wt(toLose);
     $('s-rate').textContent = base.reach ? wt(toLose / (base.reach / 7)) : wt((s.w0 - base.weeks[MAX_WEEKS].w) / MAX_WEEKS);
@@ -821,6 +972,22 @@ tbody tr.goal td { font-weight: 500; color: var(--accent); }
     save();
   }
 
+  // ---- Summary bar (plan + meals) ----
+  var ACT_SHORT = { '1.2': 'Sedentary', '1.375': 'Light activity', '1.55': 'Moderate activity', '1.725': 'Very active', '1.9': 'Athlete' };
+  function paceName(s) {
+    var sg = suggestions(s), names = ['Gentle pace', 'Balanced pace', 'Faster pace'];
+    for (var i = 0; i < sg.def.length; i++) if (Math.abs(sg.def[i].v - s.deficit) < 0.5) return names[i];
+    return nf0.format(s.deficit) + ' kcal deficit';
+  }
+  function renderSummary(s) {
+    var html = '<span class="chip-s">' + wtShort(s.w0) + ' → ' + wtShort(s.goal) + ' ' + wu() + '</span>' +
+      '<span class="chip-s">' + (ACT_SHORT[s.act] || '') + '</span>' +
+      '<span class="chip-s">' + paceName(s) + '</span>' +
+      '<a href="#about">Edit details</a>';
+    $('summary').innerHTML = html;
+    $('summary-meals').innerHTML = html;
+  }
+
   // ---- Suggestions ----
   function round25(v) { return Math.round(v / 25) * 25; }
   function suggestions(s) {
@@ -846,9 +1013,12 @@ tbody tr.goal td { font-weight: 500; color: var(--accent); }
   }
   function renderSuggestions(s) {
     var sg = suggestions(s);
-    $('sug-def').innerHTML = chipsHTML(sg.def, s.deficit, '');
+    $('sug-def').innerHTML = sg.def.map(function (c) {
+      return '<button type="button" class="chip' + (c.rec ? ' rec' : '') + '" data-v="' + c.v + '" aria-pressed="' + (Math.abs(s.deficit - c.v) < 0.5) + '">' +
+        '<span class="t">' + c.t + '</span><span class="n">' + c.p.replace('≈ ', '') + '</span><span class="p">−' + nf0.format(c.v) + ' kcal a day</span></button>';
+    }).join('');
     $('sug-rng').innerHTML = chipsHTML(sg.rng, s.spread, '±');
-    $('sug-def-note').textContent = 'age ' + s.age + ': ~' + sg.band + '% of weight/wk';
+    $('sug-def-note').textContent = 'Balanced suits most people';
   }
 
   // ---- Meal plan ----
@@ -863,7 +1033,7 @@ tbody tr.goal td { font-weight: 500; color: var(--accent); }
     $('days').innerHTML = DAYS.map(function (d, i) { return '<button type="button" data-d="' + i + '" aria-pressed="' + (i === day) + '" aria-label="' + DAY_NAMES[i] + '">' + d + '</button>'; }).join('');
     var protTarget = M.proteinTarget(s.goal);
     $('meals-sub').innerHTML = 'Four high-protein meals a day, with portions scaled to your starting intake of <strong>' + kcal(T) + '</strong>. ' +
-      (s.mode === 'deficit' ? 'Your intake steps down over time, so revisit portions as you go. ' : '') + 'Protein goal: about ' + protTarget + ' g a day (' + M.PROTEIN_PER_KG + ' g per kg of goal weight).';
+      'Protein goal: about ' + protTarget + ' g a day (' + M.PROTEIN_PER_KG + ' g per kg of goal weight).';
     var meals = buildDay(day, T, protTarget);
     var tot = M.dayTotals(meals);
     $('daytot').innerHTML =
@@ -886,7 +1056,7 @@ tbody tr.goal td { font-weight: 500; color: var(--accent); }
     }).join('');
     renderShop(T, protTarget);
     subState = { intake: Math.round(T), prot: protTarget, units: state.units };
-    $('sub-kcal').textContent = kcal(T) + ' a day';
+    document.querySelectorAll('.sub-kcal').forEach(function (el) { el.textContent = kcal(T) + ' a day'; });
   }
   function renderShop(T, P) {
     var totals = {}, extras = {};
@@ -943,15 +1113,13 @@ tbody tr.goal td { font-weight: 500; color: var(--accent); }
   function save() { try { localStorage.setItem('deficit-horizon', JSON.stringify(state)); } catch (e) {} }
 
   // ---- Wire up ----
-  $('start').value = todayISO();
+  $('start-date').value = todayISO();
   writeInputs();
-  ['age', 'hcm', 'hft', 'hin', 'w0', 'goal', 'deficit', 'spread', 'start'].forEach(function (id) { $(id).addEventListener('input', render); });
+  ['age', 'hcm', 'hft', 'hin', 'w0', 'goal-w', 'deficit', 'spread', 'start-date'].forEach(function (id) { $(id).addEventListener('input', render); });
   ['sex', 'act'].forEach(function (id) { $(id).addEventListener('change', render); });
   function setUnits(u) { if (state.units === u) return; readInputs(); state.units = u; writeInputs(); render(); }
   $('u-met').addEventListener('click', function () { setUnits('metric'); });
   $('u-imp').addEventListener('click', function () { setUnits('imperial'); });
-  $('m-int').addEventListener('click', function () { state.mode = 'intake'; render(); });
-  $('m-def').addEventListener('click', function () { state.mode = 'deficit'; render(); });
 
   $('sug-def').addEventListener('click', function (e) { var b = e.target.closest('.chip'); if (b) { $('deficit').value = b.dataset.v; render(); } });
   $('sug-rng').addEventListener('click', function (e) { var b = e.target.closest('.chip'); if (b) { $('spread').value = b.dataset.v; render(); } });
@@ -964,33 +1132,76 @@ tbody tr.goal td { font-weight: 500; color: var(--accent); }
     not_configured: 'Email sign-up opens soon. Please check back in a few days.',
     send_failed: 'We couldn’t send the confirmation email. Please try again in a moment.'
   };
-  function subMsg(text, kind) { var el = $('sub-msg'); el.textContent = text; el.className = 'sub-msg' + (kind ? ' ' + kind : ''); }
-  $('sub-form').addEventListener('submit', function (e) {
-    e.preventDefault();
-    var email = $('sub-email').value.trim();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { subMsg(MSG.invalid_email, 'err'); $('sub-email').focus(); return; }
-    if (!$('sub-consent').checked) { subMsg(MSG.consent_required, 'err'); return; }
-    var tz = 'Europe/Lisbon';
-    try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || tz; } catch (err) {}
-    var payload = { email: email, consent: true, website: $('sub-web').value, tz: tz, intake: subState ? subState.intake : 0, prot: subState ? subState.prot : 0, units: state.units };
-    $('sub-btn').disabled = true; subMsg('Sending…');
-    fetch('/api/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
-      .then(function (res) { return res.json().catch(function () { return { ok: false, error: res.status === 429 ? 'rate' : 'unknown' }; }); })
-      .then(function (data) {
-        if (data && data.ok) { subMsg('Almost done: check your inbox and tap the link to confirm.', 'ok'); $('sub-form').reset(); }
-        else subMsg(data && data.error === 'rate' ? 'Too many tries. Please wait a minute and try again.' : (MSG[data && data.error] || 'Something went wrong. Please try again.'), 'err');
-      })
-      .catch(function () { subMsg('Sign-up works on the live FitMe site (fitme-dm8v.netlify.app). It isn’t available in this preview.', 'err'); })
-      .then(function () { $('sub-btn').disabled = false; });
+  document.querySelectorAll('.sub-form').forEach(function (form) {
+    var q = function (c) { return form.querySelector(c); };
+    function subMsg(text, kind) { var el = q('.sub-msg'); el.textContent = text; el.className = 'sub-msg' + (kind ? ' ' + kind : ''); }
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var email = q('.sub-email').value.trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { subMsg(MSG.invalid_email, 'err'); q('.sub-email').focus(); return; }
+      if (!q('.sub-consent').checked) { subMsg(MSG.consent_required, 'err'); return; }
+      var tz = 'Europe/Lisbon';
+      try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || tz; } catch (err) {}
+      var payload = { email: email, consent: true, website: q('.sub-web').value, tz: tz, intake: subState ? subState.intake : 0, prot: subState ? subState.prot : 0, units: state.units };
+      q('.sub-btn').disabled = true; subMsg('Sending…');
+      fetch('/api/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+        .then(function (res) { return res.json().catch(function () { return { ok: false, error: res.status === 429 ? 'rate' : 'unknown' }; }); })
+        .then(function (data) {
+          if (data && data.ok) { subMsg('Almost done: check your inbox and tap the link to confirm.', 'ok'); form.reset(); }
+          else subMsg(data && data.error === 'rate' ? 'Too many tries. Please wait a minute and try again.' : (MSG[data && data.error] || 'Something went wrong. Please try again.'), 'err');
+        })
+        .catch(function () { subMsg('Sign-up works on the live FitMe site (fitmeplan.com). It isn’t available in this preview.', 'err'); })
+        .then(function () { q('.sub-btn').disabled = false; });
+    });
   });
-  function showHashBanner() {
-    var b = $('sub-banner'), h = location.hash;
-    if (h === '#subscribed') { b.textContent = 'You’re subscribed. Your first meal plan arrives tomorrow at 7:00.'; b.hidden = false; }
-    else if (h === '#unsubscribed') { b.textContent = 'You’ve been unsubscribed and your details deleted.'; b.hidden = false; }
-    else return;
-    var mp = $('meal-plan'); if (mp && mp.scrollIntoView) mp.scrollIntoView();
+  // ---- Steps / router ----
+  var STEPS = ['start', 'about', 'goal', 'plan', 'meals'];
+  var ORDER = { about: 1, goal: 2, plan: 3, meals: 4 };
+  var current = null;
+  function showStep(name, opts) {
+    opts = opts || {};
+    if (STEPS.indexOf(name) < 0) name = 'start';
+    if ((name === 'plan' || name === 'meals') && !state.done) name = 'about';
+    if (name === 'plan' || name === 'meals') { readInputs(); if (state.goal >= state.w0) { name = 'goal'; } }
+    current = name;
+    document.querySelectorAll('.step').forEach(function (el) { el.hidden = el.dataset.step !== name; });
+    $('progress').hidden = name === 'start';
+    document.querySelectorAll('#progress a').forEach(function (a) {
+      var n = ORDER[a.dataset.step], cur = ORDER[name] || 0;
+      a.classList.toggle('current', a.dataset.step === name);
+      a.classList.toggle('done', n < cur || (state.done && n !== cur && n <= 2));
+      a.classList.toggle('locked', !state.done && n > cur);
+      if (a.dataset.step === name) a.setAttribute('aria-current', 'step'); else a.removeAttribute('aria-current');
+    });
+    if (location.hash !== '#' + name && !opts.keepHash) history.replaceState(null, '', '#' + name);
+    render();
+    if (!opts.noScroll) window.scrollTo(0, 0);
+    var h = document.querySelector('#step-' + name + ' .step-title, #step-' + name + ' h2[tabindex]');
+    if (h && opts.focus) h.focus({ preventScroll: true });
+    if (name === 'goal' && state.goal >= state.w0) $('goal-err').hidden = false;
   }
-  window.addEventListener('hashchange', showHashBanner);
+  function go(name) {
+    if (name === 'plan') { readInputs(); if (state.goal >= state.w0) { $('goal-err').hidden = false; $('goal-w').focus(); return; } state.done = true; save(); }
+    location.hash = '#' + name;
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-go]');
+    if (b) { e.preventDefault(); go(b.dataset.go); }
+  });
+  function route() {
+    var h = (location.hash || '').slice(1);
+    var b = $('sub-banner');
+    if (h === 'subscribed' || h === 'unsubscribed') {
+      b.textContent = h === 'subscribed' ? 'You’re subscribed. Your first meal plan arrives tomorrow at 7:00.' : 'You’ve been unsubscribed and your details deleted.';
+      b.hidden = false;
+      history.replaceState(null, '', state.done ? '#meals' : '#start');
+      return showStep(state.done ? 'meals' : 'start');
+    }
+    if (h === 'meal-plan') h = 'meals';
+    if (!h) h = state.done ? 'plan' : 'start';
+    showStep(h, { focus: true });
+  }
+  window.addEventListener('hashchange', route);
 
   $('days').addEventListener('click', function (e) { var b = e.target.closest('button'); if (b) { state.day = +b.dataset.d; render(); } });
 
@@ -1018,8 +1229,7 @@ tbody tr.goal td { font-weight: 500; color: var(--accent); }
       if (w && Math.abs(w - lastW) > 1) { lastW = w; render(); }
     }).observe($('chartwrap'));
   }
-  render();
-  showHashBanner();
+  route();
 })();
 </script>
 </body>

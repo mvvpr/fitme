@@ -224,6 +224,7 @@ function buildDay(i, T, P) {
   });
   var a = 1, b = 1;
   if (P) {
+    P = P * 1.04; // headroom for rounding portions to kitchen-friendly amounts
     var Kp = 0, Ko = 0, Pp = 0, Po = 0;
     meals.forEach(function (m) {
       m.rec.ing.forEach(function (l) {
