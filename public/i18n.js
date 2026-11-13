@@ -34,6 +34,8 @@
     'Choose your pace': 'Escolhe o teu ritmo', 'Advanced settings': 'Definições avançadas',
     'Daily deficit': 'Défice diário',
     'Start date': 'Data de início',
+    'Get these meals in your inbox at 7:00': 'Recebe estas refeições no email às 7:00',
+    'Free. Sized to your calories, with your shopping list every Saturday.': 'Grátis. À medida das tuas calorias, com a lista de compras todos os sábados.',
     'The pace sets your daily calorie deficit: how far below maintenance you eat. Paces ease with age to protect muscle, and never go above 30% of maintenance or below the minimum intake. The plan assumes you stick to it every day.': 'O ritmo define o teu défice calórico diário: quanto comes abaixo da manutenção. Os ritmos ficam mais suaves com a idade, para proteger a massa muscular, e nunca passam de 30% da manutenção nem descem abaixo da ingestão mínima. O plano assume que o segues todos os dias.',
     'See my plan': 'Ver o meu plano', 'Goal reached': 'Objetivo atingido', 'Eat about': 'Come cerca de', 'Protein': 'Proteína',
     'To lose': 'A perder', 'Average per week': 'Média por semana', 'BMI now → goal': 'IMC agora → objetivo', 'Basal kcal → at goal': 'kcal basais → no objetivo',

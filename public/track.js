@@ -84,7 +84,7 @@
     var ids = ensureIds();
     return { event_id: newId(), fbp: ids.fbp, fbc: ids.fbc || '', url: location.href };
   }
-  function leadDone(ctx) { if (ctx && granted() && window.fbq) window.fbq('track', 'Lead', {}, { eventID: ctx.event_id }); }
+  function leadDone(ctx) { if (ctx && granted() && window.fbq) window.fbq('track', 'Lead', ctx.placement ? { content_category: ctx.placement } : {}, { eventID: ctx.event_id }); }
 
   // Once per browser session (survives reloads and going back and forth between steps).
   function trackOnce(name, custom) {

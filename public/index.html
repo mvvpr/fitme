@@ -303,6 +303,8 @@ tbody tr.goal td { font-weight: 500; color: var(--accent); }
 @media (max-width: 760px) { .sub-box { grid-template-columns: minmax(0, 1fr); } }
 .sub-box h3 { font-family: var(--font-display); font-size: 18px; margin: 0 0 4px; letter-spacing: -0.01em; }
 .sub-box p { margin: 0; font-size: 13.5px; color: var(--muted); }
+.sub-box.compact { margin: 4px 0 16px; padding: 14px 16px; }
+.sub-box.compact h3 { font-size: 16.5px; }
 .sub-form { display: flex; flex-direction: column; gap: 8px; }
 .sub-row { display: flex; gap: 8px; }
 .sub-row .box { flex: 1; }
@@ -382,12 +384,15 @@ header.topbar { flex-direction: row; align-items: center; justify-content: space
 .summary .chip-s { background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; color: var(--ink); }
 .summary a { color: var(--accent); font-weight: 600; text-decoration: none; }
 .summary a:hover { text-decoration: underline; }
-.plan-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 320px); gap: 20px; align-items: start; }
-@media (max-width: 900px) { .plan-grid { grid-template-columns: minmax(0, 1fr); } }
+.plan-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 320px); grid-template-areas: 'main side' 'how side'; gap: 0 20px; align-items: start; }
+.plan-main { grid-area: main; } .plan-side { grid-area: side; } .plan-grid > .how { grid-area: how; margin-top: 20px; }
+.how-body .stats { border-top: 0; padding-top: 0; }
+@media (max-width: 900px) { .plan-grid { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'main' 'side' 'how'; } }
 .plan-main { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
 .plan-side { position: sticky; top: 16px; }
 @media (max-width: 900px) { .plan-side { position: static; } }
 .plan-side .sub-box { margin-top: 0; grid-template-columns: minmax(0, 1fr); }
+@media (max-width: 900px) { .plan-side .sub-box { margin-top: 16px; } }
 .today { display: flex; flex-wrap: wrap; gap: 10px; }
 .today > div { background: var(--field); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; display: flex; flex-direction: column; flex: 1 1 130px; max-width: 260px; }
 @media (max-width: 640px) { .today .v { font-size: 21px; } }
@@ -548,17 +553,35 @@ body.lang-fading .wrap > .step { opacity: 0; }
           </div>
           <p class="sub" id="sub"></p>
           <div class="warn" id="warn" hidden><ul id="warn-list"></ul></div>
-          <div class="stats">
-            <div class="stat"><span class="k">To lose</span><span class="v" id="s-lose"></span></div>
-            <div class="stat"><span class="k">Average per week</span><span class="v" id="s-rate"></span></div>
-            <div class="stat"><span class="k">BMI now → goal</span><span class="v" id="s-bmi"></span></div>
-            <div class="stat"><span class="k">Basal kcal → at goal</span><span class="v" id="s-maint"></span></div>
-          </div>
         </section>
 
+      </div>
+      <aside class="plan-side">
+        <div class="sub-box" data-box="plan">
+          <div>
+            <h3>Get each day's meals by email</h3>
+            <p>Every morning at 7:00 your time: four meals with ingredients and method, sized to <strong class="sub-kcal">your calories</strong>. Plus your shopping list for the week every Saturday.</p>
+          </div>
+          <form class="sub-form" novalidate>
+            <div class="sub-row">
+              <label class="box"><input class="sub-email" type="email" autocomplete="email" placeholder="you@example.com" aria-label="Email address" required></label>
+              <button type="submit" class="sub-btn">Subscribe</button>
+            </div>
+            <label class="hp" aria-hidden="true">Website <input class="sub-web" tabindex="-1" autocomplete="off"></label>
+            <label class="consent"><input type="checkbox" class="sub-consent"> <span>I agree to receive a daily meal-plan email from FitMe. We store your email, time zone and calorie settings to send it, and you can unsubscribe at any time. <a class="privacy-link" href="/privacy.html" target="_blank" rel="noopener">Privacy policy</a></span></label>
+            <div class="sub-msg" role="status" aria-live="polite"></div>
+          </form>
+        </div>
+      </aside>
         <details class="panel how">
           <summary>How we calculated this</summary>
           <div class="how-body">
+            <div class="stats">
+              <div class="stat"><span class="k">To lose</span><span class="v" id="s-lose"></span></div>
+              <div class="stat"><span class="k">Average per week</span><span class="v" id="s-rate"></span></div>
+              <div class="stat"><span class="k">BMI now → goal</span><span class="v" id="s-bmi"></span></div>
+              <div class="stat"><span class="k">Basal kcal → at goal</span><span class="v" id="s-maint"></span></div>
+            </div>
             <div class="energy" aria-label="Daily energy breakdown at your current weight">
               <div class="cell bmr"><span class="k">Basal (BMR)</span><span class="v" id="e-bmr"></span><span class="d">Just staying alive</span></div>
               <div class="cell"><span class="k">Activity &amp; digestion</span><span class="v"><span class="op">+</span><span id="e-act"></span></span><span class="d" id="e-actd"></span></div>
@@ -578,24 +601,6 @@ body.lang-fading .wrap > .step { opacity: 0; }
             </div>
           </div>
         </details>
-      </div>
-      <aside class="plan-side">
-        <div class="sub-box">
-          <div>
-            <h3>Get each day's meals by email</h3>
-            <p>Every morning at 7:00 your time: four meals with ingredients and method, sized to <strong class="sub-kcal">your calories</strong>. Plus your shopping list for the week every Saturday.</p>
-          </div>
-          <form class="sub-form" novalidate>
-            <div class="sub-row">
-              <label class="box"><input class="sub-email" type="email" autocomplete="email" placeholder="you@example.com" aria-label="Email address" required></label>
-              <button type="submit" class="sub-btn">Subscribe</button>
-            </div>
-            <label class="hp" aria-hidden="true">Website <input class="sub-web" tabindex="-1" autocomplete="off"></label>
-            <label class="consent"><input type="checkbox" class="sub-consent"> <span>I agree to receive a daily meal-plan email from FitMe. We store your email, time zone and calorie settings to send it, and you can unsubscribe at any time. <a class="privacy-link" href="/privacy.html" target="_blank" rel="noopener">Privacy policy</a></span></label>
-            <div class="sub-msg" role="status" aria-live="polite"></div>
-          </form>
-        </div>
-      </aside>
     </div>
     <div class="step-nav">
       <button type="button" class="btn ghost" data-go="goal">Back</button>
@@ -616,9 +621,24 @@ body.lang-fading .wrap > .step { opacity: 0; }
         <div class="days" role="group" aria-label="Day of the week" id="days"></div>
       </div>
       <div class="banner" id="sub-banner" hidden></div>
+      <div class="sub-box compact" data-box="meals-top">
+          <div>
+            <h3>Get these meals in your inbox at 7:00</h3>
+            <p>Free. Sized to your calories, with your shopping list every Saturday.</p>
+          </div>
+          <form class="sub-form" novalidate>
+            <div class="sub-row">
+              <label class="box"><input class="sub-email" type="email" autocomplete="email" placeholder="you@example.com" aria-label="Email address" required></label>
+              <button type="submit" class="sub-btn">Subscribe</button>
+            </div>
+            <label class="hp" aria-hidden="true">Website <input class="sub-web" tabindex="-1" autocomplete="off"></label>
+            <label class="consent"><input type="checkbox" class="sub-consent"> <span>I agree to receive a daily meal-plan email from FitMe. We store your email, time zone and calorie settings to send it, and you can unsubscribe at any time. <a class="privacy-link" href="/privacy.html" target="_blank" rel="noopener">Privacy policy</a></span></label>
+            <div class="sub-msg" role="status" aria-live="polite"></div>
+          </form>
+        </div>
       <div class="daytot" id="daytot"></div>
       <div class="meal-grid" id="meal-grid"></div>
-      <div class="sub-box">
+      <div class="sub-box" data-box="meals-bottom">
           <div>
             <h3>Get each day's meals by email</h3>
             <p>Every morning at 7:00 your time: four meals with ingredients and method, sized to <strong class="sub-kcal">your calories</strong>. Plus your shopping list for the week every Saturday.</p>
@@ -1044,6 +1064,7 @@ body.lang-fading .wrap > .step { opacity: 0; }
       var tz = 'Europe/Lisbon';
       try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || tz; } catch (err) {}
       var meta = window.FITME_TRACK ? FITME_TRACK.leadContext() : null;
+      var box = form.closest('.sub-box'); if (meta && box) meta.placement = box.getAttribute('data-box');
       var payload = { email: email, consent: true, website: q('.sub-web').value, tz: tz, intake: subState ? subState.intake : 0, prot: subState ? subState.prot : 0, units: state.units, lang: LANG, meta: meta };
       q('.sub-btn').disabled = true; subMsg(MSG.sending);
       fetch('/api/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })

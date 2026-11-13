@@ -33,6 +33,7 @@ export default async (req: Request, context: Context) => {
         fbp: typeof m.fbp === "string" && FBP_RE.test(m.fbp) ? m.fbp : undefined,
         fbc: typeof m.fbc === "string" && FBC_RE.test(m.fbc) ? m.fbc : undefined,
         url: typeof m.url === "string" ? m.url.split("#")[0].slice(0, 500) : undefined,
+        placement: ["plan", "meals-top", "meals-bottom"].includes(m.placement) ? m.placement : undefined,
       }
     : null;
 
@@ -90,7 +91,7 @@ export default async (req: Request, context: Context) => {
       event_id: meta.event_id,
       event_source_url: meta.url && meta.url.startsWith(siteUrl) ? meta.url : siteUrl,
       user_data: { em: hash, external_id: hash, fbp: meta.fbp, fbc: meta.fbc, ...requestUser(req, context) },
-      custom_data: { content_name: "Daily meal plan email" },
+      custom_data: { content_name: "Daily meal plan email", ...(meta.placement ? { content_category: meta.placement } : {}) },
     }]);
     if (typeof (context as any).waitUntil === "function") (context as any).waitUntil(send); else await send;
   }
