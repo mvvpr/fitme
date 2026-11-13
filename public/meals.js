@@ -70,35 +70,35 @@ var DB = {
 // The recipe pool: 3 breakfasts, 4 mains that work as lunch or dinner, and 2 snacks.
 var POOL = {
   breakfast: [
-    { name: 'Berry overnight oats', time: '5 min + overnight',
+    { name: 'Berry overnight oats', img: 'berry-overnight-oats', time: '5 min + overnight',
       ing: [['oats', 50, 'g'], ['milk', 150, 'ml'], ['yog', 150, 'g'], ['berries', 80, 'g'], ['honey', 1, 'tsp'], ['~', 'Pinch of ground cinnamon']],
       steps: ['In a jar or bowl, stir together the oats, milk, yogurt and cinnamon.', 'Cover and refrigerate overnight (at least 4 hours) so the oats soften.', 'In the morning, stir, loosen with a splash of milk if it is too thick, and top with the berries and honey.'] },
-    { name: 'Spinach & parmesan omelette with toast', time: '12 min',
+    { name: 'Spinach & parmesan omelette with toast', img: 'spinach-parmesan-omelette', time: '12 min',
       ing: [['egg', 3, 'pc'], ['spinach', 60, 'g'], ['parm', 10, 'g'], ['bread', 1, 'pc'], ['oil', 1, 'tsp'], ['~', 'Salt and black pepper']],
       steps: ['Whisk the eggs with a pinch of salt and pepper.', 'Heat the oil in a non-stick pan over medium heat, add the spinach and stir until wilted, about 1 minute.', 'Pour in the eggs, tilt to spread and cook 2–3 minutes until almost set. Grate the parmesan over one half, fold and cook 1 minute more.', 'Serve with the toasted bread.'] },
-    { name: 'Banana protein pancakes', time: '15 min',
+    { name: 'Banana protein pancakes', img: 'banana-protein-pancakes', time: '15 min',
       ing: [['oats', 50, 'g'], ['banana', 1, 'pc'], ['egg', 2, 'pc'], ['yog', 100, 'g'], ['berries', 60, 'g'], ['oil', 1, 'tsp'], ['~', '½ tsp baking powder, pinch of ground cinnamon']],
       steps: ['Blend the oats into a coarse flour, then add the banana, eggs, baking powder and cinnamon and blend until smooth. No blender? Mash the banana well and whisk everything together.', 'Heat a non-stick pan over medium heat and brush with a little of the oil.', 'Pour in small rounds of batter (about 3 tbsp each). Cook 2 minutes until bubbles appear, flip and cook 1 minute more. Repeat with the rest.', 'Stack the pancakes and top with the yogurt and berries.'] }
   ],
   main: [
-    { name: 'Chicken, chickpea & spinach curry', time: '30 min',
+    { name: 'Chicken, chickpea & spinach curry', img: 'chicken-chickpea-curry', time: '30 min',
       ing: [['chicken', 130, 'g'], ['chickpeas', 80, 'g'], ['tins', 200, 'g'], ['spinach', 60, 'g'], ['onion', 0.5, 'pc'], ['garlic', 1, 'pc'], ['yog', 60, 'g'], ['basmati', 50, 'g'], ['oil', 1, 'tsp'], ['~', '2 tsp curry powder, fresh coriander or parsley']],
       steps: ['Cook the rice according to the pack. Cut the chicken into bite-sized pieces.', 'Heat the oil in a pan, cook the chopped onion for 5 minutes, then add the garlic and curry powder for 1 minute.', 'Add the chicken and cook for 3 minutes, then add the tomatoes and chickpeas and simmer for 12 minutes until the chicken is cooked through.', 'Stir in the spinach until wilted, take off the heat and stir in the yogurt for a creamy finish. Serve over the rice with the herbs.'] },
-    { name: 'Lemon-garlic chicken with potatoes & broccoli', time: '40 min',
+    { name: 'Lemon-garlic chicken with potatoes & broccoli', img: 'lemon-garlic-chicken', time: '40 min',
       ing: [['chicken', 150, 'g'], ['potato', 200, 'g'], ['broccoli', 120, 'g'], ['oil', 2, 'tsp'], ['lemon', 15, 'ml'], ['garlic', 1, 'pc'], ['~', 'Dried oregano, salt and black pepper']],
       steps: ['Heat the oven to 200°C (180°C fan). Halve the potatoes, toss with 1 tsp of the oil, salt and pepper and roast for 15 minutes.', 'Mix the rest of the oil with the lemon juice, crushed garlic, oregano, salt and pepper, and coat the chicken in it.', 'Add the chicken and the broccoli florets to the tray and roast for 20–25 minutes more, until the chicken is cooked through with no pink in the middle.', 'Rest the chicken for 3 minutes, slice it and serve with the potatoes and broccoli. It is just as good cold for tomorrow\'s lunch.'] },
-    { name: 'Lean beef & black bean chilli', time: '35 min',
+    { name: 'Lean beef & black bean chilli', img: 'beef-black-bean-chilli', time: '35 min',
       ing: [['beef', 130, 'g'], ['blackbeans', 80, 'g'], ['tins', 200, 'g'], ['onion', 0.5, 'pc'], ['pepper', 0.5, 'pc'], ['garlic', 1, 'pc'], ['basmati', 50, 'g'], ['oil', 1, 'tsp'], ['yog', 30, 'g'], ['~', '1 tsp ground cumin, 1 tsp smoked paprika, chilli powder to taste']],
       steps: ['Rinse the rice and cook in 1½ times its volume of water, covered, for 12 minutes. Rest off the heat.', 'Meanwhile, heat the oil and cook the diced onion and pepper for 5 minutes. Add the garlic and spices for 1 minute.', 'Add the beef and brown for 5 minutes, breaking it up. Stir in the tomatoes and black beans and simmer for 15 minutes until thick.', 'Serve over the rice with a spoonful of yogurt. It doubles well for batch cooking.'] },
-    { name: 'Turkey meatballs with wholewheat spaghetti', time: '35 min',
+    { name: 'Turkey meatballs with wholewheat spaghetti', img: 'turkey-meatballs-spaghetti', time: '35 min',
       ing: [['turkey', 140, 'g'], ['tins', 200, 'g'], ['pasta', 60, 'g'], ['onion', 0.25, 'pc'], ['garlic', 1, 'pc'], ['spinach', 50, 'g'], ['parm', 10, 'g'], ['oil', 1, 'tsp'], ['~', '1 tsp dried oregano, salt and black pepper']],
       steps: ['Mix the mince with half the grated garlic, the oregano, salt and pepper, and roll into small meatballs.', 'Heat the oil in a pan and brown the meatballs on all sides for 5 minutes. Add the chopped onion and the rest of the garlic for 2 minutes.', 'Pour in the chopped tomatoes, cover and simmer for 12 minutes until the meatballs are cooked through. Stir in the spinach to wilt.', 'Meanwhile, cook the spaghetti according to the pack. Serve with the meatballs and sauce, topped with parmesan.'] }
   ],
   snack: [
-    { name: 'Chocolate protein yogurt', time: '3 min',
+    { name: 'Chocolate protein yogurt', img: 'chocolate-protein-yogurt', time: '3 min',
       ing: [['yog', 150, 'g'], ['cocoa', 6, 'g'], ['honey', 1, 'tsp'], ['berries', 30, 'g']],
       steps: ['Whisk the cocoa and honey into the yogurt until smooth and mousse-like.', 'Top with the berries. Good as an after-dinner dessert.'] },
-    { name: 'Boiled eggs & cucumber', time: '10 min',
+    { name: 'Boiled eggs & cucumber', img: 'boiled-eggs-cucumber', time: '10 min',
       ing: [['egg', 2, 'pc'], ['cucumber', 100, 'g'], ['~', 'Salt, black pepper, chilli flakes']],
       steps: ['Boil the eggs for 8–9 minutes, then cool them in cold water and peel. You can cook a batch for the week.', 'Halve the eggs, season with salt, pepper and chilli flakes, and serve with the sliced cucumber.'] }
   ]
@@ -210,7 +210,7 @@ function buildDay(i, T, P, lang) {
     var out = { slot: m.slot, rec: m.rec, lines: lines, n: nutrition(lines) };
     if (pt) {
       var tr = pt.recipes[m.slot.key][i], xi = 0;
-      out.rec = { name: tr.name, time: tr.time, steps: tr.steps, ing: m.rec.ing };
+      out.rec = { name: tr.name, time: tr.time, steps: tr.steps, ing: m.rec.ing, img: m.rec.img };
       out.slot = { key: m.slot.key, label: pt.slots[m.slot.key], share: m.slot.share };
       out.lines = lines.map(function (l) { return l[0] === '~' ? ['~', tr.x[xi++] || l[1]] : l; });
     }
