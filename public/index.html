@@ -520,18 +520,11 @@ body.lang-fading .wrap > .step { opacity: 0; }
           <label class="field"><span class="lbl">Daily deficit</span>
             <span class="box"><input id="deficit" type="number" inputmode="numeric" min="0" max="1500" step="25"><span class="unit">kcal</span></span>
           </label>
-          <label class="field"><span class="lbl">Deficit range</span>
-            <span class="box"><input id="spread" type="number" inputmode="numeric" min="0" max="500" step="25"><span class="unit">± kcal</span></span>
-          </label>
-          <div class="field wide sugg">
-            <div class="sugg-head"><span>How consistent will you be?</span><span>sets the range</span></div>
-            <div class="chips" id="sug-rng" role="group" aria-label="Suggested deficit range"></div>
-          </div>
           <label class="field wide"><span class="lbl">Start date</span>
             <span class="box"><input id="start-date" type="date"></span>
           </label>
         </div>
-        <p class="note">The pace sets your daily calorie deficit: how far below maintenance you eat. Paces ease with age to protect muscle, and never go above 30% of maintenance or below the minimum intake. The range shows how your goal date shifts if your real deficit lands that many calories above or below plan.</p>
+        <p class="note">The pace sets your daily calorie deficit: how far below maintenance you eat. Paces ease with age to protect muscle, and never go above 30% of maintenance or below the minimum intake. The plan assumes you stick to it every day.</p>
       </details>
     </div>
     <div class="step-nav">
@@ -706,8 +699,8 @@ body.lang-fading .wrap > .step { opacity: 0; }
   var MAX_WEEKS = 104;
 
   // Internal state is always metric.
-  var DEFAULTS = { units: 'metric', sex: 'f', age: 35, h: 168, w0: 82, goal: 72, act: '1.55', deficit: 500, spread: 150, mode: 'intake', day: 0, done: false };
-  var LIMITS = { age: [18, 90], h: [120, 230], w0: [35, 300], goal: [35, 300], deficit: [0, 1500], spread: [0, 500] };
+  var DEFAULTS = { units: 'metric', sex: 'f', age: 35, h: 168, w0: 82, goal: 72, act: '1.55', deficit: 500, mode: 'intake', day: 0, done: false };
+  var LIMITS = { age: [18, 90], h: [120, 230], w0: [35, 300], goal: [35, 300], deficit: [0, 1500] };
   var state = Object.assign({}, DEFAULTS);
 
   try {
@@ -734,7 +727,6 @@ body.lang-fading .wrap > .step { opacity: 0; }
     $('age').value = state.age;
     $('act').value = state.act;
     $('deficit').value = state.deficit;
-    $('spread').value = state.spread;
     if (imp()) {
       var totalIn = state.h / 2.54;
       var ft = Math.floor(totalIn / 12);
@@ -755,7 +747,6 @@ body.lang-fading .wrap > .step { opacity: 0; }
     state.act = $('act').value;
     state.age = Math.round(clamp(num('age', DEFAULTS.age), LIMITS.age[0], LIMITS.age[1]));
     state.deficit = clamp(num('deficit', DEFAULTS.deficit), LIMITS.deficit[0], LIMITS.deficit[1]);
-    state.spread = clamp(num('spread', DEFAULTS.spread), LIMITS.spread[0], LIMITS.spread[1]);
     var f = imp() ? LB : 1;
     var h = imp() ? (num('hft', 5) * 12 + num('hin', 0)) * 2.54 : num('hcm', DEFAULTS.h);
     state.h = clamp(h, LIMITS.h[0], LIMITS.h[1]);
@@ -861,8 +852,6 @@ body.lang-fading .wrap > .step { opacity: 0; }
     }
 
     var base = simulate(s, s.deficit);
-    var low = simulate(s, Math.max(0, s.deficit - s.spread));
-    var high = simulate(s, s.deficit + s.spread);
     var reachWk = base.reach ? Math.ceil(base.reach / 7) : MAX_WEEKS;
     var H = base.reach ? Math.min(MAX_WEEKS, Math.max(6, Math.ceil(reachWk * 1.15) + 2)) : MAX_WEEKS;
 
@@ -878,9 +867,6 @@ body.lang-fading .wrap > .step { opacity: 0; }
     var lines = L.maintMinus(kcal(maint0), nf0.format(s.deficit));
     if (!base.reach) {
       lines += L.levelsOff;
-    }
-    if (s.spread > 0) {
-      lines += L.rangeLine(nf0.format(s.spread), reachText(high, sd), reachText(low, sd));
     }
     $('sub').innerHTML = lines;
 
@@ -942,11 +928,8 @@ body.lang-fading .wrap > .step { opacity: 0; }
       var d = round25(clamp(s.w0 * pct / 100 * KCAL_PER_KG / 7, 100, cap));
       return { t: names[i], v: d, p: '≈ ' + wt(d * 7 / KCAL_PER_KG) + L.perWk };
     });
-    var rng = [[0.05].concat(L.rng[0]), [0.10].concat(L.rng[1]), [0.15].concat(L.rng[2])].map(function (x, i) {
-      return { t: x[1], v: round25(maint * x[0]), p: x[2], rec: i === 1 };
-    });
     def[1].rec = true;
-    return { def: def, rng: rng, band: bands[1] };
+    return { def: def, band: bands[1] };
   }
   function chipsHTML(list, current, prefix) {
     return list.map(function (c) {
@@ -960,7 +943,6 @@ body.lang-fading .wrap > .step { opacity: 0; }
       return '<button type="button" class="chip' + (c.rec ? ' rec' : '') + '" data-v="' + c.v + '" aria-pressed="' + (Math.abs(s.deficit - c.v) < 0.5) + '">' +
         '<span class="t">' + c.t + '</span><span class="n">' + c.p.replace('≈ ', '') + '</span><span class="p">−' + nf0.format(c.v) + L.kcalADay + '</span></button>';
     }).join('');
-    $('sug-rng').innerHTML = chipsHTML(sg.rng, s.spread, '±');
     $('sug-def-note').textContent = L.balancedNote;
   }
 
@@ -1017,14 +999,13 @@ body.lang-fading .wrap > .step { opacity: 0; }
   // ---- Wire up ----
   $('start-date').value = todayISO();
   writeInputs();
-  ['age', 'hcm', 'hft', 'hin', 'w0', 'goal-w', 'deficit', 'spread', 'start-date'].forEach(function (id) { $(id).addEventListener('input', render); });
+  ['age', 'hcm', 'hft', 'hin', 'w0', 'goal-w', 'deficit', 'start-date'].forEach(function (id) { $(id).addEventListener('input', render); });
   ['sex', 'act'].forEach(function (id) { $(id).addEventListener('change', render); });
   function setUnits(u) { if (state.units === u) return; readInputs(); state.units = u; writeInputs(); render(); }
   $('u-met').addEventListener('click', function () { setUnits('metric'); });
   $('u-imp').addEventListener('click', function () { setUnits('imperial'); });
 
   $('sug-def').addEventListener('click', function (e) { var b = e.target.closest('.chip'); if (b) { $('deficit').value = b.dataset.v; render(); } });
-  $('sug-rng').addEventListener('click', function (e) { var b = e.target.closest('.chip'); if (b) { $('spread').value = b.dataset.v; render(); } });
 
   // ---- Daily email sign-up ----
   var MSG = L.msg;
