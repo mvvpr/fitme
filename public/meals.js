@@ -84,9 +84,9 @@ var POOL = {
     { name: 'Chicken, chickpea & spinach curry', time: '30 min',
       ing: [['chicken', 130, 'g'], ['chickpeas', 80, 'g'], ['tins', 200, 'g'], ['spinach', 60, 'g'], ['onion', 0.5, 'pc'], ['garlic', 1, 'pc'], ['yog', 60, 'g'], ['basmati', 50, 'g'], ['oil', 1, 'tsp'], ['~', '2 tsp curry powder, fresh coriander or parsley']],
       steps: ['Cook the rice according to the pack. Cut the chicken into bite-sized pieces.', 'Heat the oil in a pan, cook the chopped onion for 5 minutes, then add the garlic and curry powder for 1 minute.', 'Add the chicken and cook for 3 minutes, then add the tomatoes and chickpeas and simmer for 12 minutes until the chicken is cooked through.', 'Stir in the spinach until wilted, take off the heat and stir in the yogurt for a creamy finish. Serve over the rice with the herbs.'] },
-    { name: 'Lemon-garlic salmon with potatoes & broccoli', time: '30 min',
-      ing: [['salmon', 130, 'g'], ['potato', 200, 'g'], ['broccoli', 120, 'g'], ['oil', 1, 'tsp'], ['lemon', 15, 'ml'], ['garlic', 1, 'pc'], ['~', 'Fresh dill or parsley, salt and black pepper']],
-      steps: ['Heat the oven to 200°C (180°C fan). Halve the potatoes, toss with the oil, salt and pepper and roast for 15 minutes.', 'Add the salmon to the tray, skin side down. Mix the lemon juice with the crushed garlic and spoon it over the fish.', 'Add the broccoli florets around the salmon and roast for 12–15 minutes more, until the salmon flakes easily.', 'Finish with fresh herbs.'] },
+    { name: 'Lemon-garlic chicken with potatoes & broccoli', time: '40 min',
+      ing: [['chicken', 150, 'g'], ['potato', 200, 'g'], ['broccoli', 120, 'g'], ['oil', 2, 'tsp'], ['lemon', 15, 'ml'], ['garlic', 1, 'pc'], ['~', 'Dried oregano, salt and black pepper']],
+      steps: ['Heat the oven to 200°C (180°C fan). Halve the potatoes, toss with 1 tsp of the oil, salt and pepper and roast for 15 minutes.', 'Mix the rest of the oil with the lemon juice, crushed garlic, oregano, salt and pepper, and coat the chicken in it.', 'Add the chicken and the broccoli florets to the tray and roast for 20–25 minutes more, until the chicken is cooked through with no pink in the middle.', 'Rest the chicken for 3 minutes, slice it and serve with the potatoes and broccoli. It is just as good cold for tomorrow\'s lunch.'] },
     { name: 'Lean beef & black bean chilli', time: '35 min',
       ing: [['beef', 130, 'g'], ['blackbeans', 80, 'g'], ['tins', 200, 'g'], ['onion', 0.5, 'pc'], ['pepper', 0.5, 'pc'], ['garlic', 1, 'pc'], ['basmati', 50, 'g'], ['oil', 1, 'tsp'], ['yog', 30, 'g'], ['~', '1 tsp ground cumin, 1 tsp smoked paprika, chilli powder to taste']],
       steps: ['Rinse the rice and cook in 1½ times its volume of water, covered, for 12 minutes. Rest off the heat.', 'Meanwhile, heat the oil and cook the diced onion and pepper for 5 minutes. Add the garlic and spices for 1 minute.', 'Add the beef and brown for 5 minutes, breaking it up. Stir in the tomatoes and black beans and simmer for 15 minutes until thick.', 'Serve over the rice with a spoonful of yogurt. It doubles well for batch cooking.'] },
@@ -107,9 +107,9 @@ var POOL = {
 // lunch and dinner are never the same meal on the same day.
 var WEEK = {
   breakfast: [0, 1, 2, 0, 1, 2, 0],
-  lunch: [0, 1, 2, 3, 0, 1, 2],
+  lunch: [0, 2, 1, 3, 0, 2, 1], // the two chicken mains (0 and 1) never share a day
   snack: [1, 0, 0, 1, 0, 0, 1], // boiled eggs only on the overnight-oats days, so no day is egg-heavy
-  dinner: [1, 2, 3, 0, 1, 2, 3]
+  dinner: [2, 1, 3, 0, 2, 1, 3]
 };
 function weekPlan(pool) {
   function pick(list) { return function (i) { return list[i]; }; }

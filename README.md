@@ -11,7 +11,7 @@ A calorie-deficit weight loss calculator. Enter your details and a daily deficit
 - Suggested deficits by age and body weight, and a consistency-based range
 - Weekly projection chart with best/worst-case range, plus a week-by-week table
 - Safety flags for very low intake, fast loss rates and low goal BMI
-- Weekly high-protein meal plan: 4 meals a day (breakfast, lunch, snack, dinner) with ingredients and method, portions scaled to the user's intake, plus a weekly shopping list. The week rotates a small pool (`POOL` in `meals.js`): 3 breakfasts, 4 mains that serve as lunch or dinner (tonight's dinner is tomorrow's lunch) and 2 snacks, sharing ingredients so the shopping list stays at about 28 items
+- Weekly high-protein meal plan: 4 meals a day (breakfast, lunch, snack, dinner) with ingredients and method, portions scaled to the user's intake, plus a weekly shopping list. The week rotates a small pool (`POOL` in `meals.js`): 3 breakfasts, 4 mains that serve as lunch or dinner (tonight's dinner is tomorrow's lunch) and 2 snacks, sharing ingredients so the shopping list stays at about 27 items
 - English and European Portuguese (`/pt/`): interface, recipes, shopping list and emails
 - Metric and imperial units; light and dark themes
 
