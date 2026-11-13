@@ -34,6 +34,23 @@ A calorie-deficit weight loss calculator. Enter your details and a daily deficit
 
 Until `MAILGUN_API_KEY` and `MAILGUN_DOMAIN` are set, sign-up shows "opens soon" and the scheduled send does nothing.
 
+## Meta Pixel + Conversions API
+
+- `public/track.js` shows a consent banner (EN/PT). Nothing from Meta loads and no `_fbp`/`_fbc` cookies are set until the visitor accepts; "Cookie settings" in the footers reopens the choice (declining later clears the cookies).
+- Events (each browser event has an `event_id`; the server sends the same id so Meta deduplicates):
+  - `PageView`: page load, Pixel + CAPI via `/api/track`
+  - `ViewContent`: first time the plan is shown, Pixel + CAPI via `/api/track`
+  - `Lead`: new email sign-up, Pixel + CAPI from `/api/subscribe` (hashed email)
+  - `CompleteRegistration`: double opt-in confirmed, CAPI only from `/api/confirm`
+- Server events are sent only for visitors who accepted cookies. `fbp`/`fbc` are kept on the subscriber record until confirmation, then deleted.
+
+| Variable | Value |
+|---|---|
+| `META_CAPI_TOKEN` | Conversions API access token from Events Manager (mark as secret). Without it, CAPI is skipped and the Pixel still works. |
+| `META_PIXEL_ID` | Optional, defaults to `1320302420180623` |
+| `META_TEST_EVENT_CODE` | Optional: set to the code from Events Manager → Test events while testing, then remove |
+| `META_GRAPH_VERSION` | Optional, defaults to `v24.0` |
+
 ## Brand
 
 Logo files live in `brand/`: full logo in light and dark versions (SVG and PNG) and the app icon.

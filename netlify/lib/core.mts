@@ -29,6 +29,8 @@ export type Subscriber = {
   lastConfirmMailAt?: string;
   lastSentDate?: string;
   lastShopDate?: string;
+  // Set only when the visitor accepted Meta cookies at sign-up; removed once CompleteRegistration is sent.
+  meta?: { fbp?: string; fbc?: string; url?: string } | null;
 };
 
 export async function sha256(text: string) {
@@ -83,6 +85,65 @@ export async function sendMail(cfg: NonNullable<ReturnType<typeof mailConfig>>, 
     body,
   });
   if (!res.ok) throw new Error(`Mailgun ${res.status}: ${(await res.text()).slice(0, 300)}`);
+}
+
+// ---------- Meta Conversions API ----------
+// Pixel id is public; the access token is a Netlify secret. Missing token = CAPI is skipped silently.
+export function metaConfig() {
+  const token = Netlify.env.get("META_CAPI_TOKEN");
+  if (!token) return null;
+  return {
+    pixel: Netlify.env.get("META_PIXEL_ID") || "1320302420180623",
+    token,
+    version: Netlify.env.get("META_GRAPH_VERSION") || "v24.0",
+    testCode: Netlify.env.get("META_TEST_EVENT_CODE") || "",
+  };
+}
+
+export const FBP_RE = /^fb\.[0-2]\.\d{10,14}\.\d{1,24}$/;
+export const FBC_RE = /^fb\.[0-2]\.\d{10,14}\.[A-Za-z0-9_\-]{10,500}$/;
+export const EVENT_ID_RE = /^[A-Za-z0-9_\-]{8,64}$/;
+
+export type MetaUser = { em?: string; external_id?: string; fbp?: string; fbc?: string; client_ip_address?: string; client_user_agent?: string };
+export type MetaEvent = { event_name: string; event_id: string; event_time?: number; event_source_url?: string; user_data: MetaUser; custom_data?: Record<string, unknown> };
+
+// Sends events to Meta. Never throws: measurement must not break the product.
+export async function sendMetaEvents(events: MetaEvent[]) {
+  const cfg = metaConfig();
+  if (!cfg || !events.length) return;
+  const data = events.map((e) => {
+    const user: Record<string, unknown> = {};
+    if (e.user_data.em) user.em = [e.user_data.em];
+    if (e.user_data.external_id) user.external_id = [e.user_data.external_id];
+    for (const k of ["fbp", "fbc", "client_ip_address", "client_user_agent"] as const) if (e.user_data[k]) user[k] = e.user_data[k];
+    return {
+      event_name: e.event_name,
+      event_id: e.event_id,
+      event_time: e.event_time || Math.floor(Date.now() / 1000),
+      action_source: "website",
+      ...(e.event_source_url ? { event_source_url: e.event_source_url } : {}),
+      user_data: user,
+      ...(e.custom_data && Object.keys(e.custom_data).length ? { custom_data: e.custom_data } : {}),
+    };
+  });
+  try {
+    const res = await fetch(`https://graph.facebook.com/${cfg.version}/${cfg.pixel}/events`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ data, access_token: cfg.token, ...(cfg.testCode ? { test_event_code: cfg.testCode } : {}) }),
+    });
+    if (!res.ok) console.error("Meta CAPI", res.status, (await res.text()).slice(0, 300));
+  } catch (err) {
+    console.error("Meta CAPI failed", err);
+  }
+}
+
+// Client IP and user agent, as Meta wants them for matching.
+export function requestUser(req: Request, context: { ip?: string }) {
+  return {
+    client_ip_address: context.ip || req.headers.get("x-nf-client-connection-ip") || undefined,
+    client_user_agent: (req.headers.get("user-agent") || "").slice(0, 400) || undefined,
+  };
 }
 
 // ---------- Rendering ----------

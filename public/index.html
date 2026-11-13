@@ -675,6 +675,7 @@ body.lang-fading .wrap > .step { opacity: 0; }
 <script src="meals.js"></script>
 <script src="meals.pt.js"></script>
 <script src="i18n.js"></script>
+<script src="track.js"></script>
 <script>
 (function () {
   var $ = function (id) { return document.getElementById(id); };
@@ -1162,12 +1163,13 @@ body.lang-fading .wrap > .step { opacity: 0; }
       if (!q('.sub-consent').checked) { subMsg(MSG.consent_required, 'err'); return; }
       var tz = 'Europe/Lisbon';
       try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || tz; } catch (err) {}
-      var payload = { email: email, consent: true, website: q('.sub-web').value, tz: tz, intake: subState ? subState.intake : 0, prot: subState ? subState.prot : 0, units: state.units, lang: LANG };
+      var meta = window.FITME_TRACK ? FITME_TRACK.leadContext() : null;
+      var payload = { email: email, consent: true, website: q('.sub-web').value, tz: tz, intake: subState ? subState.intake : 0, prot: subState ? subState.prot : 0, units: state.units, lang: LANG, meta: meta };
       q('.sub-btn').disabled = true; subMsg(MSG.sending);
       fetch('/api/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
         .then(function (res) { return res.json().catch(function () { return { ok: false, error: res.status === 429 ? 'rate' : 'unknown' }; }); })
         .then(function (data) {
-          if (data && data.ok) { subMsg(MSG.ok, 'ok'); form.reset(); }
+          if (data && data.ok) { subMsg(MSG.ok, 'ok'); form.reset(); if (window.FITME_TRACK) FITME_TRACK.leadDone(meta); }
           else subMsg(data && data.error === 'rate' ? MSG.rate : (MSG[data && data.error] || MSG.error), 'err');
         })
         .catch(function () { subMsg(MSG.preview, 'err'); })
@@ -1199,6 +1201,7 @@ body.lang-fading .wrap > .step { opacity: 0; }
     var h = document.querySelector('#step-' + name + ' .step-title, #step-' + name + ' h2[tabindex]');
     if (h && opts.focus) h.focus({ preventScroll: true });
     if (name === 'goal' && state.goal >= state.w0) $('goal-err').hidden = false;
+    if (name === 'plan' && window.FITME_TRACK) FITME_TRACK.trackOnce('ViewContent', { content_name: 'Weight loss plan', content_category: 'plan' });
   }
   function go(name) {
     if (name === 'plan') { readInputs(); if (state.goal >= state.w0) { $('goal-err').hidden = false; $('goal-w').focus(); return; } state.done = true; save(); }
@@ -1249,6 +1252,7 @@ body.lang-fading .wrap > .step { opacity: 0; }
       if (w && Math.abs(w - lastW) > 1) { lastW = w; render(); }
     }).observe($('chartwrap'));
   }
+  if (window.FITME_TRACK) FITME_TRACK.init({ onGranted: function () { if (current === 'plan') FITME_TRACK.trackOnce('ViewContent', { content_name: 'Weight loss plan', content_category: 'plan' }); } });
   route();
 })();
 </script>

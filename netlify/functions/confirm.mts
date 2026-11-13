@@ -1,6 +1,6 @@
 // GET /api/confirm?t=TOKEN — activate a subscription (or apply an update) from the opt-in email.
 import type { Config, Context } from "@netlify/functions";
-import { subscribers, subKey, tokKey, htmlPage, sitePath, T, type Subscriber } from "../lib/core.mts";
+import { subscribers, subKey, tokKey, htmlPage, sitePath, T, sendMetaEvents, requestUser, type Subscriber } from "../lib/core.mts";
 
 export default async (req: Request, context: Context) => {
   const siteUrl = context.site.url || new URL(req.url).origin;
@@ -21,9 +21,22 @@ export default async (req: Request, context: Context) => {
     pending: null,
     confirmToken: null,
     confirmedAt: sub.confirmedAt || new Date().toISOString(),
+    meta: null, // measurement ids are only kept until the confirmation is reported
   };
   await store.setJSON(subKey(hash!), updated);
   await store.delete(tokKey(token));
+
+  // CompleteRegistration: first confirmation only, and only if the visitor accepted Meta cookies at sign-up.
+  if (sub.meta && !sub.confirmedAt) {
+    const send = sendMetaEvents([{
+      event_name: "CompleteRegistration",
+      event_id: `cr_${hash!.slice(0, 32)}`,
+      event_source_url: sitePath(siteUrl, updated.lang),
+      user_data: { em: hash!, external_id: hash!, fbp: sub.meta.fbp, fbc: sub.meta.fbc, ...requestUser(req, context) },
+      custom_data: { content_name: "Daily meal plan email", status: "confirmed" },
+    }]);
+    if (typeof (context as any).waitUntil === "function") (context as any).waitUntil(send); else await send;
+  }
 
   return new Response(null, { status: 303, headers: { Location: `${sitePath(siteUrl, updated.lang)}#subscribed`, "cache-control": "no-store" } });
 };

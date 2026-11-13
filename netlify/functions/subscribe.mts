@@ -1,6 +1,6 @@
 // POST /api/subscribe — store a pending subscriber and send a double opt-in email.
 import type { Config, Context } from "@netlify/functions";
-import { subscribers, sha256, subKey, tokKey, unsKey, newToken, validTimeZone, mailConfig, sendMail, renderConfirmEmail, type Subscriber } from "../lib/core.mts";
+import { subscribers, sha256, subKey, tokKey, unsKey, newToken, validTimeZone, mailConfig, sendMail, renderConfirmEmail, sendMetaEvents, requestUser, FBP_RE, FBC_RE, EVENT_ID_RE, type Subscriber } from "../lib/core.mts";
 
 const CONSENT_TEXT = "I agree to receive a daily meal-plan email from FitMe. I can unsubscribe at any time.";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -25,6 +25,17 @@ export default async (req: Request, context: Context) => {
     lang: input?.lang === "pt" ? "pt" as const : "en" as const,
   };
 
+  // Meta measurement context: present only if the visitor accepted Meta cookies on the site.
+  const m = input?.meta && typeof input.meta === "object" ? input.meta : null;
+  const meta = m && EVENT_ID_RE.test(String(m.event_id || ""))
+    ? {
+        event_id: String(m.event_id),
+        fbp: typeof m.fbp === "string" && FBP_RE.test(m.fbp) ? m.fbp : undefined,
+        fbc: typeof m.fbc === "string" && FBC_RE.test(m.fbc) ? m.fbc : undefined,
+        url: typeof m.url === "string" ? m.url.split("#")[0].slice(0, 500) : undefined,
+      }
+    : null;
+
   const cfg = mailConfig();
   if (!cfg) return Response.json({ ok: false, error: "not_configured" }, { status: 503 });
 
@@ -42,6 +53,7 @@ export default async (req: Request, context: Context) => {
   const confirmToken = newToken();
   const isUpdate = existing?.status === "active";
 
+  const metaKeep = meta ? { fbp: meta.fbp, fbc: meta.fbc, url: meta.url } : null;
   const record: Subscriber = existing && isUpdate
     ? { ...existing, pending: settings, confirmToken, lastConfirmMailAt: now }
     : {
@@ -55,6 +67,7 @@ export default async (req: Request, context: Context) => {
         consentAt: now,
         consentText: CONSENT_TEXT,
         lastConfirmMailAt: now,
+        meta: metaKeep,
       };
 
   await store.setJSON(subKey(hash), record);
@@ -69,6 +82,17 @@ export default async (req: Request, context: Context) => {
   } catch (err) {
     console.error("confirm email failed", err);
     return Response.json({ ok: false, error: "send_failed" }, { status: 502 });
+  }
+  // Lead: a new sign-up (not a settings update), same event_id as the browser Pixel event.
+  if (meta && !isUpdate) {
+    const send = sendMetaEvents([{
+      event_name: "Lead",
+      event_id: meta.event_id,
+      event_source_url: meta.url && meta.url.startsWith(siteUrl) ? meta.url : siteUrl,
+      user_data: { em: hash, external_id: hash, fbp: meta.fbp, fbc: meta.fbc, ...requestUser(req, context) },
+      custom_data: { content_name: "Daily meal plan email" },
+    }]);
+    if (typeof (context as any).waitUntil === "function") (context as any).waitUntil(send); else await send;
   }
   return Response.json({ ok: true });
 };
