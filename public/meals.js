@@ -67,107 +67,62 @@ var DB = {
 };
 
 /* Ingredient lines: [key, qty, unit] with unit g | ml | pc | tsp | tbsp, or ['~', 'unscaled extra'] for herbs, spices and seasoning. */
-var RECIPES = {
+// The recipe pool: 3 breakfasts, 4 mains that work as lunch or dinner, and 2 snacks.
+var POOL = {
   breakfast: [
     { name: 'Berry overnight oats', time: '5 min + overnight',
       ing: [['oats', 50, 'g'], ['milk', 150, 'ml'], ['yog', 150, 'g'], ['berries', 80, 'g'], ['honey', 1, 'tsp'], ['~', 'Pinch of ground cinnamon']],
       steps: ['In a jar or bowl, stir together the oats, milk, yogurt and cinnamon.', 'Cover and refrigerate overnight (at least 4 hours) so the oats soften.', 'In the morning, stir, loosen with a splash of milk if it is too thick, and top with the berries and honey.'] },
-    { name: 'Spinach & feta omelette with toast', time: '12 min',
-      ing: [['egg', 2, 'pc'], ['eggw', 100, 'g'], ['spinach', 60, 'g'], ['feta', 30, 'g'], ['cherry', 80, 'g'], ['bread', 1, 'pc'], ['oil', 1, 'tsp'], ['~', 'Salt and black pepper']],
-      steps: ['Whisk the eggs and egg whites with a pinch of salt and pepper.', 'Heat the oil in a non-stick pan over medium heat, add the spinach and stir until wilted, about 1 minute.', 'Pour in the eggs, tilt to spread and cook 2–3 minutes until almost set. Crumble the feta over one half, fold and cook 1 minute more.', 'Toast the bread and serve with the omelette and halved cherry tomatoes.'] },
-    { name: 'Greek yogurt crunch bowl', time: '5 min',
-      ing: [['yog', 200, 'g'], ['berries', 100, 'g'], ['oats', 30, 'g'], ['walnuts', 15, 'g'], ['honey', 1, 'tsp'], ['~', 'Pinch of ground cinnamon']],
-      steps: ['Toast the oats in a dry pan over medium heat for 2–3 minutes, stirring, until golden. Let them cool slightly.', 'Spoon the yogurt into a bowl and top with the berries, toasted oats and chopped walnuts.', 'Drizzle with the honey and dust with cinnamon.'] },
-    { name: 'Smashed avocado & egg toast', time: '10 min',
-      ing: [['bread', 2, 'pc'], ['avocado', 50, 'g'], ['egg', 2, 'pc'], ['cherry', 60, 'g'], ['lemon', 5, 'ml'], ['~', 'Chilli flakes, salt and black pepper']],
-      steps: ['Poach the eggs in gently simmering water for 3 minutes, or fry them in a dry non-stick pan.', 'Meanwhile, toast the bread and mash the avocado with the lemon juice, salt and pepper.', 'Spread the avocado over the toast, top with the eggs and sliced cherry tomatoes, and finish with chilli flakes.'] },
+    { name: 'Spinach & parmesan omelette with toast', time: '12 min',
+      ing: [['egg', 3, 'pc'], ['spinach', 60, 'g'], ['parm', 10, 'g'], ['bread', 1, 'pc'], ['oil', 1, 'tsp'], ['~', 'Salt and black pepper']],
+      steps: ['Whisk the eggs with a pinch of salt and pepper.', 'Heat the oil in a non-stick pan over medium heat, add the spinach and stir until wilted, about 1 minute.', 'Pour in the eggs, tilt to spread and cook 2–3 minutes until almost set. Grate the parmesan over one half, fold and cook 1 minute more.', 'Serve with the toasted bread.'] },
     { name: 'Banana protein pancakes', time: '15 min',
-      ing: [['oats', 50, 'g'], ['banana', 1, 'pc'], ['egg', 1, 'pc'], ['eggw', 100, 'g'], ['whey', 15, 'g'], ['berries', 60, 'g'], ['oil', 1, 'tsp'], ['~', '½ tsp baking powder, pinch of ground cinnamon']],
-      steps: ['Blend the oats into a coarse flour, then add the banana, egg, egg whites, protein powder, baking powder and cinnamon and blend until smooth. No blender? Mash the banana well and whisk everything together.', 'Heat a non-stick pan over medium heat and brush with a little of the oil.', 'Pour in small rounds of batter (about 3 tbsp each). Cook 2 minutes until bubbles appear, flip and cook 1 minute more. Repeat with the rest.', 'Stack the pancakes and top with the berries.'] },
-    { name: 'Smoked salmon scrambled eggs on toast', time: '10 min',
-      ing: [['egg', 2, 'pc'], ['eggw', 60, 'g'], ['smsalmon', 50, 'g'], ['spinach', 40, 'g'], ['bread', 1, 'pc'], ['oil', 1, 'tsp'], ['~', 'Fresh chives or dill, black pepper']],
-      steps: ['Whisk the eggs and egg whites with black pepper.', 'Heat the oil in a non-stick pan over low–medium heat, wilt the spinach, then pour in the eggs.', 'Stir slowly for 2–3 minutes and take the pan off the heat while the eggs are still soft.', 'Serve on the toast, topped with the smoked salmon and herbs.'] },
-    { name: 'Peanut butter banana protein porridge', time: '8 min',
-      ing: [['oats', 50, 'g'], ['milk', 200, 'ml'], ['whey', 20, 'g'], ['banana', 0.5, 'pc'], ['pb', 10, 'g'], ['~', 'Pinch of ground cinnamon']],
-      steps: ['Simmer the oats and milk in a small pan over medium heat for 4–5 minutes, stirring, until thick and creamy.', 'Take off the heat and stir in the protein powder, adding a splash of water or milk if it gets too thick.', 'Top with the sliced banana, peanut butter and cinnamon.'] }
+      ing: [['oats', 50, 'g'], ['banana', 1, 'pc'], ['egg', 2, 'pc'], ['yog', 100, 'g'], ['berries', 60, 'g'], ['oil', 1, 'tsp'], ['~', '½ tsp baking powder, pinch of ground cinnamon']],
+      steps: ['Blend the oats into a coarse flour, then add the banana, eggs, baking powder and cinnamon and blend until smooth. No blender? Mash the banana well and whisk everything together.', 'Heat a non-stick pan over medium heat and brush with a little of the oil.', 'Pour in small rounds of batter (about 3 tbsp each). Cook 2 minutes until bubbles appear, flip and cook 1 minute more. Repeat with the rest.', 'Stack the pancakes and top with the yogurt and berries.'] }
   ],
-  lunch: [
-    { name: 'Mediterranean chicken couscous bowl', time: '20 min',
-      ing: [['chicken', 130, 'g'], ['couscous', 60, 'g'], ['cucumber', 80, 'g'], ['cherry', 80, 'g'], ['redonion', 30, 'g'], ['feta', 25, 'g'], ['oil', 2, 'tsp'], ['lemon', 15, 'ml'], ['~', 'Dried oregano, salt and black pepper']],
-      steps: ['Put the couscous in a bowl, pour over the same volume of boiling water, cover and leave for 5 minutes. Fluff with a fork.', 'Season the chicken with oregano, salt and pepper. Cook in a hot pan with 1 tsp of the oil for 5–6 minutes per side until cooked through, then slice.', 'Dice the cucumber, halve the tomatoes and finely slice the red onion.', 'Whisk the rest of the oil with the lemon juice, toss with the couscous and vegetables, and top with the chicken and crumbled feta.'] },
-    { name: 'Tuna, chickpea & sweetcorn salad', time: '10 min',
-      ing: [['tuna', 110, 'g'], ['chickpeas', 120, 'g'], ['sweetcorn', 40, 'g'], ['leaves', 50, 'g'], ['cucumber', 80, 'g'], ['tomato', 1, 'pc'], ['redonion', 20, 'g'], ['oil', 2, 'tsp'], ['lemon', 15, 'ml'], ['~', 'Fresh parsley, salt and black pepper']],
-      steps: ['Rinse and drain the chickpeas and sweetcorn.', 'Chop the cucumber and tomato and finely slice the red onion.', 'Whisk the oil, lemon juice, salt and pepper in a large bowl, then add the vegetables, chickpeas and sweetcorn and toss.', 'Serve over the salad leaves, topped with the flaked tuna and parsley.'] },
-    { name: 'Turkey taco wraps', time: '20 min',
-      ing: [['turkey', 120, 'g'], ['wrap', 1, 'pc'], ['pepper', 0.5, 'pc'], ['onion', 0.25, 'pc'], ['blackbeans', 50, 'g'], ['yog', 30, 'g'], ['leaves', 30, 'g'], ['oil', 1, 'tsp'], ['~', '1 tsp smoked paprika, ½ tsp ground cumin, salt']],
-      steps: ['Heat the oil in a pan over medium-high heat. Add the diced onion and pepper and cook for 4 minutes until softened.', 'Add the mince, paprika, cumin and salt. Cook for 6–8 minutes, breaking it up, until browned and cooked through.', 'Stir in the black beans with a splash of water and warm through for 2 minutes.', 'Warm the wrap, fill with the leaves and mince mixture, add the yogurt and roll up.'] },
-    { name: 'Red lentil & spinach soup', time: '30 min',
-      ing: [['lentils', 70, 'g'], ['carrot', 1, 'pc'], ['onion', 0.5, 'pc'], ['garlic', 1, 'pc'], ['tins', 200, 'g'], ['spinach', 40, 'g'], ['oil', 1, 'tsp'], ['yog', 50, 'g'], ['bread', 1, 'pc'], ['~', '1 tsp ground cumin, about 350 ml low-salt vegetable stock']],
-      steps: ['Heat the oil in a saucepan, add the chopped onion, carrot and garlic and cook gently for 5 minutes.', 'Stir in the cumin, then add the rinsed lentils, tomatoes and stock. Simmer for 18–20 minutes until the lentils break down.', 'Stir in the spinach until wilted. Blend part of the soup for a thicker texture if you like, and season.', 'Serve topped with the yogurt, with the bread on the side.'] },
-    { name: 'Prawn, avocado & rice bowl', time: '20 min',
-      ing: [['prawns', 150, 'g'], ['basmati', 60, 'g'], ['peas', 60, 'g'], ['sweetcorn', 40, 'g'], ['cucumber', 60, 'g'], ['avocado', 40, 'g'], ['carrot', 0.5, 'pc'], ['soy', 1, 'tbsp'], ['lemon', 10, 'ml'], ['~', 'Spring onion or fresh coriander to garnish']],
-      steps: ['Rinse the rice and cook in 1½ times its volume of water, covered, for 12 minutes, adding the frozen peas for the last 3 minutes. Rest for 5 minutes off the heat.', 'Cook the prawns (thawed if frozen) in a hot non-stick pan for 2–3 minutes until pink.', 'Slice the cucumber and avocado and grate the carrot. Mix the soy sauce with the lemon juice.', 'Arrange everything over the rice with the sweetcorn, drizzle with the dressing and garnish.'] },
-    { name: 'Chicken pesto pasta salad', time: '20 min',
-      ing: [['pasta', 70, 'g'], ['chicken', 120, 'g'], ['pesto', 15, 'g'], ['cherry', 100, 'g'], ['rocket', 30, 'g'], ['parm', 10, 'g'], ['~', 'Salt and black pepper']],
-      steps: ['Cook the pasta in salted boiling water according to the pack, then drain and rinse under cold water.', 'Season the chicken and cook in a hot non-stick pan for 5–6 minutes per side until cooked through. Slice.', 'Toss the pasta with the pesto, halved tomatoes and rocket.', 'Top with the chicken and grated parmesan. It keeps well in the fridge as a packed lunch.'] },
-    { name: 'Chickpea shakshuka', time: '25 min',
-      ing: [['egg', 3, 'pc'], ['tins', 250, 'g'], ['pepper', 1, 'pc'], ['onion', 0.5, 'pc'], ['garlic', 1, 'pc'], ['chickpeas', 80, 'g'], ['feta', 20, 'g'], ['oil', 1, 'tsp'], ['bread', 1, 'pc'], ['~', '1 tsp ground cumin, 1 tsp smoked paprika, fresh parsley']],
-      steps: ['Heat the oil in a frying pan, add the sliced onion and pepper and cook for 6 minutes until soft. Add the garlic, cumin and paprika for 1 minute.', 'Pour in the tomatoes and chickpeas and simmer for 8–10 minutes until thickened. Season.', 'Make a hollow in the sauce for each egg, crack them in, cover and cook on low for 5–7 minutes until the whites are set.', 'Scatter with the feta and parsley and serve with the bread.'] }
-  ],
-  snack: [
-    { name: 'Boiled eggs & cherry tomatoes', time: '10 min',
-      ing: [['egg', 2, 'pc'], ['cherry', 100, 'g'], ['~', 'Salt, black pepper, pinch of paprika']],
-      steps: ['Boil the eggs for 8–9 minutes, then cool them in cold water and peel. You can cook a batch for the week.', 'Halve the eggs, season with salt, pepper and paprika, and serve with the tomatoes.'] },
-    { name: 'Berry Greek yogurt', time: '2 min',
-      ing: [['yog', 150, 'g'], ['berries', 60, 'g'], ['~', 'Pinch of ground cinnamon']],
-      steps: ['Spoon the yogurt into a bowl.', 'Top with the berries and a pinch of cinnamon.'] },
-    { name: 'Cottage cheese & cucumber rice cakes', time: '5 min',
-      ing: [['ricecake', 2, 'pc'], ['cottage', 100, 'g'], ['cucumber', 40, 'g'], ['~', 'Black pepper, chilli flakes']],
-      steps: ['Spread the cottage cheese over the rice cakes.', 'Top with thinly sliced cucumber, black pepper and chilli flakes.'] },
-    { name: 'Hummus & veggie sticks', time: '5 min',
-      ing: [['hummus', 50, 'g'], ['carrot', 1, 'pc'], ['pepper', 0.5, 'pc'], ['cucumber', 60, 'g']],
-      steps: ['Cut the carrot, pepper and cucumber into sticks.', 'Serve with the hummus for dipping.'] },
-    { name: 'Chocolate protein yogurt', time: '3 min',
-      ing: [['yog', 150, 'g'], ['cocoa', 6, 'g'], ['honey', 1, 'tsp'], ['berries', 30, 'g']],
-      steps: ['Whisk the cocoa and honey into the yogurt until smooth and mousse-like.', 'Top with the berries. Good as an after-dinner dessert.'] },
-    { name: 'Apple & peanut butter', time: '2 min',
-      ing: [['apple', 1, 'pc'], ['pb', 15, 'g']],
-      steps: ['Core and slice the apple.', 'Serve with the peanut butter for dipping.'] },
-    { name: 'Dark chocolate, almonds & kiwi', time: '2 min',
-      ing: [['almonds', 15, 'g'], ['choc', 10, 'g'], ['kiwi', 1, 'pc']],
-      steps: ['Peel and slice the kiwi (or eat it halved with a teaspoon).', 'Serve with the almonds and a square of dark chocolate. A light after-dinner treat.'] }
-  ],
-  dinner: [
+  main: [
+    { name: 'Chicken, chickpea & spinach curry', time: '30 min',
+      ing: [['chicken', 130, 'g'], ['chickpeas', 80, 'g'], ['tins', 200, 'g'], ['spinach', 60, 'g'], ['onion', 0.5, 'pc'], ['garlic', 1, 'pc'], ['yog', 60, 'g'], ['basmati', 50, 'g'], ['oil', 1, 'tsp'], ['~', '2 tsp curry powder, fresh coriander or parsley']],
+      steps: ['Cook the rice according to the pack. Cut the chicken into bite-sized pieces.', 'Heat the oil in a pan, cook the chopped onion for 5 minutes, then add the garlic and curry powder for 1 minute.', 'Add the chicken and cook for 3 minutes, then add the tomatoes and chickpeas and simmer for 12 minutes until the chicken is cooked through.', 'Stir in the spinach until wilted, take off the heat and stir in the yogurt for a creamy finish. Serve over the rice with the herbs.'] },
     { name: 'Lemon-garlic salmon with potatoes & broccoli', time: '30 min',
       ing: [['salmon', 130, 'g'], ['potato', 200, 'g'], ['broccoli', 120, 'g'], ['oil', 1, 'tsp'], ['lemon', 15, 'ml'], ['garlic', 1, 'pc'], ['~', 'Fresh dill or parsley, salt and black pepper']],
       steps: ['Heat the oven to 200°C (180°C fan). Halve the potatoes, toss with the oil, salt and pepper and roast for 15 minutes.', 'Add the salmon to the tray, skin side down. Mix the lemon juice with the crushed garlic and spoon it over the fish.', 'Add the broccoli florets around the salmon and roast for 12–15 minutes more, until the salmon flakes easily.', 'Finish with fresh herbs.'] },
-    { name: 'Chicken & veg stir-fry with rice', time: '20 min',
-      ing: [['chicken', 140, 'g'], ['basmati', 60, 'g'], ['pepper', 1, 'pc'], ['broccoli', 80, 'g'], ['carrot', 0.5, 'pc'], ['soy', 1, 'tbsp'], ['garlic', 1, 'pc'], ['oil', 1, 'tsp'], ['~', 'Fresh ginger (optional), spring onion, chilli flakes']],
-      steps: ['Rinse the rice and cook in 1½ times its volume of water, covered, for 12 minutes. Rest off the heat.', 'Slice the chicken into strips. Heat the oil in a large pan or wok over high heat and stir-fry the chicken for 5 minutes until cooked.', 'Add the garlic (and ginger, if using) and the sliced vegetables and stir-fry for 3–4 minutes, keeping them crisp.', 'Add the soy sauce with a splash of water and toss for 1 minute. Serve over the rice with spring onion and chilli flakes.'] },
     { name: 'Lean beef & black bean chilli', time: '35 min',
-      ing: [['beef', 130, 'g'], ['blackbeans', 80, 'g'], ['tins', 200, 'g'], ['onion', 0.5, 'pc'], ['pepper', 0.5, 'pc'], ['garlic', 1, 'pc'], ['brice', 50, 'g'], ['oil', 1, 'tsp'], ['yog', 30, 'g'], ['~', '1 tsp ground cumin, 1 tsp smoked paprika, chilli powder to taste']],
-      steps: ['Cook the rice in plenty of boiling water for 25–30 minutes, then drain.', 'Meanwhile, heat the oil and cook the diced onion and pepper for 5 minutes. Add the garlic and spices for 1 minute.', 'Add the beef and brown for 5 minutes, breaking it up. Stir in the tomatoes and black beans and simmer for 15 minutes until thick.', 'Serve over the rice with a spoonful of yogurt. It doubles well for batch cooking.'] },
-    { name: 'Lemon cod with rice & green beans', time: '25 min',
-      ing: [['cod', 170, 'g'], ['basmati', 55, 'g'], ['greenbeans', 120, 'g'], ['cherry', 80, 'g'], ['oil', 2, 'tsp'], ['lemon', 15, 'ml'], ['garlic', 1, 'pc'], ['~', 'Fresh parsley, salt and black pepper']],
-      steps: ['Rinse the rice and cook in 1½ times its volume of water, covered, for 12 minutes. Rest off the heat.', 'Heat the oven to 200°C (180°C fan). Put the cod (thawed if frozen) and tomatoes on a lined tray, drizzle with half the oil and the lemon juice, add the sliced garlic and season. Bake for 12–15 minutes until the fish flakes.', 'Boil the green beans (fresh or frozen) for 4–5 minutes and toss with the rest of the oil.', 'Serve the cod over the rice with the beans and roasted tomatoes, scattered with parsley.'] },
+      ing: [['beef', 130, 'g'], ['blackbeans', 80, 'g'], ['tins', 200, 'g'], ['onion', 0.5, 'pc'], ['pepper', 0.5, 'pc'], ['garlic', 1, 'pc'], ['basmati', 50, 'g'], ['oil', 1, 'tsp'], ['yog', 30, 'g'], ['~', '1 tsp ground cumin, 1 tsp smoked paprika, chilli powder to taste']],
+      steps: ['Rinse the rice and cook in 1½ times its volume of water, covered, for 12 minutes. Rest off the heat.', 'Meanwhile, heat the oil and cook the diced onion and pepper for 5 minutes. Add the garlic and spices for 1 minute.', 'Add the beef and brown for 5 minutes, breaking it up. Stir in the tomatoes and black beans and simmer for 15 minutes until thick.', 'Serve over the rice with a spoonful of yogurt. It doubles well for batch cooking.'] },
     { name: 'Turkey meatballs with wholewheat spaghetti', time: '35 min',
-      ing: [['turkey', 140, 'g'], ['passata', 200, 'g'], ['pasta', 60, 'g'], ['onion', 0.25, 'pc'], ['garlic', 1, 'pc'], ['spinach', 50, 'g'], ['parm', 10, 'g'], ['oil', 1, 'tsp'], ['~', '1 tsp dried oregano, salt and black pepper']],
-      steps: ['Mix the mince with half the grated garlic, the oregano, salt and pepper, and roll into small meatballs.', 'Heat the oil in a pan and brown the meatballs on all sides for 5 minutes. Add the chopped onion and the rest of the garlic for 2 minutes.', 'Pour in the passata, cover and simmer for 12 minutes until the meatballs are cooked through. Stir in the spinach to wilt.', 'Meanwhile, cook the spaghetti according to the pack. Serve with the meatballs and sauce, topped with parmesan.'] },
-    { name: 'Pork tenderloin & sweet potato tray bake', time: '35 min',
-      ing: [['pork', 140, 'g'], ['sweetpot', 200, 'g'], ['redonion', 0.5, 'pc'], ['pepper', 1, 'pc'], ['courgette', 0.5, 'pc'], ['garlic', 1, 'pc'], ['oil', 2, 'tsp'], ['~', '1 tsp smoked paprika, 1 tsp dried thyme, salt and black pepper']],
-      steps: ['Heat the oven to 200°C (180°C fan). Cut the sweet potato into chunks and the onion, pepper and courgette into wedges.', 'Toss the vegetables with most of the oil, the paprika, thyme, crushed garlic and seasoning, and roast for 15 minutes.', 'Rub the pork with the rest of the oil and season. Sear in a hot pan for 1 minute per side, add to the tray and roast for 15–18 minutes until just cooked (63°C inside).', 'Rest the pork for 5 minutes, slice and serve with the vegetables.'] },
-    { name: 'Chicken, chickpea & spinach curry', time: '30 min',
-      ing: [['chicken', 130, 'g'], ['chickpeas', 80, 'g'], ['tins', 200, 'g'], ['spinach', 60, 'g'], ['onion', 0.5, 'pc'], ['garlic', 1, 'pc'], ['yog', 60, 'g'], ['basmati', 50, 'g'], ['oil', 1, 'tsp'], ['~', '2 tsp curry powder, fresh coriander or parsley']],
-      steps: ['Cook the rice according to the pack. Cut the chicken into bite-sized pieces.', 'Heat the oil in a pan, cook the chopped onion for 5 minutes, then add the garlic and curry powder for 1 minute.', 'Add the chicken and cook for 3 minutes, then add the tomatoes and chickpeas and simmer for 12 minutes until the chicken is cooked through.', 'Stir in the spinach until wilted, take off the heat and stir in the yogurt for a creamy finish. Serve over the rice with the herbs.'] }
+      ing: [['turkey', 140, 'g'], ['tins', 200, 'g'], ['pasta', 60, 'g'], ['onion', 0.25, 'pc'], ['garlic', 1, 'pc'], ['spinach', 50, 'g'], ['parm', 10, 'g'], ['oil', 1, 'tsp'], ['~', '1 tsp dried oregano, salt and black pepper']],
+      steps: ['Mix the mince with half the grated garlic, the oregano, salt and pepper, and roll into small meatballs.', 'Heat the oil in a pan and brown the meatballs on all sides for 5 minutes. Add the chopped onion and the rest of the garlic for 2 minutes.', 'Pour in the chopped tomatoes, cover and simmer for 12 minutes until the meatballs are cooked through. Stir in the spinach to wilt.', 'Meanwhile, cook the spaghetti according to the pack. Serve with the meatballs and sauce, topped with parmesan.'] }
+  ],
+  snack: [
+    { name: 'Chocolate protein yogurt', time: '3 min',
+      ing: [['yog', 150, 'g'], ['cocoa', 6, 'g'], ['honey', 1, 'tsp'], ['berries', 30, 'g']],
+      steps: ['Whisk the cocoa and honey into the yogurt until smooth and mousse-like.', 'Top with the berries. Good as an after-dinner dessert.'] },
+    { name: 'Boiled eggs & cucumber', time: '10 min',
+      ing: [['egg', 2, 'pc'], ['cucumber', 100, 'g'], ['~', 'Salt, black pepper, chilli flakes']],
+      steps: ['Boil the eggs for 8–9 minutes, then cool them in cold water and peel. You can cook a batch for the week.', 'Halve the eggs, season with salt, pepper and chilli flakes, and serve with the sliced cucumber.'] }
   ]
 };
+// How the pool fills the week. Tonight's dinner is tomorrow's lunch, so a main can be cooked once and eaten twice;
+// lunch and dinner are never the same meal on the same day.
+var WEEK = {
+  breakfast: [0, 1, 2, 0, 1, 2, 0],
+  lunch: [0, 1, 2, 3, 0, 1, 2],
+  snack: [1, 0, 0, 1, 0, 0, 1], // boiled eggs only on the overnight-oats days, so no day is egg-heavy
+  dinner: [1, 2, 3, 0, 1, 2, 3]
+};
+function weekPlan(pool) {
+  function pick(list) { return function (i) { return list[i]; }; }
+  return { breakfast: WEEK.breakfast.map(pick(pool.breakfast)), lunch: WEEK.lunch.map(pick(pool.main)), snack: WEEK.snack.map(pick(pool.snack)), dinner: WEEK.dinner.map(pick(pool.main)) };
+}
+var RECIPES = weekPlan(POOL);
 
 /* Shared meal-plan logic: used by the FitMe page (classic script) and the Netlify Functions (side-effect import). */
 var SLOTS = [
   { key: 'breakfast', label: 'Breakfast', share: 0.25 },
-  { key: 'lunch', label: 'Lunch', share: 0.32 },
+  { key: 'lunch', label: 'Lunch', share: 0.315 },
   { key: 'snack', label: 'Snack · mid-afternoon or after dinner', share: 0.12 },
-  { key: 'dinner', label: 'Dinner', share: 0.31 }
+  { key: 'dinner', label: 'Dinner', share: 0.315 }
 ];
 var DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 function mClamp(v, lo, hi) { return Math.min(hi, Math.max(lo, v)); }
@@ -190,7 +145,11 @@ function scaleLine(l, f) {
   else q = q < 20 ? Math.max(1, Math.round(q)) : Math.round(q / 5) * 5;
   return [l[0], q, u];
 }
-function ptData(lang) { return lang === 'pt' && globalThis.FITME_MEALS_PT ? globalThis.FITME_MEALS_PT : null; }
+function ptData(lang) {
+  var pt = lang === 'pt' && globalThis.FITME_MEALS_PT ? globalThis.FITME_MEALS_PT : null;
+  if (pt && pt.recipes.main) pt.recipes = weekPlan(pt.recipes); // the Portuguese pool follows the same weekly rotation
+  return pt;
+}
 function ingName(key, lang) { var pt = ptData(lang); return pt && pt.db[key] ? pt.db[key][0] : DB[key][0]; }
 function pieceLabels(key, lang) { var pt = ptData(lang); return ((pt && pt.db[key] && pt.db[key][1]) || DB[key][7] || '|').split('|'); }
 function amountText(l, imperial, lang) {
@@ -215,7 +174,7 @@ function nutrition(lines) {
   return t;
 }
 // Protein-rich = at least 35% of the ingredient's calories come from protein (meat, fish, eggs, egg whites, Greek yogurt, cottage cheese, whey...).
-function isProteinRich(key) { var d = DB[key]; return d && d[1] > 0 && (d[2] * 4) / d[1] >= 0.35; }
+function isProteinRich(key) { var d = DB[key]; return d && d[1] > 0 && (d[2] * 4) / d[1] >= 0.4; } // lean protein only: eggs (~35%) scale with the rest of the meal
 var PROTEIN_PER_KG = 1.5; // grams per kg of goal weight
 function proteinTarget(goalKg) { return Math.round(PROTEIN_PER_KG * goalKg); }
 // Build a day's four meals for an intake of T kcal. If P (grams of protein) is given and the
@@ -241,7 +200,7 @@ function buildDay(i, T, P, lang) {
     if (Pp + Po < P && Kp > 0 && Ko > 0) {
       var det = Kp * Po - Ko * Pp;
       if (det !== 0) { a = (T * Po - Ko * P) / det; b = (Kp * P - Pp * T) / det; }
-      a = mClamp(a, 1, 2.2);
+      a = mClamp(a, 1, 2.6);
       b = mClamp((T - a * Kp) / Ko, 0.6, 1);
     }
   }
@@ -267,8 +226,9 @@ function shoppingList(T, P, lang, imperial) {
   var num = function (v) { return v.toLocaleString(loc); };
   var totals = {}, extras = {};
   for (var i = 0; i < 7; i++) buildDay(i, T, P, lang).forEach(function (m) {
+    m.rec.ing.forEach(function (l) { if (l[0] === '~') extras[l[1]] = 1; });
     m.lines.forEach(function (l) {
-      if (l[0] === '~') { extras[l[1]] = 1; return; }
+      if (l[0] === '~') return;
       var t = totals[l[0]] || (totals[l[0]] = { g: 0, pc: 0, tsp: 0, ml: 0 });
       if (l[2] === 'pc') t.pc += l[1];
       else if (l[2] === 'tsp') t.tsp += l[1];
@@ -295,19 +255,20 @@ function shoppingList(T, P, lang, imperial) {
   var groups = AISLES.filter(function (a) { return byAisle[a]; }).map(function (a) {
     return { aisle: pt ? pt.aisles[a] : a, items: byAisle[a].sort(function (x, y) { return x.n.localeCompare(y.n, loc); }) };
   });
-  var ex;
-  if (pt) ex = pt.shopExtras;
-  else {
-    var seen = {}, list = [];
+  var seen = {}, list = [];
+  {
     Object.keys(extras).forEach(function (e) {
       e.split(/,| and /).forEach(function (x) {
         x = x.trim().replace(/^(about\s+)?(\d+|½|¼)\s*(tsp|tbsp|ml)?\s*/i, '').replace(/^pinch of\s+/i, '').replace(/\s*\(optional\)/i, '').replace(/\s+to (taste|garnish)$/i, '').trim();
-        if (!x || seen[x.toLowerCase()]) return;
-        seen[x.toLowerCase()] = 1; list.push(x.charAt(0).toUpperCase() + x.slice(1));
+        if (!x) return;
+        if (seen[x.toLowerCase()]) return;
+        seen[x.toLowerCase()] = 1;
+        x = x.charAt(0).toUpperCase() + x.slice(1);
+        list.push(pt ? (pt.extraNames[x] || x) : x);
       });
     });
-    ex = list.sort().join(', ');
   }
+  var ex = list.sort(function (a, b) { return a.localeCompare(b, loc); }).join(', ');
   return { groups: groups, extras: ex };
 }
 function dayTotals(meals) {
