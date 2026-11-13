@@ -699,7 +699,8 @@ body.lang-fading .wrap > .step { opacity: 0; }
   var MAX_WEEKS = 104;
 
   // Internal state is always metric.
-  var DEFAULTS = { units: 'metric', sex: 'f', age: 35, h: 168, w0: 82, goal: 72, act: '1.55', deficit: 500, mode: 'intake', day: 0, done: false };
+  var DEFAULTS = { units: 'metric', sex: 'f', age: 35, h: 168, w0: 82, goal: 72, act: '1.55', deficit: 500, pace: 1, mode: 'intake', day: 0, done: false };
+  // pace: 0 slow, 1 recommended, 2 faster, -1 a deficit typed in Advanced settings. New visitors start on recommended.
   var LIMITS = { age: [18, 90], h: [120, 230], w0: [35, 300], goal: [35, 300], deficit: [0, 1500] };
   var state = Object.assign({}, DEFAULTS);
 
@@ -707,6 +708,7 @@ body.lang-fading .wrap > .step { opacity: 0; }
     var saved = JSON.parse(localStorage.getItem('deficit-horizon') || 'null');
     if (saved && typeof saved === 'object') {
       Object.keys(DEFAULTS).forEach(function (k) { if (k in saved && typeof saved[k] === typeof DEFAULTS[k]) state[k] = saved[k]; });
+      if (!('pace' in saved)) state.pace = -2; // saved before paces existed: keep their deficit, match it to a pace on first render
     }
   } catch (e) {}
 
@@ -813,8 +815,18 @@ body.lang-fading .wrap > .step { opacity: 0; }
   }
 
   // ---- Render ----
+  // Keep the deficit in step with the chosen pace (it moves with age, weight and activity).
+  function applyPace() {
+    var def = suggestions(state).def;
+    if (state.pace === -2) {
+      state.pace = -1;
+      for (var i = 0; i < def.length; i++) if (Math.abs(def[i].v - state.deficit) < 0.5) state.pace = i;
+    }
+    if (state.pace >= 0 && def[state.pace]) { state.deficit = def[state.pace].v; $('deficit').value = state.deficit; }
+  }
   function render() {
     readInputs();
+    applyPace();
     var s = Object.assign({}, state);
     var sd = startDate();
 
@@ -905,7 +917,7 @@ body.lang-fading .wrap > .step { opacity: 0; }
   var ACT_SHORT = L.actShort;
   function paceName(s) {
     var sg = suggestions(s), names = L.paceNames;
-    for (var i = 0; i < sg.def.length; i++) if (Math.abs(sg.def[i].v - s.deficit) < 0.5) return names[i];
+    if (s.pace >= 0 && names[s.pace]) return names[s.pace];
     return L.customDeficit(nf0.format(s.deficit));
   }
   function renderSummary(s) {
@@ -939,8 +951,8 @@ body.lang-fading .wrap > .step { opacity: 0; }
   }
   function renderSuggestions(s) {
     var sg = suggestions(s);
-    $('sug-def').innerHTML = sg.def.map(function (c) {
-      return '<button type="button" class="chip' + (c.rec ? ' rec' : '') + '" data-v="' + c.v + '" aria-pressed="' + (Math.abs(s.deficit - c.v) < 0.5) + '">' +
+    $('sug-def').innerHTML = sg.def.map(function (c, i) {
+      return '<button type="button" class="chip' + (c.rec ? ' rec' : '') + '" data-v="' + c.v + '" data-i="' + i + '" aria-pressed="' + (s.pace === i) + '">' +
         '<span class="t">' + c.t + '</span><span class="n">' + c.p.replace('≈ ', '') + '</span><span class="p">−' + nf0.format(c.v) + L.kcalADay + '</span></button>';
     }).join('');
     $('sug-def-note').textContent = L.balancedNote;
@@ -999,13 +1011,14 @@ body.lang-fading .wrap > .step { opacity: 0; }
   // ---- Wire up ----
   $('start-date').value = todayISO();
   writeInputs();
-  ['age', 'hcm', 'hft', 'hin', 'w0', 'goal-w', 'deficit', 'start-date'].forEach(function (id) { $(id).addEventListener('input', render); });
+  ['age', 'hcm', 'hft', 'hin', 'w0', 'goal-w', 'start-date'].forEach(function (id) { $(id).addEventListener('input', render); });
+  $('deficit').addEventListener('input', function () { state.pace = -1; render(); });
   ['sex', 'act'].forEach(function (id) { $(id).addEventListener('change', render); });
   function setUnits(u) { if (state.units === u) return; readInputs(); state.units = u; writeInputs(); render(); }
   $('u-met').addEventListener('click', function () { setUnits('metric'); });
   $('u-imp').addEventListener('click', function () { setUnits('imperial'); });
 
-  $('sug-def').addEventListener('click', function (e) { var b = e.target.closest('.chip'); if (b) { $('deficit').value = b.dataset.v; render(); } });
+  $('sug-def').addEventListener('click', function (e) { var b = e.target.closest('.chip'); if (b) { state.pace = +b.dataset.i; render(); } });
 
   // ---- Daily email sign-up ----
   var MSG = L.msg;
