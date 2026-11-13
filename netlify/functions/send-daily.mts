@@ -2,12 +2,13 @@
 // when it is 07:xx in their own time zone (once per local day), and on Saturdays at 08:xx
 // their shopping list for the week (once per Saturday).
 import type { Config, Context } from "@netlify/functions";
-import { subscribers, subKey, mailConfig, sendMail, renderDailyEmail, renderShoppingEmail, type Subscriber } from "../lib/core.mts";
+import { subscribers, subKey, tokKey, unsKey, mailConfig, sendMail, renderDailyEmail, renderShoppingEmail, type Subscriber } from "../lib/core.mts";
 
 const SEND_HOUR = 7;
 const SHOP_HOUR = 8;
 const SHOP_DAY = 5; // Saturday (Mon = 0)
 const CONCURRENCY = 8;
+const PENDING_TTL_MS = 30 * 864e5; // unconfirmed sign-ups are deleted after 30 days (privacy policy)
 const TIME_BUDGET_MS = 24_000; // scheduled functions stop at 30s
 
 const WEEKDAY: Record<string, number> = { Mon: 0, Tue: 1, Wed: 2, Thu: 3, Fri: 4, Sat: 5, Sun: 6 };
@@ -30,13 +31,19 @@ export default async (req: Request, context: Context) => {
   const store = subscribers();
   const { blobs } = await store.list({ prefix: "sub/" });
   const now = new Date();
-  let sent = 0, shops = 0, skipped = 0, failed = 0;
+  let sent = 0, shops = 0, skipped = 0, failed = 0, expired = 0;
 
   const queue = [...blobs];
   async function worker() {
     while (queue.length && Date.now() - started < TIME_BUDGET_MS) {
       const { key } = queue.shift()!;
       const sub = (await store.get(key, { type: "json" })) as Subscriber | null;
+      if (sub && sub.status === "pending" && Date.now() - Date.parse(sub.lastConfirmMailAt || sub.createdAt) > PENDING_TTL_MS) {
+        await store.delete(key);
+        if (sub.confirmToken) await store.delete(tokKey(sub.confirmToken));
+        if (sub.unsubToken) await store.delete(unsKey(sub.unsubToken));
+        expired++; continue;
+      }
       if (!sub || sub.status !== "active") { skipped++; continue; }
       const lang = sub.lang === "pt" ? "pt" : "en";
       const local = localParts(now, sub.tz, lang);
@@ -59,7 +66,7 @@ export default async (req: Request, context: Context) => {
     }
   }
   await Promise.all(Array.from({ length: CONCURRENCY }, worker));
-  console.log(`send-daily: ${sent} plans, ${shops} shopping lists, ${skipped} skipped, ${failed} failed, ${queue.length} left (of ${blobs.length})`);
+  console.log(`send-daily: ${sent} plans, ${shops} shopping lists, ${skipped} skipped, ${failed} failed, ${expired} expired, ${queue.length} left (of ${blobs.length})`);
 };
 
 export const config: Config = { schedule: "0 * * * *" }; // hourly at :00 UTC; plans at 07:00 local, shopping lists Saturdays 08:00 local

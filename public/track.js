@@ -8,14 +8,15 @@
   var TXT = {
     en: {
       text: 'We use Meta cookies to measure how our ads perform. They load only if you accept, and you can change your mind anytime.',
-      accept: 'Accept', decline: 'Decline', settings: 'Cookie settings', label: 'Cookie consent'
+      accept: 'Accept', decline: 'Decline', settings: 'Cookie settings', label: 'Cookie consent', privacy: 'Privacy policy'
     },
     pt: {
       text: 'Usamos cookies da Meta para medir o desempenho dos nossos anúncios. Só são carregados se aceitares, e podes mudar de ideias a qualquer momento.',
-      accept: 'Aceitar', decline: 'Recusar', settings: 'Definições de cookies', label: 'Consentimento de cookies'
+      accept: 'Aceitar', decline: 'Recusar', settings: 'Definições de cookies', label: 'Consentimento de cookies', privacy: 'Política de privacidade'
     }
   };
 
+  function privacyHref() { return lang() === 'pt' ? '/pt/privacy.html' : '/privacy.html'; }
   function lang() { return (document.documentElement.lang || 'en').slice(0, 2) === 'pt' ? 'pt' : 'en'; }
   function getConsent() { try { return localStorage.getItem(KEY); } catch (e) { return null; } }
   function setConsent(v) { try { localStorage.setItem(KEY, v); } catch (e) {} }
@@ -90,24 +91,27 @@
   // ---------- Banner ----------
   var css = '' +
     '.cc-bar{position:fixed;left:12px;right:12px;bottom:12px;z-index:50;max-width:640px;margin:0 auto;background:var(--surface,#fbfaf7);color:var(--ink,#1e1c1a);border:1px solid var(--line,#ddd8cf);border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.14);padding:14px 16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;font-size:13.5px;line-height:1.45}' +
-    '.cc-bar p{margin:0;flex:1 1 300px}' +
+    '.cc-bar p{margin:0;flex:1 1 300px}.cc-bar a{color:var(--accent,#2e6b4f)}' +
     '.cc-btns{display:flex;gap:8px;flex:0 0 auto}' +
     '.cc-btns button{font:inherit;font-weight:600;border-radius:999px;padding:8px 16px;cursor:pointer;border:1px solid var(--accent,#2e6b4f)}' +
     '.cc-yes{background:var(--accent,#2e6b4f);color:var(--accent-ink,#fff)}' +
     '.cc-no{background:transparent;color:var(--accent,#2e6b4f)}' +
     '.cc-btns button:focus-visible{outline:2px solid var(--accent,#2e6b4f);outline-offset:2px}' +
     '.cc-link{background:none;border:0;padding:0;font:inherit;font-size:12.5px;color:var(--muted,#6b655e);text-decoration:underline;cursor:pointer}';
-  var bar = null, links = [];
+  var bar = null, links = [], plinks = [];
 
   function relabel() {
     var t = TXT[lang()];
     if (bar) {
       bar.setAttribute('aria-label', t.label);
-      bar.querySelector('p').textContent = t.text;
+      var p = bar.querySelector('p'); p.textContent = t.text + ' ';
+      var a = document.createElement('a'); a.href = privacyHref(); a.textContent = t.privacy; p.appendChild(a);
       bar.querySelector('.cc-yes').textContent = t.accept;
       bar.querySelector('.cc-no').textContent = t.decline;
     }
     links.forEach(function (l) { l.textContent = t.settings; });
+    plinks.forEach(function (l) { l.textContent = t.privacy; l.href = privacyHref(); });
+    document.querySelectorAll('a.privacy-link').forEach(function (l) { l.href = privacyHref(); });
   }
   function showBar() {
     if (!bar) {
@@ -140,7 +144,9 @@
     document.querySelectorAll('.foot').forEach(function (p) {
       var l = document.createElement('button'); l.type = 'button'; l.className = 'cc-link';
       l.addEventListener('click', showBar);
-      p.appendChild(document.createTextNode(' ')); p.appendChild(l); links.push(l);
+      var pl = document.createElement('a'); pl.className = 'cc-link';
+      p.appendChild(document.createTextNode(' ')); p.appendChild(pl); plinks.push(pl);
+      p.appendChild(document.createTextNode(' · ')); p.appendChild(l); links.push(l);
     });
     relabel();
     var c = getConsent();
