@@ -15,7 +15,7 @@ A calorie-deficit weight loss calculator. Enter your details and a daily deficit
 - English and European Portuguese (`/pt/`): interface, recipes, shopping list and emails
 - Metric and imperial units; light and dark themes
 
-- Daily meal-plan email: double opt-in sign-up, sent at 07:00 in each subscriber's time zone, one-click unsubscribe
+- Daily meal-plan email at 07:00 and a weekly shopping-list email on Saturdays at 08:00, in each subscriber's time zone and language; double opt-in, one-click unsubscribe
 
 ## Stack
 

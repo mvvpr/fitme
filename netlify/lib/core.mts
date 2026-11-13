@@ -28,6 +28,7 @@ export type Subscriber = {
   confirmedAt?: string;
   lastConfirmMailAt?: string;
   lastSentDate?: string;
+  lastShopDate?: string;
 };
 
 export async function sha256(text: string) {
@@ -91,7 +92,7 @@ export const T = {
   en: {
     htmlLang: "en", locale: "en-GB",
     confirmTitle: "Confirm your daily meal plan", updateTitle: "Confirm your updated meal plan",
-    confirmLead: "Tap the button below to start getting your FitMe meal plan every morning at 7:00: four high-protein meals with ingredients and method, sized to your calories.",
+    confirmLead: "Tap the button below to start getting your FitMe meal plan every morning at 7:00: four high-protein meals with ingredients and method, sized to your calories. Every Saturday you'll also get your shopping list for the week.",
     updateLead: "You asked to update the calories behind your daily FitMe meal plan. Confirm to apply the new portions.",
     confirmBtn: "Confirm subscription", updateBtn: "Confirm update",
     ignore: "If you didn't sign up, ignore this email and nothing will happen.", confirmFooter: "You're receiving this because this address was entered on FitMe.",
@@ -103,12 +104,16 @@ export const T = {
     expiredTitle: "This link has expired", expiredBody: (u: string) => `It may have been used already or replaced by a newer email. You can <a href="${u}" style="color:#2e6b4f;">sign up again on FitMe</a>.`,
     notSubTitle: "You're not subscribed", notSubBody: "This address isn't on the FitMe daily email list anymore.",
     stopTitle: "Stop the daily meal plan?", stopBody: "You'll stop getting FitMe emails and we'll delete your email address and settings.", stopBtn: "Unsubscribe",
+    shopSubject: "Your shopping list for the week", shopTitle: "Your shopping list for the week",
+    shopIntro: (k: string) => `Everything for the week's 28 meals, with portions sized to your daily intake of ${k}. Amounts are rounded up so you won't run short.`,
+    shopExtras: "Herbs, spices & extras (check your cupboard)", shopCta: "See this week's recipes on FitMe →",
+    shopFooter: (site: string, unsub: string) => `You get this list every Saturday as part of your FitMe meal plan. To change your calories, recalculate on <a href="${site}" style="color:#6b655e;">FitMe</a> and sign up again with the same email. <a href="${unsub}" style="color:#6b655e;">Unsubscribe</a>.`,
     doneTitle: "You're unsubscribed", doneBody: (u: string) => `Your email and settings have been deleted. You can <a href="${u}" style="color:#2e6b4f;">sign up again</a> any time.`,
   },
   pt: {
     htmlLang: "pt-PT", locale: "pt-PT",
     confirmTitle: "Confirma o teu plano de refeições diário", updateTitle: "Confirma o teu plano de refeições atualizado",
-    confirmLead: "Carrega no botão abaixo para começares a receber o teu plano de refeições FitMe todas as manhãs às 7:00: quatro refeições ricas em proteína, com ingredientes e preparação, ajustadas às tuas calorias.",
+    confirmLead: "Carrega no botão abaixo para começares a receber o teu plano de refeições FitMe todas as manhãs às 7:00: quatro refeições ricas em proteína, com ingredientes e preparação, ajustadas às tuas calorias. Ao sábado recebes também a lista de compras da semana.",
     updateLead: "Pediste para atualizar as calorias do teu plano de refeições diário FitMe. Confirma para aplicar as novas porções.",
     confirmBtn: "Confirmar subscrição", updateBtn: "Confirmar atualização",
     ignore: "Se não fizeste esta subscrição, ignora este email e nada acontecerá.", confirmFooter: "Recebes este email porque este endereço foi introduzido no FitMe.",
@@ -120,6 +125,10 @@ export const T = {
     expiredTitle: "Este link expirou", expiredBody: (u: string) => `Pode já ter sido usado ou substituído por um email mais recente. Podes <a href="${u}" style="color:#2e6b4f;">voltar a subscrever no FitMe</a>.`,
     notSubTitle: "Não tens subscrição ativa", notSubBody: "Este endereço já não está na lista do email diário do FitMe.",
     stopTitle: "Parar o plano de refeições diário?", stopBody: "Deixas de receber emails do FitMe e apagamos o teu endereço de email e as tuas definições.", stopBtn: "Cancelar subscrição",
+    shopSubject: "A tua lista de compras da semana", shopTitle: "A tua lista de compras da semana",
+    shopIntro: (k: string) => `Tudo o que precisas para as 28 refeições da semana, com porções ajustadas à tua ingestão diária de ${k}. As quantidades estão arredondadas para cima, para não te faltar nada.`,
+    shopExtras: "Ervas, especiarias e extras (confirma na despensa)", shopCta: "Vê as receitas desta semana no FitMe →",
+    shopFooter: (site: string, unsub: string) => `Recebes esta lista todos os sábados como parte do teu plano de refeições FitMe. Para mudar as tuas calorias, recalcula no <a href="${site}" style="color:#6b655e;">FitMe</a> e volta a subscrever com o mesmo email. <a href="${unsub}" style="color:#6b655e;">Cancelar subscrição</a>.`,
     doneTitle: "Subscrição cancelada", doneBody: (u: string) => `O teu email e as tuas definições foram apagados. Podes <a href="${u}" style="color:#2e6b4f;">voltar a subscrever</a> quando quiseres.`,
   },
 };
@@ -201,6 +210,27 @@ export function renderDailyEmail(opts: { siteUrl: string; unsubUrl: string; dayI
     }))
     .concat([`${t.textFull}: ${site}#meals`, `${t.textUnsub}: ${opts.unsubUrl}`]).join("\n");
   return { subject, html: shell(opts.siteUrl, summary + cards + cta, footer, lang), text };
+}
+
+export function renderShoppingEmail(opts: { siteUrl: string; unsubUrl: string; dateLabel: string; intake: number; prot: number; imperial: boolean; lang?: Lang }) {
+  const c = COLORS, lang: Lang = opts.lang === "pt" ? "pt" : "en", t = T[lang];
+  const site = sitePath(opts.siteUrl, lang);
+  const list = M.shoppingList(opts.intake, opts.prot, lang, opts.imperial);
+  const head = `<tr><td style="background:${c.card};border:1px solid ${c.line};border-radius:12px;padding:20px 22px;">
+<div style="font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:${c.muted};">${esc(opts.dateLabel)}</div>
+<h1 style="margin:4px 0 8px;font-size:24px;line-height:1.2;">${t.shopTitle}</h1>
+<p style="margin:0;font-size:14px;line-height:1.55;color:${c.muted};">${esc(t.shopIntro(kcalL(opts.intake, t.locale)))}</p></td></tr>`;
+  const sections = list.groups.map((g: any) => `<tr><td style="height:14px;"></td></tr><tr><td style="background:${c.card};border:1px solid ${c.line};border-radius:12px;padding:16px 22px;">
+<div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:${c.accent};margin:0 0 6px;">${esc(g.aisle)}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0">${g.items.map((it: any) => `<tr><td style="padding:6px 0;border-bottom:1px solid ${c.line};font-size:14px;">&#9744;&nbsp; ${esc(it.n)}</td><td align="right" style="padding:6px 0 6px 12px;border-bottom:1px solid ${c.line};font-family:Menlo,Consolas,monospace;font-size:13px;color:${c.muted};white-space:nowrap;">${esc(it.q)}</td></tr>`).join("")}</table></td></tr>`).join("");
+  const extras = `<tr><td style="height:14px;"></td></tr><tr><td style="background:${c.card};border:1px solid ${c.line};border-radius:12px;padding:16px 22px;">
+<div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:${c.accent};margin:0 0 6px;">${t.shopExtras}</div>
+<p style="margin:0;font-size:13.5px;line-height:1.55;color:${c.muted};">${esc(list.extras)}</p></td></tr>`;
+  const cta = `<tr><td style="padding:18px 4px 0;font-size:14px;"><a href="${esc(site)}#meals" style="color:${c.accent};font-weight:600;">${t.shopCta}</a></td></tr>`;
+  const text = [t.shopTitle + ` (${opts.dateLabel})`, t.shopIntro(kcalL(opts.intake, t.locale)), ""]
+    .concat(list.groups.map((g: any) => g.aisle.toUpperCase() + "\n" + g.items.map((it: any) => `  [ ] ${it.n}: ${it.q}`).join("\n") + "\n"))
+    .concat([t.shopExtras + ": " + list.extras, "", `${t.textFull}: ${site}#meals`, `${t.textUnsub}: ${opts.unsubUrl}`]).join("\n");
+  return { subject: t.shopSubject, html: shell(opts.siteUrl, head + sections + extras + cta, t.shopFooter(esc(site), esc(opts.unsubUrl)), lang), text };
 }
 
 export function htmlPage(siteUrl: string, title: string, body: string, status = 200, lang: Lang = "en") {

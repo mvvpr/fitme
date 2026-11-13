@@ -258,7 +258,59 @@ function buildDay(i, T, P, lang) {
     return out;
   });
 }
+// Weekly shopping list for the 7-day plan at intake T and protein target P.
+// Returns { groups: [{ aisle, items: [{ n, q }] }], extras } with names, units and numbers in the given language.
+var AISLES = ['Fruit & veg', 'Meat & fish', 'Dairy & eggs', 'Grains & bread', 'Pantry'];
+function shoppingList(T, P, lang, imperial) {
+  var pt = ptData(lang), loc = pt ? 'pt-PT' : 'en';
+  var W = pt ? { slice: ['fatia', 'fatias'], clove: ['dente', 'dentes'], tsp: 'c. chá', tbsp: 'c. sopa' } : { slice: ['slice', 'slices'], clove: ['clove', 'cloves'], tsp: 'tsp', tbsp: 'tbsp' };
+  var num = function (v) { return v.toLocaleString(loc); };
+  var totals = {}, extras = {};
+  for (var i = 0; i < 7; i++) buildDay(i, T, P, lang).forEach(function (m) {
+    m.lines.forEach(function (l) {
+      if (l[0] === '~') { extras[l[1]] = 1; return; }
+      var t = totals[l[0]] || (totals[l[0]] = { g: 0, pc: 0, tsp: 0, ml: 0 });
+      if (l[2] === 'pc') t.pc += l[1];
+      else if (l[2] === 'tsp') t.tsp += l[1];
+      else if (l[2] === 'tbsp') t.tsp += l[1] * 3;
+      else if (l[2] === 'ml') t.ml += l[1];
+      else t.g += l[1];
+    });
+  });
+  function big(v, u, k) { return v >= 1000 ? num(parseFloat((Math.ceil(v / 50) * 50 / 1000).toFixed(2))) + ' ' + k : num(Math.ceil(v / 10) * 10) + ' ' + u; }
+  var byAisle = {};
+  Object.keys(totals).forEach(function (k) {
+    var d = DB[k], t = totals[k], parts = [];
+    if (t.pc && t.g) { t.g += t.pc * d[6]; t.pc = 0; }
+    if (t.pc) {
+      var n = (d[5] === 'Fruit & veg' || k === 'egg') ? Math.ceil(t.pc - 1e-9) : Math.ceil(t.pc * 2) / 2;
+      var unit = k === 'bread' ? ' ' + W.slice[n === 1 ? 0 : 1] : k === 'garlic' ? ' ' + W.clove[n === 1 ? 0 : 1] : '';
+      parts.push(frac(n) + unit);
+    }
+    if (t.g) parts.push(imperial ? num(Math.ceil(t.g / 28.35 * 2) / 2) + ' oz' : big(t.g, 'g', 'kg'));
+    if (t.ml) parts.push(imperial ? num(Math.ceil(t.ml / 29.57 * 2) / 2) + ' fl oz' : big(t.ml, 'ml', 'l'));
+    if (t.tsp) parts.push(t.tsp >= 3 ? frac(Math.ceil(t.tsp / 3 * 2) / 2) + ' ' + W.tbsp : frac(t.tsp) + ' ' + W.tsp);
+    (byAisle[d[5]] || (byAisle[d[5]] = [])).push({ n: ingName(k, lang), q: parts.join(' + ') });
+  });
+  var groups = AISLES.filter(function (a) { return byAisle[a]; }).map(function (a) {
+    return { aisle: pt ? pt.aisles[a] : a, items: byAisle[a].sort(function (x, y) { return x.n.localeCompare(y.n, loc); }) };
+  });
+  var ex;
+  if (pt) ex = pt.shopExtras;
+  else {
+    var seen = {}, list = [];
+    Object.keys(extras).forEach(function (e) {
+      e.split(/,| and /).forEach(function (x) {
+        x = x.trim().replace(/^(about\s+)?(\d+|½|¼)\s*(tsp|tbsp|ml)?\s*/i, '').replace(/^pinch of\s+/i, '').replace(/\s*\(optional\)/i, '').replace(/\s+to (taste|garnish)$/i, '').trim();
+        if (!x || seen[x.toLowerCase()]) return;
+        seen[x.toLowerCase()] = 1; list.push(x.charAt(0).toUpperCase() + x.slice(1));
+      });
+    });
+    ex = list.sort().join(', ');
+  }
+  return { groups: groups, extras: ex };
+}
 function dayTotals(meals) {
   return meals.reduce(function (a, m) { a.k += m.n.k; a.p += m.n.p; a.c += m.n.c; a.f += m.n.f; return a; }, { k: 0, p: 0, c: 0, f: 0 });
 }
-globalThis.FITME_MEALS = { DB: DB, RECIPES: RECIPES, SLOTS: SLOTS, DAY_NAMES: DAY_NAMES, lineGrams: lineGrams, frac: frac, scaleLine: scaleLine, amountText: amountText, nutrition: nutrition, buildDay: buildDay, dayTotals: dayTotals, ingName: ingName, pieceLabels: pieceLabels, ptData: ptData, proteinTarget: proteinTarget, PROTEIN_PER_KG: PROTEIN_PER_KG };
+globalThis.FITME_MEALS = { DB: DB, RECIPES: RECIPES, SLOTS: SLOTS, DAY_NAMES: DAY_NAMES, lineGrams: lineGrams, frac: frac, scaleLine: scaleLine, amountText: amountText, nutrition: nutrition, buildDay: buildDay, dayTotals: dayTotals, ingName: ingName, pieceLabels: pieceLabels, ptData: ptData, proteinTarget: proteinTarget, PROTEIN_PER_KG: PROTEIN_PER_KG, shoppingList: shoppingList };
