@@ -3,7 +3,8 @@
 import type { Config, Context } from "@netlify/functions";
 import { sendMetaEvents, requestUser, FBP_RE, FBC_RE, EVENT_ID_RE } from "../lib/core.mts";
 
-const ALLOWED = new Set(["PageView", "ViewContent"]);
+// Standard events plus one custom event per step of the journey.
+const ALLOWED = new Set(["PageView", "ViewContent", "Step1_About", "Step2_Goal", "Step3_Plan", "Step4_Meals"]);
 
 export default async (req: Request, context: Context) => {
   let input: any;
@@ -27,10 +28,12 @@ export default async (req: Request, context: Context) => {
   const fbc = typeof input?.fbc === "string" && FBC_RE.test(input.fbc) ? input.fbc : undefined;
 
   const custom: Record<string, string> = {};
-  if (name === "ViewContent") {
+  if (name !== "PageView") {
     const c = input?.custom_data || {};
     if (typeof c.content_name === "string") custom.content_name = c.content_name.slice(0, 80);
     if (typeof c.content_category === "string") custom.content_category = c.content_category.slice(0, 40);
+    if (Number.isInteger(c.step) && c.step >= 1 && c.step <= 4) (custom as any).step = c.step;
+    if (c.lang === "en" || c.lang === "pt") custom.lang = c.lang;
   }
 
   const send = sendMetaEvents([{

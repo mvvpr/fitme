@@ -60,13 +60,14 @@
     window.fbq('init', PIXEL_ID);
   }
 
+  var STANDARD = { PageView: 1, ViewContent: 1, Lead: 1, CompleteRegistration: 1 };
   // Browser event + matching server event with the same id.
   function track(name, custom) {
     if (!granted()) return null;
     loadPixel();
     var ids = ensureIds();
     var id = newId();
-    window.fbq('track', name, custom || {}, { eventID: id });
+    window.fbq(STANDARD[name] ? 'track' : 'trackCustom', name, custom || {}, { eventID: id });
     try {
       fetch('/api/track', {
         method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json' },
@@ -85,8 +86,12 @@
   }
   function leadDone(ctx) { if (ctx && granted() && window.fbq) window.fbq('track', 'Lead', {}, { eventID: ctx.event_id }); }
 
-  var onceSent = {};
-  function trackOnce(name, custom) { if (onceSent[name]) return; if (track(name, custom)) onceSent[name] = true; }
+  // Once per browser session (survives reloads and going back and forth between steps).
+  function trackOnce(name, custom) {
+    var k = 'fitme-ev-' + name;
+    try { if (sessionStorage.getItem(k)) return; } catch (e) {}
+    if (track(name, custom)) { try { sessionStorage.setItem(k, '1'); } catch (e) {} }
+  }
 
   // ---------- Banner ----------
   var css = '' +

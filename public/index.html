@@ -1201,7 +1201,15 @@ body.lang-fading .wrap > .step { opacity: 0; }
     var h = document.querySelector('#step-' + name + ' .step-title, #step-' + name + ' h2[tabindex]');
     if (h && opts.focus) h.focus({ preventScroll: true });
     if (name === 'goal' && state.goal >= state.w0) $('goal-err').hidden = false;
-    if (name === 'plan' && window.FITME_TRACK) FITME_TRACK.trackOnce('ViewContent', { content_name: 'Weight loss plan', content_category: 'plan' });
+    trackStep(name);
+  }
+  // One Meta event per step (once per session); the plan also counts as the standard ViewContent.
+  var STEP_EVENTS = { about: [1, 'Step1_About', 'About you'], goal: [2, 'Step2_Goal', 'Your goal'], plan: [3, 'Step3_Plan', 'Your plan'], meals: [4, 'Step4_Meals', 'Your meals'] };
+  function trackStep(name) {
+    var e = STEP_EVENTS[name];
+    if (!e || !window.FITME_TRACK) return;
+    FITME_TRACK.trackOnce(e[1], { step: e[0], content_name: e[2], content_category: 'journey', lang: LANG });
+    if (name === 'plan') FITME_TRACK.trackOnce('ViewContent', { content_name: 'Weight loss plan', content_category: 'plan' });
   }
   function go(name) {
     if (name === 'plan') { readInputs(); if (state.goal >= state.w0) { $('goal-err').hidden = false; $('goal-w').focus(); return; } state.done = true; save(); }
@@ -1252,7 +1260,7 @@ body.lang-fading .wrap > .step { opacity: 0; }
       if (w && Math.abs(w - lastW) > 1) { lastW = w; render(); }
     }).observe($('chartwrap'));
   }
-  if (window.FITME_TRACK) FITME_TRACK.init({ onGranted: function () { if (current === 'plan') FITME_TRACK.trackOnce('ViewContent', { content_name: 'Weight loss plan', content_category: 'plan' }); } });
+  if (window.FITME_TRACK) FITME_TRACK.init({ onGranted: function () { trackStep(current); } });
   route();
 })();
 </script>

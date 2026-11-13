@@ -42,6 +42,7 @@ Until `MAILGUN_API_KEY` and `MAILGUN_DOMAIN` are set, sign-up shows "opens soon"
   - `ViewContent`: first time the plan is shown, Pixel + CAPI via `/api/track`
   - `Lead`: new email sign-up, Pixel + CAPI from `/api/subscribe` (hashed email)
   - `CompleteRegistration`: double opt-in confirmed, CAPI only from `/api/confirm`
+  - Custom step events, once per browser session, Pixel + CAPI: `Step1_About`, `Step2_Goal`, `Step3_Plan`, `Step4_Meals` (custom_data: step, content_name, lang)
 - Privacy policy (EN/PT): `public/privacy.html`, served at `/privacy.html` and `/pt/privacy.html`; linked from the banner, the footers and the sign-up consent line. Unconfirmed sign-ups are deleted after 30 days by `send-daily`.
 - Server events are sent only for visitors who accepted cookies. `fbp`/`fbc` are kept on the subscriber record until confirmation, then deleted.
 
