@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-/* Layout mirrors Growth Horizon: an inputs rail beside a results column (headline, chart, weekly ledger); stacks on phones. */
+/* Layout mirrors Growth Horizon: an inputs rail beside a results column (headline, weekly ledger); stacks on phones. */
 :root {
   --bg: #f0eee9;        /* Cloud Dancer */
   --surface: #fbfaf7;
@@ -227,9 +227,6 @@ header p { margin: 0; color: var(--muted); max-width: 64ch; }
 .sw.r { width: 16px; height: 0; border-top: 2px dashed var(--range); border-radius: 0; }
 .sw.g { width: 16px; height: 0; border-top: 2px solid var(--ink); border-radius: 0; }
 
-.chartwrap { position: relative; width: 100%; margin-top: 10px; }
-.chartwrap svg { display: block; width: 100%; touch-action: pan-y; }
-.chartwrap text { font-family: var(--font-data); font-size: 11px; fill: var(--muted); }
 .tip {
   position: absolute;
   top: 8px;
@@ -566,22 +563,6 @@ body.lang-fading .wrap > .step { opacity: 0; }
           </div>
         </section>
 
-        <section class="panel sec" aria-labelledby="h-chart">
-          <div class="ledger-head">
-            <h2 id="h-chart">Weight over time</h2>
-            <div class="legend">
-              <span><i class="sw b"></i>Body weight</span>
-              <span><i class="sw l"></i>Lost</span>
-              <span><i class="sw g"></i>Goal</span>
-              <span><i class="sw r"></i>Range</span>
-            </div>
-          </div>
-          <div class="chartwrap" id="chartwrap">
-            <svg id="chart" role="img" aria-label="Area chart of projected weight by week"></svg>
-            <div class="tip" id="tip" hidden></div>
-          </div>
-        </section>
-
         <details class="panel how">
           <summary>How we calculated this</summary>
           <div class="how-body">
@@ -840,97 +821,6 @@ body.lang-fading .wrap > .step { opacity: 0; }
     return { step: step, lo: Math.floor(lo / step) * step, hi: Math.ceil(hi / step) * step };
   }
 
-  // ---- Chart ----
-  var view = null;
-  function drawChart(s, base, low, high, H, sd) {
-    var wrap = $('chartwrap'), svg = $('chart');
-    var W = Math.max(280, wrap.clientWidth || 720);
-    var Ht = W < 520 ? 260 : 340;
-    var m = { l: W < 520 ? 44 : 54, r: 12, t: 10, b: 28 };
-    var iw = W - m.l - m.r, ih = Ht - m.t - m.b;
-    var f = function (n) { return n.toFixed(1); };
-    var conv = function (kg) { return imp() ? kg / LB : kg; };
-
-    var top = conv(s.w0), bottom = conv(s.goal);
-    var pad = Math.max((top - bottom) * 0.12, imp() ? 2 : 1);
-    var tk = niceTicks(bottom - pad, top + pad * 0.5);
-    var x = function (i) { return m.l + (H === 0 ? 0 : iw * i / H); };
-    var y = function (kg) { return m.t + ih * (1 - (conv(kg) - tk.lo) / (tk.hi - tk.lo)); };
-    var yv = function (v) { return m.t + ih * (1 - (v - tk.lo) / (tk.hi - tk.lo)); };
-
-    var parts = [];
-    for (var t = tk.lo; t <= tk.hi + tk.step / 2; t += tk.step) {
-      parts.push('<line x1="' + m.l + '" x2="' + (W - m.r) + '" y1="' + f(yv(t)) + '" y2="' + f(yv(t)) + '" stroke="var(--line)" stroke-width="1"/>');
-      parts.push('<text x="' + (m.l - 8) + '" y="' + f(yv(t) + 4) + '" text-anchor="end">' + nf0.format(t) + '</text>');
-    }
-    var xs = H <= 12 ? 1 : H <= 26 ? 2 : H <= 52 ? 4 : 8;
-    for (var k = 0; k <= H; k += xs) {
-      parts.push('<text x="' + f(x(k)) + '" y="' + (Ht - 8) + '" text-anchor="' + (k === 0 ? 'start' : 'middle') + '">' + (k === 0 ? 'wk 0' : k) + '</text>');
-    }
-
-    var bw = base.weeks;
-    var i2, floorY = m.t + ih;
-    // Body weight area (from axis floor up to the curve)
-    var bPath = 'M' + f(x(0)) + ',' + f(floorY);
-    for (i2 = 0; i2 <= H; i2++) bPath += ' L' + f(x(i2)) + ',' + f(y(bw[i2].w));
-    bPath += ' L' + f(x(H)) + ',' + f(floorY) + ' Z';
-    // Lost area (between starting weight and the curve)
-    var lPath = 'M' + f(x(0)) + ',' + f(y(s.w0));
-    for (i2 = 0; i2 <= H; i2++) lPath += ' L' + f(x(i2)) + ',' + f(y(bw[i2].w));
-    lPath += ' L' + f(x(H)) + ',' + f(y(s.w0)) + ' Z';
-    parts.push('<path d="' + bPath + '" fill="var(--body)"/>');
-    parts.push('<path d="' + lPath + '" fill="var(--lost)"/>');
-
-    function line(sim) {
-      var d = '';
-      for (var j = 0; j <= H; j++) d += (j ? ' L' : 'M') + f(x(j)) + ',' + f(y(sim.weeks[j].w));
-      return '<path d="' + d + '" fill="none" stroke="var(--range)" stroke-width="1.75" stroke-dasharray="5 4"/>';
-    }
-    parts.push(line(low));
-    parts.push(line(high));
-    // Goal line
-    var gy = f(y(s.goal));
-    parts.push('<line x1="' + m.l + '" x2="' + (W - m.r) + '" y1="' + gy + '" y2="' + gy + '" stroke="var(--ink)" stroke-width="1.5"/>');
-    parts.push('<text x="' + (W - m.r - 4) + '" y="' + (+gy - 6) + '" text-anchor="end" style="fill:var(--ink);font-weight:500">' + (LANG === 'pt' ? 'Objetivo ' : 'Goal ') + wtShort(s.goal) + ' ' + wu() + '</text>');
-
-    parts.push('<g id="cursor" hidden><line id="cl" y1="' + m.t + '" y2="' + (m.t + ih) + '" stroke="var(--ink)" stroke-width="1"/><circle id="cd" r="4.5" fill="var(--surface)" stroke="var(--ink)" stroke-width="2"/></g>');
-    parts.push('<rect x="' + m.l + '" y="' + m.t + '" width="' + iw + '" height="' + ih + '" fill="transparent"/>');
-
-    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + Ht);
-    svg.setAttribute('height', Ht);
-    svg.innerHTML = parts.join('');
-    $('tip').hidden = true;
-    view = { s: s, base: base, low: low, high: high, H: H, m: m, iw: iw, W: W, x: x, y: y, sd: sd };
-  }
-
-  function showTip(clientX) {
-    if (!view) return;
-    var svg = $('chart'), rect = svg.getBoundingClientRect();
-    var px = (clientX - rect.left) * (view.W / rect.width);
-    var i = view.H === 0 ? 0 : Math.round((px - view.m.l) / view.iw * view.H);
-    i = clamp(i, 0, view.H);
-    var b = view.base.weeks[i];
-    var cx = view.x(i);
-    $('cursor').hidden = false;
-    var cl = $('cl'); cl.setAttribute('x1', cx); cl.setAttribute('x2', cx);
-    var cd = $('cd'); cd.setAttribute('cx', cx); cd.setAttribute('cy', view.y(b.w));
-    var tip = $('tip');
-    var lo = view.high.weeks[i].w, hi = view.low.weeks[i].w;
-    tip.innerHTML = '<b>' + L.tipWeek(i, dfShort.format(addDays(view.sd, i * 7))) + '</b>' +
-      '<div class="row"><span>' + L.tipWeight + '</span><span>' + wt(b.w) + '</span></div>' +
-      '<div class="row"><span>' + L.tipLost + '</span><span>' + wt(view.s.w0 - b.w) + '</span></div>' +
-      '<div class="row"><span>' + L.tipIntake + '</span><span>' + kcal(b.intake) + '</span></div>' +
-      '<div class="row"><span>' + L.tipBasal + '</span><span>' + kcal(b.bmr) + '</span></div>' +
-      '<div class="row"><span>' + L.tipRange + '</span><span>' + wtShort(lo) + '–' + wtShort(hi) + ' ' + wu() + '</span></div>';
-    tip.hidden = false;
-    var wrapW = $('chartwrap').clientWidth;
-    var tw = tip.offsetWidth;
-    var left = (cx / view.W) * wrapW + 12;
-    if (left + tw > wrapW) left = (cx / view.W) * wrapW - tw - 12;
-    tip.style.left = Math.max(0, left) + 'px';
-  }
-  function hideTip() { var c = $('cursor'); if (c) c.hidden = true; $('tip').hidden = true; }
-
   // ---- Render ----
   function render() {
     readInputs();
@@ -965,8 +855,6 @@ body.lang-fading .wrap > .step { opacity: 0; }
       $('s-maint').textContent = kcal(bmr0);
       $('warn').hidden = true;
       $('rows').innerHTML = '';
-      $('chart').innerHTML = '';
-      view = null;
       renderMeals(s, maint0);
       save();
       return;
@@ -1023,8 +911,6 @@ body.lang-fading .wrap > .step { opacity: 0; }
     }
     $('rows').innerHTML = rows.join('');
 
-    $('chart').setAttribute('aria-label', L.chartAria(H, wt(s.w0), base.reach ? wt(s.goal) : wt(base.weeks[MAX_WEEKS].w)));
-    drawChart(s, base, low, high, H, sd);
     renderMeals(s, Math.max(base.startIntake, s.sex === 'm' ? 1500 : 1200));
     save();
   }
@@ -1248,18 +1134,6 @@ body.lang-fading .wrap > .step { opacity: 0; }
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('act-pop').hidden) { setPop(false); $('act-info').focus(); } });
   $('act').addEventListener('change', function () { if (!$('act-pop').hidden) setPop(true); });
 
-  var svg = $('chart');
-  svg.addEventListener('pointermove', function (e) { showTip(e.clientX); });
-  svg.addEventListener('pointerdown', function (e) { showTip(e.clientX); });
-  svg.addEventListener('pointerleave', hideTip);
-
-  var lastW = 0;
-  if (window.ResizeObserver) {
-    new ResizeObserver(function () {
-      var w = $('chartwrap').clientWidth;
-      if (w && Math.abs(w - lastW) > 1) { lastW = w; render(); }
-    }).observe($('chartwrap'));
-  }
   if (window.FITME_TRACK) FITME_TRACK.init({ onGranted: function () { trackStep(current); } });
   route();
 })();
