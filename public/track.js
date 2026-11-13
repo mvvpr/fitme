@@ -7,11 +7,11 @@
   var KEY = 'fitme-consent';
   var TXT = {
     en: {
-      text: 'We use Meta cookies to measure how our ads perform. They load only if you accept, and you can change your mind anytime.',
+      text: 'FitMe is free. Meta cookies help us see which ads bring people here, so we can keep it that way. They load only if you accept, and you can change your mind anytime.',
       accept: 'Accept', decline: 'Decline', settings: 'Cookie settings', label: 'Cookie consent', privacy: 'Privacy policy'
     },
     pt: {
-      text: 'Usamos cookies da Meta para medir o desempenho dos nossos anúncios. Só são carregados se aceitares, e podes mudar de ideias a qualquer momento.',
+      text: 'O FitMe é grátis. Os cookies da Meta ajudam-nos a perceber que anúncios trazem pessoas até aqui, para continuar assim. Só são carregados se aceitares, e podes mudar de ideias a qualquer momento.',
       accept: 'Aceitar', decline: 'Recusar', settings: 'Definições de cookies', label: 'Consentimento de cookies', privacy: 'Política de privacidade'
     }
   };
