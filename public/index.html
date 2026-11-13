@@ -272,11 +272,12 @@ tbody tr.goal td { font-weight: 500; color: var(--accent); }
 .days button { font: inherit; font-size: 13px; border: 1px solid var(--line); background: var(--field); color: var(--muted); padding: 6px 11px; border-radius: 6px; cursor: pointer; }
 .days button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
 .days button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.daytot { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; padding: 12px 14px; background: var(--field); border: 1px solid var(--line); border-radius: 8px; margin-bottom: 14px; }
-@media (max-width: 720px) { .daytot { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-.daytot .k { font-size: 12px; color: var(--muted); display: block; }
-.daytot .v { font-family: var(--font-data); font-size: 16px; font-weight: 500; font-variant-numeric: tabular-nums; }
-.daytot .v small { font-size: 12px; color: var(--muted); font-weight: 400; }
+.daytot { display: flex; justify-content: space-between; gap: 8px; padding: 7px 12px; background: var(--field); border: 1px solid var(--line); border-radius: 8px; margin-bottom: 12px; }
+.daytot > div { min-width: 0; white-space: nowrap; }
+.daytot .k { font-size: 11px; color: var(--muted); display: block; line-height: 1.3; }
+.daytot .v { font-family: var(--font-data); font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; line-height: 1.35; }
+.daytot .v small { font-size: 11px; color: var(--muted); font-weight: 400; }
+@media (max-width: 400px) { .daytot { padding: 7px 10px; gap: 4px; } .daytot .v { font-size: 13px; } .daytot .v small { font-size: 10px; } }
 .meal-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 @media (max-width: 760px) { .meal-grid { grid-template-columns: minmax(0, 1fr); } }
 .meal { border: 1px solid var(--line); border-radius: 10px; padding: 0; overflow: hidden; display: flex; flex-direction: column; min-width: 0; background: var(--surface); }
@@ -1015,8 +1016,8 @@ body.lang-fading .wrap > .step { opacity: 0; }
     var meals = buildDay(day, T, protTarget, LANG);
     var tot = M.dayTotals(meals);
     $('daytot').innerHTML =
-      '<div><span class="k">' + L.dayTotal(DAY_NAMES[day]) + '</span><span class="v">' + kcal(tot.k) + ' <small>/ ' + nf0.format(Math.round(T / 10) * 10) + '</small></span></div>' +
-      '<div><span class="k">' + L.protein + '</span><span class="v">' + Math.round(tot.p) + ' g <small>/ ' + protTarget + ' g</small></span></div>' +
+      '<div><span class="k">kcal</span><span class="v">' + nf0.format(Math.round(tot.k / 10) * 10) + '<small>/' + nf0.format(Math.round(T / 10) * 10) + '</small></span></div>' +
+      '<div><span class="k">' + L.protein + '</span><span class="v">' + Math.round(tot.p) + ' g<small>/' + protTarget + '</small></span></div>' +
       '<div><span class="k">' + L.carbs + '</span><span class="v">' + Math.round(tot.c) + ' g</span></div>' +
       '<div><span class="k">' + L.fat + '</span><span class="v">' + Math.round(tot.f) + ' g</span></div>';
     $('meal-grid').innerHTML = meals.map(function (m) {
