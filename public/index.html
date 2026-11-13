@@ -405,6 +405,9 @@ header.topbar { flex-direction: row; align-items: center; justify-content: space
 .lang-switch a { font-size: 12.5px; font-weight: 600; color: var(--muted); text-decoration: none; padding: 4px 10px; border-radius: 999px; }
 .lang-switch a[aria-current="true"] { background: var(--accent); color: var(--accent-ink); }
 .lang-switch a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wrap > .step { transition: opacity 0.14s ease; }
+body.lang-fading .wrap > .step { opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .wrap > .step { transition: none; } }
 .topbar .progress { order: 2; margin-left: auto; }
 @media (max-width: 640px) { .topbar .progress { order: 4; width: 100%; margin-left: 0; } }
 .foot { font-size: 12.5px; color: var(--muted); margin: 0; max-width: 84ch; }
@@ -675,7 +678,7 @@ header.topbar { flex-direction: row; align-items: center; justify-content: space
 <script>
 (function () {
   var $ = function (id) { return document.getElementById(id); };
-  var I18N = globalThis.FITME_I18N, L = I18N.L, LANG = I18N.lang;
+  var I18N = globalThis.FITME_I18N, L = I18N.L, LANG = I18N.lang, applyLangGlobals = function () {};
   // First visit on the English page from a Portuguese browser: go to /pt/ (unless the visitor chose a language before).
   try {
     var chosen = localStorage.getItem('fitme-lang');
@@ -686,14 +689,35 @@ header.topbar { flex-direction: row; align-items: center; justify-content: space
   I18N.translateStatic(document.body);
   document.documentElement.lang = L.htmlLang;
   document.title = L.title;
+  function langPath(lang) { return lang === 'pt' ? '/pt/' : '/'; }
+  function canPushPath() { return location.protocol !== 'file:' && !/claude|artifact/.test(location.hostname); }
+  function markLangSwitch() { document.querySelectorAll('.lang-switch a').forEach(function (a) { a.setAttribute('aria-current', String(a.dataset.lang === LANG)); }); }
+  markLangSwitch();
+  function switchLang(lang, fromHistory) {
+    if (lang === LANG) return;
+    var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    function apply() {
+      L = I18N.setLang(lang); LANG = lang;
+      applyLangGlobals();
+      document.documentElement.lang = L.htmlLang;
+      document.title = L.title;
+      markLangSwitch();
+      if (!fromHistory && canPushPath()) history.pushState({ lang: lang }, '', langPath(lang) + location.hash);
+      render();
+      requestAnimationFrame(function () { document.body.classList.remove('lang-fading'); });
+    }
+    if (reduce) apply(); else { document.body.classList.add('lang-fading'); setTimeout(apply, 140); }
+  }
   document.querySelectorAll('.lang-switch a').forEach(function (a) {
-    a.setAttribute('aria-current', String(a.dataset.lang === LANG));
     a.addEventListener('click', function (e) {
+      e.preventDefault();
       try { localStorage.setItem('fitme-lang', a.dataset.lang); } catch (err) {}
-      if (a.dataset.lang === LANG) { e.preventDefault(); return; }
-      if (location.protocol === 'file:' || /claude|artifact/.test(location.hostname)) return;
-      e.preventDefault(); location.href = a.getAttribute('href') + location.hash;
+      switchLang(a.dataset.lang);
     });
+  });
+  window.addEventListener('popstate', function () {
+    var pathLang = /^\/pt(\/|$)/.test(location.pathname) ? 'pt' : 'en';
+    if (pathLang !== LANG) switchLang(pathLang, true);
   });
   var LB = 0.45359237;
   var KCAL_PER_KG = 7700;
@@ -1057,7 +1081,7 @@ header.topbar { flex-direction: row; align-items: center; justify-content: space
   var subState = null;
   var M = globalThis.FITME_MEALS;
   var DB = M.DB, RECIPES = M.RECIPES, DAY_NAMES = M.DAY_NAMES, frac = M.frac, buildDay = M.buildDay;
-  var DAYS = L.daysShort;
+  var DAYS = L.daysShort, DAY_NAMES_EN = M.DAY_NAMES;
   if (LANG === 'pt') DAY_NAMES = globalThis.FITME_MEALS_PT.days;
   function amountText(l) { return M.amountText(l, imp(), LANG); }
   function esc(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
@@ -1159,6 +1183,17 @@ header.topbar { flex-direction: row; align-items: center; justify-content: space
 
   // ---- Daily email sign-up ----
   var MSG = L.msg;
+  // Re-point everything that was read from the language table at load time.
+  applyLangGlobals = function () {
+    nf0 = new Intl.NumberFormat(L.locale, { maximumFractionDigits: 0 });
+    nf1 = new Intl.NumberFormat(L.locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+    dfLong = new Intl.DateTimeFormat(L.locale, { day: 'numeric', month: LANG === 'pt' ? 'long' : 'short', year: 'numeric' });
+    dfShort = new Intl.DateTimeFormat(L.locale, { day: 'numeric', month: 'short' });
+    ACT_SHORT = L.actShort; DAYS = L.daysShort; MSG = L.msg;
+    DAY_NAMES = LANG === 'pt' ? globalThis.FITME_MEALS_PT.days : DAY_NAMES_EN;
+    document.querySelectorAll('.sub-msg').forEach(function (el) { el.textContent = ''; el.className = 'sub-msg'; });
+    var b = $('sub-banner'); if (b && !b.hidden) b.hidden = true;
+  };
   document.querySelectorAll('.sub-form').forEach(function (form) {
     var q = function (c) { return form.querySelector(c); };
     function subMsg(text, kind) { var el = q('.sub-msg'); el.textContent = text; el.className = 'sub-msg' + (kind ? ' ' + kind : ''); }

@@ -150,24 +150,37 @@
     }
   };
 
-  function translateStatic(root) {
-    if (LANG !== 'pt') return;
+  var origText = new WeakMap();
+  function applyStatic(root, lang) {
     var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT), n, nodes = [];
     while ((n = w.nextNode())) nodes.push(n);
     nodes.forEach(function (node) {
-      var raw = node.nodeValue, key = raw.replace(/\s+/g, ' ').trim();
-      if (key && Object.prototype.hasOwnProperty.call(STATIC_PT, key)) {
-        var lead = raw.match(/^\s*/)[0], trail = raw.match(/\s*$/)[0];
-        node.nodeValue = lead + STATIC_PT[key] + trail;
+      if (node.parentElement && node.parentElement.closest('script,style')) return;
+      var en = origText.get(node);
+      if (en === undefined) {
+        var key = node.nodeValue.replace(/\s+/g, ' ').trim();
+        if (!key || !Object.prototype.hasOwnProperty.call(STATIC_PT, key)) return;
+        en = node.nodeValue; origText.set(node, en);
       }
+      var k = en.replace(/\s+/g, ' ').trim(), lead = en.match(/^\s*/)[0], trail = en.match(/\s*$/)[0];
+      var next = lang === 'pt' ? lead + STATIC_PT[k] + trail : en;
+      if (node.nodeValue !== next) node.nodeValue = next;
     });
     root.querySelectorAll('[placeholder],[aria-label],[title]').forEach(function (el) {
       ['placeholder', 'aria-label', 'title'].forEach(function (a) {
-        var v = el.getAttribute(a);
-        if (v && Object.prototype.hasOwnProperty.call(STATIC_PT, v)) el.setAttribute(a, STATIC_PT[v]);
+        var store = 'i18nEn' + a.replace(/-./g, function (m) { return m[1].toUpperCase(); }).replace(/^./, function (c) { return c.toUpperCase(); });
+        var en = el.dataset[store];
+        if (en === undefined) { var v = el.getAttribute(a); if (!v || !Object.prototype.hasOwnProperty.call(STATIC_PT, v)) return; en = v; el.dataset[store] = en; }
+        el.setAttribute(a, lang === 'pt' ? STATIC_PT[en] : en);
       });
     });
   }
+  function translateStatic(root) { if (LANG === 'pt') applyStatic(root, 'pt'); }
 
-  globalThis.FITME_I18N = { lang: LANG, L: STR[LANG], STR: STR, translateStatic: translateStatic };
+  var api = {
+    lang: LANG, L: STR[LANG], STR: STR, translateStatic: translateStatic,
+    // Switch language in place (no page reload).
+    setLang: function (lang) { api.lang = lang; api.L = STR[lang]; applyStatic(document.body, lang); return api.L; }
+  };
+  globalThis.FITME_I18N = api;
 })();
