@@ -269,7 +269,7 @@ tbody tr.goal td { font-weight: 500; color: var(--accent); }
 .days button { padding: 8px 0 !important; text-align: center; }
 .next-day { display: flex; justify-content: flex-end; margin-top: 14px; }
 .next-day .btn { font-size: 14px; }
-.days button { font: inherit; font-size: 13px; border: 1px solid var(--line); background: var(--field); color: var(--muted); padding: 6px 11px; border-radius: 6px; cursor: pointer; }
+.days button { font: inherit; font-size: 13px; border: 1px solid var(--line); background: var(--field); color: var(--muted); padding: 6px 11px; border-radius: 6px; }
 .days button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
 .days button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .daytot { display: flex; justify-content: space-between; gap: 8px; padding: 7px 12px; background: var(--field); border: 1px solid var(--line); border-radius: 8px; margin-bottom: 12px; }
@@ -428,12 +428,35 @@ header.topbar { flex-direction: row; align-items: center; justify-content: space
 .wrap > .step { transition: opacity 0.14s ease; }
 body.lang-fading .wrap > .step { opacity: 0; }
 @media (prefers-reduced-motion: reduce) { .wrap > .step { transition: none; } }
+/* First-time plan build screen */
+.building { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: 24px; background: var(--bg); opacity: 0; transition: opacity .18s ease; }
+.building.show { opacity: 1; }
+.building[hidden] { display: none; }
+.building-card { width: 100%; max-width: 360px; }
+.building-brand { margin-bottom: 28px; pointer-events: none; }
+.building h2 { font-family: var(--font-display); font-size: 24px; line-height: 1.2; margin: 0 0 18px; }
+.building ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.building li { display: flex; align-items: center; gap: 12px; font-size: 16px; color: var(--muted); opacity: .35; transition: opacity .2s ease, color .2s ease; }
+.building li.on, .building li.ok { opacity: 1; color: var(--ink); }
+.building .tick { flex: none; width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line); display: grid; place-items: center; font-size: 13px; font-weight: 700; color: transparent; box-sizing: border-box; }
+.building li.on .tick { border-color: var(--accent); border-right-color: transparent; animation: bspin .7s linear infinite; }
+.building li.ok .tick { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); animation: none; }
+@keyframes bspin { to { transform: rotate(360deg); } }
+
 .topbar .progress { order: 2; margin-left: auto; }
 @media (max-width: 640px) { .topbar .progress { order: 4; width: 100%; margin-left: 0; } }
 .foot { font-size: 12.5px; color: var(--muted); margin: 0; max-width: 84ch; }
 </style>
 </head>
 <body>
+<div class="building" id="building" hidden role="status" aria-live="polite">
+  <div class="building-card">
+    <div class="brand building-brand" aria-hidden="true"><svg class="mark" viewBox="0 0 64 64"><rect width="64" height="64" rx="16" fill="var(--accent)"/><path d="M13 19 C22 19 24 41 33 41 L51 21" fill="none" stroke="var(--mark-line)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="13" cy="19" r="3.5" fill="#f0eee9"/></svg><span class="wordmark">Fit<span>Me</span></span></div>
+    <h2 id="building-title"></h2>
+    <ol id="building-list"></ol>
+  </div>
+</div>
+
 <div class="wrap">
   <header class="topbar">
     <a class="brand" href="#start" aria-label="FitMe home"><svg class="mark" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16" fill="var(--accent)"/><path d="M13 19 C22 19 24 41 33 41 L51 21" fill="none" stroke="var(--mark-line)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="13" cy="19" r="3.5" fill="#f0eee9"/></svg><span class="wordmark">Fit<span>Me</span></span></a>
@@ -1141,8 +1164,35 @@ body.lang-fading .wrap > .step { opacity: 0; }
     if (name === 'plan') FITME_TRACK.trackOnce('ViewContent', { content_name: 'Weight loss plan', content_category: 'plan' });
   }
   function go(name) {
-    if (name === 'plan') { readInputs(); if (state.goal >= state.w0) { $('goal-err').hidden = false; $('goal-w').focus(); return; } state.done = true; save(); }
+    if (name === 'plan') {
+      readInputs(); if (state.goal >= state.w0) { $('goal-err').hidden = false; $('goal-w').focus(); return; }
+      var first = !state.done; state.done = true; save();
+      if (first) return buildScreen(function () { location.hash = '#plan'; });
+    }
     location.hash = '#' + name;
+  }
+  // Short "building your plan" screen, shown only the first time someone reaches their plan.
+  // Each line is a real step of the calculation. Skipped for reduced motion.
+  function buildScreen(done) {
+    var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var el = $('building'), lines = L.building.steps, finished = false, timers = [];
+    if (reduce || !el) return done();
+    function finish() {
+      if (finished) return; finished = true;
+      timers.forEach(clearTimeout);
+      el.classList.remove('show'); setTimeout(function () { el.hidden = true; }, 180);
+      done();
+    }
+    $('building-title').textContent = L.building.title;
+    $('building-list').innerHTML = lines.map(function (t) { return '<li><span class="tick" aria-hidden="true">✓</span><span>' + t + '</span></li>'; }).join('');
+    var items = el.querySelectorAll('li');
+    el.hidden = false; requestAnimationFrame(function () { el.classList.add('show'); });
+    var STEP = 340;
+    items.forEach(function (li, i) {
+      timers.push(setTimeout(function () { li.classList.add('on'); }, i * STEP));
+      timers.push(setTimeout(function () { li.classList.remove('on'); li.classList.add('ok'); }, i * STEP + STEP - 40));
+    });
+    timers.push(setTimeout(finish, items.length * STEP + 200));
   }
   document.addEventListener('click', function (e) {
     var b = e.target.closest('[data-go]');
