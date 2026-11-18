@@ -274,7 +274,9 @@ export function renderDailyEmail(opts: { siteUrl: string; unsubUrl: string; dayI
       return `<tr><td style="padding:3px 12px 3px 0;white-space:nowrap;font-family:Menlo,Consolas,monospace;font-size:13px;vertical-align:top;">${esc(a.q)}</td><td style="padding:3px 0;font-size:14px;">${esc(a.n)}</td></tr>`;
     }).join("");
     const steps = m.rec.steps.map((st: string) => `<li style="margin:0 0 6px;">${esc(st)}</li>`).join("");
-    return `<tr><td style="height:14px;"></td></tr><tr><td style="background:${c.card};border:1px solid ${c.line};border-radius:12px;padding:20px 22px;">
+    // Dish photo (JPEG, not WebP, so it shows in every mail app). Served from the site: public/img/email/<slug>.jpg.
+    const photo = m.rec.img ? `<img src="${esc(opts.siteUrl)}/img/email/${esc(m.rec.img)}.jpg" width="556" alt="${esc(m.rec.name)}" style="display:block;width:100%;max-width:100%;height:auto;border:0;border-radius:12px 12px 0 0;background:#e8e5df;">` : "";
+    return `<tr><td style="height:14px;"></td></tr><tr><td style="background:${c.card};border:1px solid ${c.line};border-radius:12px;padding:0;overflow:hidden;">${photo}<div style="padding:18px 22px 20px;">
 <div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:${c.accent};">${esc(m.slot.label)} · ${esc(m.rec.time)}</div>
 <h2 style="margin:4px 0 8px;font-size:19px;line-height:1.25;">${esc(m.rec.name)}</h2>
 <div style="font-size:12px;margin:0 0 12px;"><span style="background:${c.matcha};color:${c.ink};border-radius:20px;padding:2px 9px;font-weight:600;">${kcal(m.n.k)}</span>
@@ -282,7 +284,7 @@ export function renderDailyEmail(opts: { siteUrl: string; unsubUrl: string; dayI
 <div style="font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:${c.muted};margin:0 0 4px;">${t.ingredients}</div>
 <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 12px;">${ing}</table>
 <div style="font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:${c.muted};margin:0 0 4px;">${t.method}</div>
-<ol style="margin:0;padding-left:20px;font-size:14px;line-height:1.5;">${steps}</ol></td></tr>`;
+<ol style="margin:0;padding-left:20px;font-size:14px;line-height:1.5;">${steps}</ol></div></td></tr>`;
   }).join("");
   const cta = `<tr><td style="padding:18px 4px 0;font-size:14px;"><a href="${esc(site)}#meals" style="color:${c.accent};font-weight:600;">${t.fullWeek}</a></td></tr>`;
   const footer = t.footer(kcal(opts.intake), esc(site), esc(opts.unsubUrl));
