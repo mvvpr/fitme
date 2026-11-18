@@ -2,6 +2,7 @@
 import { getStore } from "@netlify/blobs";
 import "../../public/meals.js";
 import "../../public/meals.pt.js";
+import "../../public/meals.br.js";
 
 export const M: any = (globalThis as any).FITME_MEALS;
 
@@ -18,9 +19,9 @@ export type Subscriber = {
   intake: number;
   prot: number;
   units: "metric" | "imperial";
-  lang?: "en" | "pt";
+  lang?: "en" | "pt" | "br";
   diet?: "all" | "veg";
-  pending?: { tz: string; intake: number; prot: number; units: "metric" | "imperial"; lang?: "en" | "pt"; diet?: "all" | "veg" } | null;
+  pending?: { tz: string; intake: number; prot: number; units: "metric" | "imperial"; lang?: "en" | "pt" | "br"; diet?: "all" | "veg" } | null;
   confirmToken: string | null;
   unsubToken: string;
   createdAt: string;
@@ -148,8 +149,9 @@ export function requestUser(req: Request, context: { ip?: string }) {
 }
 
 // ---------- Rendering ----------
-export type Lang = "en" | "pt";
-export const sitePath = (siteUrl: string, lang?: Lang) => (lang === "pt" ? `${siteUrl}/pt/` : `${siteUrl}/`);
+export type Lang = "en" | "pt" | "br";
+export const asLang = (v: unknown): Lang => (v === "pt" || v === "br" ? v : "en");
+export const sitePath = (siteUrl: string, lang?: Lang) => (lang === "pt" || lang === "br" ? `${siteUrl}/${lang}/` : `${siteUrl}/`);
 export const T = {
   en: {
     htmlLang: "en", locale: "en-GB",
@@ -193,6 +195,27 @@ export const T = {
     shopFooter: (site: string, unsub: string) => `Recebes esta lista todos os sábados como parte do teu plano de refeições FitMe. Para mudar as tuas calorias, recalcula no <a href="${site}" style="color:#6b655e;">FitMe</a> e volta a subscrever com o mesmo email. <a href="${unsub}" style="color:#6b655e;">Cancelar subscrição</a>.`,
     doneTitle: "Subscrição cancelada", doneBody: (u: string) => `O teu email e as tuas definições foram apagados. Podes <a href="${u}" style="color:#2e6b4f;">voltar a subscrever</a> quando quiseres.`,
   },
+  br: {
+    htmlLang: "pt-BR", locale: "pt-BR",
+    confirmTitle: "Confirme seu plano de refeições diário", updateTitle: "Confirme seu plano de refeições atualizado",
+    confirmLead: "Toque no botão abaixo para começar a receber seu plano de refeições FitMe toda manhã às 7h: quatro refeições ricas em proteína, com ingredientes e modo de preparo, na medida das suas calorias. Aos sábados você também recebe a lista de compras da semana.",
+    updateLead: "Você pediu para atualizar as calorias do seu plano de refeições diário FitMe. Confirme para aplicar as novas porções.",
+    confirmBtn: "Confirmar inscrição", updateBtn: "Confirmar atualização",
+    ignore: "Se você não fez essa inscrição, ignore este e-mail e nada vai acontecer.", confirmFooter: "Você está recebendo este e-mail porque este endereço foi informado no FitMe.",
+    yourDayPlan: (d: string) => `Seu plano de ${d}`, calories: "Calorias", protein: "Proteína", carbs: "Carboidratos", fat: "Gordura", macro: ["P", "C", "G"],
+    ingredients: "Ingredientes", method: "Modo de preparo", fullWeek: "Veja a semana completa e a lista de compras no FitMe →",
+    footer: (k: string, site: string, unsub: string) => `As porções estão na medida da sua ingestão diária de ${k}. Os valores nutricionais são estimados a partir de valores-padrão dos ingredientes, então confira os rótulos se tiver alergias. Não é orientação médica.<br>Para mudar suas calorias, recalcule no <a href="${site}" style="color:#6b655e;">FitMe</a> e faça a inscrição de novo com o mesmo e-mail. <a href="${unsub}" style="color:#6b655e;">Cancelar inscrição</a>.`,
+    subject: (d: string, lunch: string) => `Seu plano de ${d}: ${lunch} no almoço`,
+    textFull: "Semana completa", textUnsub: "Cancelar inscrição", textConfirm: "Confirmar",
+    expiredTitle: "Este link expirou", expiredBody: (u: string) => `Ele pode já ter sido usado ou substituído por um e-mail mais recente. Você pode <a href="${u}" style="color:#2e6b4f;">se inscrever de novo no FitMe</a>.`,
+    notSubTitle: "Você não está inscrito", notSubBody: "Este endereço não está mais na lista do e-mail diário do FitMe.",
+    stopTitle: "Parar o plano de refeições diário?", stopBody: "Você deixa de receber os e-mails do FitMe e apagamos seu endereço de e-mail e suas configurações.", stopBtn: "Cancelar inscrição",
+    shopSubject: "Sua lista de compras da semana", shopTitle: "Sua lista de compras da semana",
+    shopIntro: (k: string) => `Tudo o que você precisa para as 28 refeições da semana, com porções na medida da sua ingestão diária de ${k}. As quantidades estão arredondadas para cima, para não faltar nada.`,
+    shopExtras: "Ervas, temperos e extras (confira na despensa)", shopCta: "Veja as receitas desta semana no FitMe →",
+    shopFooter: (site: string, unsub: string) => `Você recebe esta lista todo sábado como parte do seu plano de refeições FitMe. Para mudar suas calorias, recalcule no <a href="${site}" style="color:#6b655e;">FitMe</a> e faça a inscrição de novo com o mesmo e-mail. <a href="${unsub}" style="color:#6b655e;">Cancelar inscrição</a>.`,
+    doneTitle: "Inscrição cancelada", doneBody: (u: string) => `Seu e-mail e suas configurações foram apagados. Você pode <a href="${u}" style="color:#2e6b4f;">se inscrever de novo</a> quando quiser.`,
+  },
 };
 export const COLORS = { bg: "#f0eee9", card: "#fbfaf7", ink: "#1e1c1a", muted: "#6b655e", line: "#ddd8cf", accent: "#2e6b4f", matcha: "#8fb339" };
 
@@ -230,12 +253,12 @@ export function renderConfirmEmail(siteUrl: string, confirmUrl: string, isUpdate
 }
 
 export function renderDailyEmail(opts: { siteUrl: string; unsubUrl: string; dayIndex: number; dateLabel: string; intake: number; prot: number; imperial: boolean; lang?: Lang; diet?: "all" | "veg" }) {
-  const c = COLORS, lang: Lang = opts.lang === "pt" ? "pt" : "en", t = T[lang];
+  const c = COLORS, lang: Lang = asLang(opts.lang), t = T[lang];
   const kcal = (v: number) => kcalL(v, t.locale);
   const site = sitePath(opts.siteUrl, lang);
   const meals = M.buildDay(opts.dayIndex, opts.intake, opts.prot, lang, opts.diet);
   const tot = M.dayTotals(meals);
-  const dayName = lang === "pt" ? (globalThis as any).FITME_MEALS_PT.days[opts.dayIndex].toLowerCase() : M.DAY_NAMES[opts.dayIndex];
+  const dayName = lang === "en" ? M.DAY_NAMES[opts.dayIndex] : (globalThis as any)[lang === "br" ? "FITME_MEALS_BR" : "FITME_MEALS_PT"].days[opts.dayIndex].toLowerCase();
   const summary = `<tr><td style="background:${c.card};border:1px solid ${c.line};border-radius:12px;padding:20px 22px;">
 <div style="font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:${c.muted};">${esc(opts.dateLabel)}</div>
 <h1 style="margin:4px 0 12px;font-size:24px;line-height:1.2;">${t.yourDayPlan(dayName)}</h1>
@@ -275,7 +298,7 @@ export function renderDailyEmail(opts: { siteUrl: string; unsubUrl: string; dayI
 }
 
 export function renderShoppingEmail(opts: { siteUrl: string; unsubUrl: string; dateLabel: string; intake: number; prot: number; imperial: boolean; lang?: Lang; diet?: "all" | "veg" }) {
-  const c = COLORS, lang: Lang = opts.lang === "pt" ? "pt" : "en", t = T[lang];
+  const c = COLORS, lang: Lang = asLang(opts.lang), t = T[lang];
   const site = sitePath(opts.siteUrl, lang);
   const list = M.shoppingList(opts.intake, opts.prot, lang, opts.imperial, opts.diet);
   const head = `<tr><td style="background:${c.card};border:1px solid ${c.line};border-radius:12px;padding:20px 22px;">

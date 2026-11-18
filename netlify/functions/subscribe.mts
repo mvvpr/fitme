@@ -1,6 +1,6 @@
 // POST /api/subscribe — store a pending subscriber and send a double opt-in email.
 import type { Config, Context } from "@netlify/functions";
-import { subscribers, sha256, subKey, tokKey, unsKey, newToken, validTimeZone, mailConfig, sendMail, renderConfirmEmail, sendMetaEvents, requestUser, FBP_RE, FBC_RE, EVENT_ID_RE, type Subscriber } from "../lib/core.mts";
+import { subscribers, sha256, subKey, tokKey, unsKey, newToken, validTimeZone, mailConfig, sendMail, renderConfirmEmail, sendMetaEvents, requestUser, FBP_RE, FBC_RE, EVENT_ID_RE, asLang, type Subscriber } from "../lib/core.mts";
 
 const CONSENT_TEXT = "I agree to receive a daily meal-plan email from FitMe. We store your email, time zone and calorie settings to send it, and you can unsubscribe at any time. (privacy policy version 2026-11-13)";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -22,7 +22,7 @@ export default async (req: Request, context: Context) => {
     intake,
     prot: prot >= 40 && prot <= 400 ? prot : Math.round(intake * 0.3 / 4),
     units: input?.units === "imperial" ? "imperial" as const : "metric" as const,
-    lang: input?.lang === "pt" ? "pt" as const : "en" as const,
+    lang: asLang(input?.lang),
     diet: input?.diet === "veg" ? "veg" as const : "all" as const,
   };
 
@@ -77,7 +77,7 @@ export default async (req: Request, context: Context) => {
   await store.set(unsKey(record.unsubToken), hash);
 
   const siteUrl = context.site.url || new URL(req.url).origin;
-  const confirmUrl = `${siteUrl}/api/confirm?t=${confirmToken}${settings.lang === "pt" ? "&l=pt" : ""}`;
+  const confirmUrl = `${siteUrl}/api/confirm?t=${confirmToken}${settings.lang && settings.lang !== "en" ? "&l=" + settings.lang : ""}`;
   const mail = renderConfirmEmail(siteUrl, confirmUrl, isUpdate, settings.lang);
   try {
     await sendMail(cfg, { to: email, ...mail, tag: "confirm" });

@@ -13,11 +13,15 @@
     pt: {
       text: 'O FitMe é grátis. Os cookies da Meta ajudam-nos a perceber que anúncios trazem pessoas até aqui, para continuar assim. Só são carregados se aceitares, e podes mudar de ideias a qualquer momento.',
       accept: 'Aceitar', decline: 'Recusar', settings: 'Definições de cookies', label: 'Consentimento de cookies', privacy: 'Política de privacidade'
+    },
+    br: {
+      text: 'O FitMe é grátis. Os cookies da Meta ajudam a gente a entender quais anúncios trazem pessoas até aqui, para continuar assim. Eles só são carregados se você aceitar, e você pode mudar de ideia quando quiser.',
+      accept: 'Aceitar', decline: 'Recusar', settings: 'Configurações de cookies', label: 'Consentimento de cookies', privacy: 'Política de privacidade'
     }
   };
 
-  function privacyHref() { return lang() === 'pt' ? '/pt/privacy.html' : '/privacy.html'; }
-  function lang() { return (document.documentElement.lang || 'en').slice(0, 2) === 'pt' ? 'pt' : 'en'; }
+  function privacyHref() { var l = lang(); return l === 'en' ? '/privacy.html' : '/' + l + '/privacy.html'; }
+  function lang() { var h = (document.documentElement.lang || 'en').toLowerCase(); return h === 'pt-br' ? 'br' : h.slice(0, 2) === 'pt' ? 'pt' : 'en'; }
   function getConsent() { try { return localStorage.getItem(KEY); } catch (e) { return null; } }
   function setConsent(v) { try { localStorage.setItem(KEY, v); } catch (e) {} }
   function granted() { return getConsent() === 'granted'; }

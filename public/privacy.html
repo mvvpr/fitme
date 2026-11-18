@@ -45,7 +45,7 @@ code { font-size: 13px; }
 <div class="wrap">
 <header>
   <a class="brand" id="home" href="/"><img src="/brand/fitme-icon-512.png" alt=""><b style="font-weight:inherit">Fit<span>Me</span></b></a>
-  <div class="lang-switch" role="group" aria-label="Language / Idioma"><a href="/privacy.html" data-lang="en" hreflang="en">EN</a><a href="/pt/privacy.html" data-lang="pt" hreflang="pt-PT">PT</a></div>
+  <div class="lang-switch" role="group" aria-label="Language / Idioma"><a href="/privacy.html" data-lang="en" hreflang="en">EN</a><a href="/pt/privacy.html" data-lang="pt" hreflang="pt-PT">PT</a><a href="/br/privacy.html" data-lang="br" hreflang="pt-BR">BR</a></div>
 </header>
 
 <article lang="en" data-lang="en">
@@ -84,7 +84,7 @@ code { font-size: 13px; }
 <p>Meta Platforms Ireland Ltd. is jointly responsible with us for collecting and sending this data to Meta; what Meta does with it afterwards is covered by <a href="https://www.facebook.com/privacy/policy/" rel="noopener">Meta's privacy policy</a>.</p>
 
 <h2>Other things stored in your browser</h2>
-<p>Besides the calculator figures, FitMe saves your language and your cookie choice in local storage. These are needed for the site to work as you set it and are never sent to us.</p>
+<p>Besides the calculator figures, FitMe saves your language and your cookie choice in local storage. If you pick a language with the EN / PT / BR switch, a small cookie (<code>nf_country</code>, kept for a year) remembers it so our hosting provider shows you that version next time. These are needed for the site to work as you set it and are not used for tracking.</p>
 
 <h2>Who processes data for us</h2>
 <table>
@@ -144,7 +144,7 @@ code { font-size: 13px; }
 <p>A Meta Platforms Ireland Ltd. é responsável, em conjunto connosco, pela recolha e envio destes dados para a Meta; o que a Meta faz com eles depois está descrito na <a href="https://www.facebook.com/privacy/policy/" rel="noopener">política de privacidade da Meta</a>.</p>
 
 <h2>Outras coisas guardadas no teu navegador</h2>
-<p>Além dos valores da calculadora, o FitMe guarda no armazenamento local o teu idioma e a tua escolha sobre cookies. São necessários para o site funcionar como o definiste e nunca nos são enviados.</p>
+<p>Além dos valores da calculadora, o FitMe guarda no armazenamento local o teu idioma e a tua escolha sobre cookies. Se escolheres um idioma no seletor EN / PT / BR, um pequeno cookie (<code>nf_country</code>, guardado durante um ano) lembra essa escolha para o nosso fornecedor de alojamento te mostrar essa versão da próxima vez. São necessários para o site funcionar como o definiste e não são usados para rastreio.</p>
 
 <h2>Quem trata dados por nossa conta</h2>
 <table>
@@ -170,18 +170,19 @@ code { font-size: 13px; }
 </div>
 <script>
 (function () {
-  var lang = /^\/pt(\/|$)/.test(location.pathname) ? 'pt' : 'en';
-  document.documentElement.lang = lang === 'pt' ? 'pt-PT' : 'en';
+  var path = /^\/br(\/|$)/.test(location.pathname) ? 'br' : /^\/pt(\/|$)/.test(location.pathname) ? 'pt' : 'en', lang = path === 'en' ? 'en' : 'pt'; // /br/ shows the Portuguese text
+  document.documentElement.lang = path === 'br' ? 'pt-BR' : lang === 'pt' ? 'pt-PT' : 'en';
   document.title = lang === 'pt' ? 'Política de privacidade · FitMe' : 'Privacy policy · FitMe';
   document.querySelectorAll('article').forEach(function (a) { a.hidden = a.dataset.lang !== lang; });
-  document.querySelectorAll('.lang-switch a').forEach(function (a) { a.setAttribute('aria-current', String(a.dataset.lang === lang)); });
-  document.getElementById('home').href = lang === 'pt' ? '/pt/' : '/';
+  document.querySelectorAll('.lang-switch a').forEach(function (a) { a.setAttribute('aria-current', String(a.dataset.lang === path)); });
+  document.getElementById('home').href = path === 'br' ? '/br/' : lang === 'pt' ? '/pt/' : '/';
+  document.querySelectorAll('[data-home]').forEach(function (b) { b.href = document.getElementById('home').href; });
   // Cookie settings: clear the choice and go back to FitMe, where the banner asks again.
   document.querySelectorAll('[data-cc]').forEach(function (b) {
     b.addEventListener('click', function () {
       try { localStorage.removeItem('fitme-consent'); } catch (e) {}
       ['_fbp', '_fbc'].forEach(function (n) { document.cookie = n + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'; });
-      location.href = lang === 'pt' ? '/pt/' : '/';
+      location.href = path === 'br' ? '/br/' : lang === 'pt' ? '/pt/' : '/';
     });
   });
 })();

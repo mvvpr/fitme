@@ -174,8 +174,9 @@ function scaleLine(l, f) {
   else q = q < 20 ? Math.max(1, Math.round(q)) : Math.round(q / 5) * 5;
   return [l[0], q, u];
 }
+// Locale data for the meal plan: European Portuguese (FITME_MEALS_PT, /pt/) or Brazilian Portuguese (FITME_MEALS_BR, /br/).
 function ptData(lang) {
-  var pt = lang === 'pt' && globalThis.FITME_MEALS_PT ? globalThis.FITME_MEALS_PT : null;
+  var pt = lang === 'pt' ? globalThis.FITME_MEALS_PT || null : lang === 'br' ? globalThis.FITME_MEALS_BR || null : null;
   if (pt && pt.recipes.main) pt.recipes = weekPlan(pt.recipes); // the Portuguese pool follows the same weekly rotation
   if (pt && pt.recipesVeg && pt.recipesVeg.main) pt.recipesVeg = weekPlan(pt.recipesVeg);
   return pt;
@@ -184,7 +185,7 @@ function ingName(key, lang) { var pt = ptData(lang); return pt && pt.db[key] ? p
 function pieceLabels(key, lang) { var pt = ptData(lang); return ((pt && pt.db[key] && pt.db[key][1]) || DB[key][7] || '|').split('|'); }
 function amountText(l, imperial, lang) {
   var q = l[1], u = l[2], pt = ptData(lang);
-  var loc = pt ? 'pt-PT' : 'en', dec = function (v) { return v.toLocaleString(loc); };
+  var loc = pt ? pt.locale || 'pt-PT' : 'en', dec = function (v) { return v.toLocaleString(loc); };
   var name = ingName(l[0], lang).toLowerCase();
   if (u === 'pc') { var lab = pieceLabels(l[0], lang); return { q: frac(q), n: q > 1 ? lab[1] : lab[0] }; }
   if (u === 'tsp' || u === 'tbsp') return { q: frac(q) + ' ' + (pt ? pt.units[u] : u), n: name };
@@ -252,8 +253,8 @@ function buildDay(i, T, P, lang, diet) {
 // Returns { groups: [{ aisle, items: [{ n, q }] }], extras } with names, units and numbers in the given language.
 var AISLES = ['Fruit & veg', 'Meat & fish', 'Dairy & eggs', 'Grains & bread', 'Pantry'];
 function shoppingList(T, P, lang, imperial, diet) {
-  var pt = ptData(lang), loc = pt ? 'pt-PT' : 'en';
-  var W = pt ? { slice: ['fatia', 'fatias'], clove: ['dente', 'dentes'], tsp: 'c. chá', tbsp: 'c. sopa' } : { slice: ['slice', 'slices'], clove: ['clove', 'cloves'], tsp: 'tsp', tbsp: 'tbsp' };
+  var pt = ptData(lang), loc = pt ? pt.locale || 'pt-PT' : 'en';
+  var W = pt ? pt.words || { slice: ['fatia', 'fatias'], clove: ['dente', 'dentes'], tsp: 'c. chá', tbsp: 'c. sopa' } : { slice: ['slice', 'slices'], clove: ['clove', 'cloves'], tsp: 'tsp', tbsp: 'tbsp' };
   var num = function (v) { return v.toLocaleString(loc); };
   var totals = {}, extras = {};
   for (var i = 0; i < 7; i++) buildDay(i, T, P, lang, diet).forEach(function (m) {

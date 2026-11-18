@@ -2,7 +2,7 @@
 // when it is 07:xx in their own time zone (once per local day), and on Saturdays at 08:xx
 // their shopping list for the week (once per Saturday).
 import type { Config, Context } from "@netlify/functions";
-import { subscribers, subKey, tokKey, unsKey, mailConfig, sendMail, renderDailyEmail, renderShoppingEmail, type Subscriber } from "../lib/core.mts";
+import { subscribers, subKey, tokKey, unsKey, mailConfig, sendMail, renderDailyEmail, renderShoppingEmail, asLang, type Subscriber } from "../lib/core.mts";
 
 const SEND_HOUR = 7;
 const SHOP_HOUR = 8;
@@ -13,12 +13,12 @@ const TIME_BUDGET_MS = 24_000; // scheduled functions stop at 30s
 
 const WEEKDAY: Record<string, number> = { Mon: 0, Tue: 1, Wed: 2, Thu: 3, Fri: 4, Sat: 5, Sun: 6 };
 
-export function localParts(now: Date, tz: string, lang: "en" | "pt" = "en") {
+export function localParts(now: Date, tz: string, lang: "en" | "pt" | "br" = "en") {
   const parts = Object.fromEntries(
     new Intl.DateTimeFormat("en-GB", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", hourCycle: "h23", weekday: "short" })
       .formatToParts(now).map((p) => [p.type, p.value]),
   );
-  const label = new Intl.DateTimeFormat(lang === "pt" ? "pt-PT" : "en-GB", { timeZone: tz, weekday: "long", day: "numeric", month: "long" }).format(now);
+  const label = new Intl.DateTimeFormat(lang === "br" ? "pt-BR" : lang === "pt" ? "pt-PT" : "en-GB", { timeZone: tz, weekday: "long", day: "numeric", month: "long" }).format(now);
   return { date: `${parts.year}-${parts.month}-${parts.day}`, hour: Number(parts.hour), dayIndex: WEEKDAY[parts.weekday] ?? 0, label };
 }
 
@@ -45,9 +45,9 @@ export default async (req: Request, context: Context) => {
         expired++; continue;
       }
       if (!sub || sub.status !== "active") { skipped++; continue; }
-      const lang = sub.lang === "pt" ? "pt" : "en";
+      const lang = asLang(sub.lang);
       const local = localParts(now, sub.tz, lang);
-      const unsubUrl = `${siteUrl}/api/unsubscribe?u=${sub.unsubToken}${lang === "pt" ? "&l=pt" : ""}`;
+      const unsubUrl = `${siteUrl}/api/unsubscribe?u=${sub.unsubToken}${lang !== "en" ? "&l=" + lang : ""}`;
       const base = { siteUrl, unsubUrl, dateLabel: local.label, intake: sub.intake, prot: sub.prot, imperial: sub.units === "imperial", lang, diet: sub.diet === "veg" ? "veg" : "all" } as const;
       try {
         if (local.hour === SEND_HOUR && sub.lastSentDate !== local.date) {

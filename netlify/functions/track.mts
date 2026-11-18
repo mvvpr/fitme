@@ -33,7 +33,7 @@ export default async (req: Request, context: Context) => {
     if (typeof c.content_name === "string") custom.content_name = c.content_name.slice(0, 80);
     if (typeof c.content_category === "string") custom.content_category = c.content_category.slice(0, 40);
     if (Number.isInteger(c.step) && c.step >= 1 && c.step <= 4) (custom as any).step = c.step;
-    if (c.lang === "en" || c.lang === "pt") custom.lang = c.lang;
+    if (c.lang === "en" || c.lang === "pt" || c.lang === "br") custom.lang = c.lang;
   }
 
   const send = sendMetaEvents([{

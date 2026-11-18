@@ -2,6 +2,7 @@
    Recipes are matched by meal slot and position, so their order must follow RECIPES in meals.js.
    x = the recipe's herbs/spices/seasoning lines ('~' lines), in order. */
 globalThis.FITME_MEALS_PT = {
+  locale: 'pt-PT',
   db: {
     oats: ['Flocos de aveia'], milk: ['Leite meio-gordo'], yog: ['Iogurte grego magro (0%)'],
     egg: ['Ovos', 'ovo|ovos'], eggw: ['Claras de ovo'], cottage: ['Queijo cottage'], feta: ['Queijo feta'],

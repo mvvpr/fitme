@@ -6,6 +6,7 @@
 <title>FitMe</title>
 <link rel="alternate" hreflang="en" href="https://fitmeplan.com/">
 <link rel="alternate" hreflang="pt-PT" href="https://fitmeplan.com/pt/">
+<link rel="alternate" hreflang="pt-BR" href="https://fitmeplan.com/br/">
 <link rel="alternate" hreflang="x-default" href="https://fitmeplan.com/">
 <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0Ij4KICA8cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHJ4PSIxNiIgZmlsbD0iIzJlNmI0ZiIvPgogIDxwYXRoIGQ9Ik0xMyAxOSBDMjIgMTkgMjQgNDEgMzMgNDEgTDUxIDIxIiBmaWxsPSJub25lIiBzdHJva2U9IiM4ZmIzMzkiIHN0cm9rZS13aWR0aD0iNyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+CiAgPGNpcmNsZSBjeD0iMTMiIGN5PSIxOSIgcj0iMy41IiBmaWxsPSIjZjBlZWU5Ii8+Cjwvc3ZnPgo=">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -462,7 +463,7 @@ body.lang-fading .wrap > .step { opacity: 0; }
 <div class="wrap">
   <header class="topbar">
     <a class="brand" href="#start" aria-label="FitMe home"><svg class="mark" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16" fill="var(--accent)"/><path d="M13 19 C22 19 24 41 33 41 L51 21" fill="none" stroke="var(--mark-line)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="13" cy="19" r="3.5" fill="#f0eee9"/></svg><span class="wordmark">Fit<span>Me</span></span></a>
-    <div class="lang-switch" role="group" aria-label="Language / Idioma"><a href="/" data-lang="en" hreflang="en">EN</a><a href="/pt/" data-lang="pt" hreflang="pt-PT">PT</a></div>
+    <div class="lang-switch" role="group" aria-label="Language / Idioma"><a href="/" data-lang="en" hreflang="en">EN</a><a href="/pt/" data-lang="pt" hreflang="pt-PT" title="Português (Portugal)">PT</a><a href="/br/" data-lang="br" hreflang="pt-BR" title="Português (Brasil)">BR</a></div>
     <nav class="progress" id="progress" aria-label="Steps" hidden>
       <ol>
         <li><a href="#about" data-step="about"><span class="num">1</span><span class="lab">About you</span></a></li>
@@ -724,23 +725,31 @@ body.lang-fading .wrap > .step { opacity: 0; }
 
 <script src="meals.js"></script>
 <script src="meals.pt.js"></script>
+<script src="meals.br.js"></script>
 <script src="i18n.js"></script>
 <script src="track.js"></script>
 <script>
 (function () {
   var $ = function (id) { return document.getElementById(id); };
   var I18N = globalThis.FITME_I18N, L = I18N.L, LANG = I18N.lang, applyLangGlobals = function () {};
-  // First visit on the English page from a Portuguese browser: go to /pt/ (unless the visitor chose a language before).
+  // Visitors are routed by country at the edge (netlify.toml: Brazil -> /br/, Portugal and Portuguese-speaking Africa -> /pt/).
+  // Fallback on the English page: a Portuguese browser goes to /br/ (pt-BR) or /pt/ (other pt), unless the visitor chose a language before.
   try {
-    var chosen = localStorage.getItem('fitme-lang');
-    if (LANG === 'en' && !chosen && /^pt\b/i.test(navigator.language || '') && location.protocol !== 'file:' && !/claude|artifact/.test(location.hostname)) {
-      location.replace('/pt/' + location.hash); return;
+    var chosen = localStorage.getItem('fitme-lang'), navLang = navigator.language || '';
+    if (LANG === 'en' && !chosen && /^pt\b/i.test(navLang) && location.protocol !== 'file:' && !/claude|artifact/.test(location.hostname)) {
+      location.replace((/^pt-br$/i.test(navLang) ? '/br/' : '/pt/') + location.hash); return;
     }
   } catch (e) {}
   I18N.translateStatic(document.body);
   document.documentElement.lang = L.htmlLang;
   document.title = L.title;
-  function langPath(lang) { return lang === 'pt' ? '/pt/' : '/'; }
+  function langPath(lang) { return lang === 'pt' ? '/pt/' : lang === 'br' ? '/br/' : '/'; }
+  function pathLangOf(path) { return /^\/br(\/|$)/.test(path) ? 'br' : /^\/pt(\/|$)/.test(path) ? 'pt' : 'en'; }
+  // Remember an explicit choice: localStorage for this page, and Netlify's nf_country cookie so the edge geo-redirect respects it next time.
+  function rememberLang(lang) {
+    try { localStorage.setItem('fitme-lang', lang); } catch (err) {}
+    try { document.cookie = 'nf_country=' + (lang === 'br' ? 'BR' : lang === 'pt' ? 'PT' : 'ZZ') + '; path=/; max-age=31536000; SameSite=Lax' + (location.protocol === 'https:' ? '; Secure' : ''); } catch (err) {}
+  }
   function canPushPath() { return location.protocol !== 'file:' && !/claude|artifact/.test(location.hostname); }
   function markLangSwitch() { document.querySelectorAll('.lang-switch a').forEach(function (a) { a.setAttribute('aria-current', String(a.dataset.lang === LANG)); }); }
   markLangSwitch();
@@ -762,12 +771,12 @@ body.lang-fading .wrap > .step { opacity: 0; }
   document.querySelectorAll('.lang-switch a').forEach(function (a) {
     a.addEventListener('click', function (e) {
       e.preventDefault();
-      try { localStorage.setItem('fitme-lang', a.dataset.lang); } catch (err) {}
+      rememberLang(a.dataset.lang);
       switchLang(a.dataset.lang);
     });
   });
   window.addEventListener('popstate', function () {
-    var pathLang = /^\/pt(\/|$)/.test(location.pathname) ? 'pt' : 'en';
+    var pathLang = pathLangOf(location.pathname);
     if (pathLang !== LANG) switchLang(pathLang, true);
   });
   var LB = 0.45359237;
@@ -876,7 +885,7 @@ body.lang-fading .wrap > .step { opacity: 0; }
     return new Date(+p[0], +p[1] - 1, +p[2]);
   }
   function addDays(d, n) { var x = new Date(d); x.setDate(x.getDate() + n); return x; }
-  var dfLong = new Intl.DateTimeFormat(L.locale, { day: 'numeric', month: LANG === 'pt' ? 'long' : 'short', year: 'numeric' });
+  var dfLong = new Intl.DateTimeFormat(L.locale, { day: 'numeric', month: LANG === 'en' ? 'short' : 'long', year: 'numeric' });
   var dfShort = new Intl.DateTimeFormat(L.locale, { day: 'numeric', month: 'short' });
   function weeksText(days) { return L.weeks(Math.ceil(days / 7)); }
   function reachText(sim, sd) { return sim.reach ? dfLong.format(addDays(sd, sim.reach)) + ' (' + weeksText(sim.reach) + ')' : L.notWithin; }
@@ -1039,7 +1048,7 @@ body.lang-fading .wrap > .step { opacity: 0; }
   var M = globalThis.FITME_MEALS;
   var DB = M.DB, RECIPES = M.RECIPES, DAY_NAMES = M.DAY_NAMES, frac = M.frac, buildDay = M.buildDay;
   var DAYS = L.daysShort, DAY_NAMES_EN = M.DAY_NAMES;
-  if (LANG === 'pt') DAY_NAMES = globalThis.FITME_MEALS_PT.days;
+  if (LANG !== 'en') DAY_NAMES = (LANG === 'br' ? globalThis.FITME_MEALS_BR : globalThis.FITME_MEALS_PT).days;
   function amountText(l) { return M.amountText(l, imp(), LANG); }
   function esc(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
   function renderMeals(s, T) {
@@ -1112,10 +1121,10 @@ body.lang-fading .wrap > .step { opacity: 0; }
   applyLangGlobals = function () {
     nf0 = new Intl.NumberFormat(L.locale, { maximumFractionDigits: 0 });
     nf1 = new Intl.NumberFormat(L.locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-    dfLong = new Intl.DateTimeFormat(L.locale, { day: 'numeric', month: LANG === 'pt' ? 'long' : 'short', year: 'numeric' });
+    dfLong = new Intl.DateTimeFormat(L.locale, { day: 'numeric', month: LANG === 'en' ? 'short' : 'long', year: 'numeric' });
     dfShort = new Intl.DateTimeFormat(L.locale, { day: 'numeric', month: 'short' });
     ACT_SHORT = L.actShort; DAYS = L.daysShort; MSG = L.msg;
-    DAY_NAMES = LANG === 'pt' ? globalThis.FITME_MEALS_PT.days : DAY_NAMES_EN;
+    DAY_NAMES = LANG === 'en' ? DAY_NAMES_EN : (LANG === 'br' ? globalThis.FITME_MEALS_BR : globalThis.FITME_MEALS_PT).days;
     document.querySelectorAll('.sub-msg').forEach(function (el) { el.textContent = ''; el.className = 'sub-msg'; });
     var b = $('sub-banner'); if (b && !b.hidden) b.hidden = true;
   };
