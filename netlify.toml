@@ -17,12 +17,14 @@
   from = "/"
   to = "/br/"
   status = 302
+  force = true
   conditions = { Country = ["BR"] }
 
 [[redirects]]
   from = "/"
   to = "/pt/"
   status = 302
+  force = true
   conditions = { Country = ["PT", "AO", "MZ", "CV", "GW", "ST", "TL"] }
 
 # Brazilian site: /br/ serves the same page as /pt/ and /, with pt-BR text (language is picked from the path).
