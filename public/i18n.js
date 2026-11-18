@@ -12,7 +12,7 @@
     'Daily calories and protein': 'Calorias e proteína diárias', 'sized to your body': 'ajustadas ao teu corpo',
     'A 7-day meal plan': 'Um plano de refeições para 7 dias', 'with recipes and a shopping list': 'com receitas e lista de compras',
     'Start': 'Começar', '3 quick steps · about 1 minute · free, no sign-up': '3 passos rápidos · cerca de 1 minuto · grátis, sem registo',
-    'Metric': 'Métrico', 'Imperial': 'Imperial',
+    'Metric': 'Métrico', 'Imperial': 'Imperial', 'Diet': 'Alimentação', 'Everything': 'Tudo', 'Vegetarian': 'Vegetariana',
     'We use these to estimate how many calories your body burns.': 'Usamos estes dados para estimar quantas calorias o teu corpo gasta.',
     'Sex': 'Sexo', 'Female': 'Feminino', 'Male': 'Masculino', 'Age': 'Idade', 'yrs': 'anos', 'Height': 'Altura',
     'Current weight': 'Peso atual', 'Activity level': 'Nível de atividade',

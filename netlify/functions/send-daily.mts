@@ -48,7 +48,7 @@ export default async (req: Request, context: Context) => {
       const lang = sub.lang === "pt" ? "pt" : "en";
       const local = localParts(now, sub.tz, lang);
       const unsubUrl = `${siteUrl}/api/unsubscribe?u=${sub.unsubToken}${lang === "pt" ? "&l=pt" : ""}`;
-      const base = { siteUrl, unsubUrl, dateLabel: local.label, intake: sub.intake, prot: sub.prot, imperial: sub.units === "imperial", lang } as const;
+      const base = { siteUrl, unsubUrl, dateLabel: local.label, intake: sub.intake, prot: sub.prot, imperial: sub.units === "imperial", lang, diet: sub.diet === "veg" ? "veg" : "all" } as const;
       try {
         if (local.hour === SEND_HOUR && sub.lastSentDate !== local.date) {
           await sendMail(cfg!, { to: sub.email, ...renderDailyEmail({ ...base, dayIndex: local.dayIndex }), unsubUrl, tag: "daily-plan" });

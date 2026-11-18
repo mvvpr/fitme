@@ -5,7 +5,7 @@ globalThis.FITME_MEALS_PT = {
   db: {
     oats: ['Flocos de aveia'], milk: ['Leite meio-gordo'], yog: ['Iogurte grego magro (0%)'],
     egg: ['Ovos', 'ovo|ovos'], eggw: ['Claras de ovo'], cottage: ['Queijo cottage'], feta: ['Queijo feta'],
-    parm: ['Queijo parmesão'], hummus: ['Húmus'],
+    parm: ['Queijo parmesão'], vparm: ['Queijo curado vegetariano (tipo parmesão)'], tofu: ['Tofu firme'], hummus: ['Húmus'],
     bread: ['Pão integral', 'fatia de pão integral|fatias de pão integral'],
     wrap: ['Tortilhas integrais', 'tortilha integral|tortilhas integrais'],
     ricecake: ['Bolachas de arroz', 'bolacha de arroz|bolachas de arroz'],
@@ -61,6 +61,27 @@ globalThis.FITME_MEALS_PT = {
       { name: 'Ovos cozidos com pepino', time: '10 min', x: ['Sal, pimenta preta, flocos de malagueta'],
         steps: ['Coze os ovos durante 8–9 minutos, arrefece-os em água fria e descasca-os. Podes cozer um lote para a semana.', 'Corta os ovos ao meio, tempera com sal, pimenta e flocos de malagueta e serve com o pepino às rodelas.'] }
     ]
+  },
+  // Vegetarian pool, same order as POOL_VEG in meals.js.
+  recipesVeg: {
+    breakfast: [
+      null,
+      { name: 'Omelete de espinafres e queijo com torrada', time: '12 min', x: ['Sal e pimenta preta'],
+        steps: ['Bate os ovos com uma pitada de sal e pimenta.', 'Aquece o azeite numa frigideira antiaderente em lume médio, junta os espinafres e mexe até murcharem, cerca de 1 minuto.', 'Deita os ovos, inclina a frigideira para espalhar e cozinha 2–3 minutos até estarem quase firmes. Rala o queijo sobre metade, dobra e cozinha mais 1 minuto.', 'Serve com o pão torrado.'] },
+      null
+    ],
+    main: [
+      { name: 'Caril de tofu, grão e espinafres', time: '30 min', x: ['2 c. chá de caril em pó, coentros ou salsa frescos'],
+        steps: ['Coze o arroz segundo as instruções da embalagem. Seca o tofu com papel de cozinha e corta-o em cubos.', 'Aquece o azeite numa frigideira antiaderente e frita o tofu durante 5–6 minutos, virando, até ficar dourado. Retira-o para um prato.', 'Na mesma frigideira, cozinha a cebola picada durante 5 minutos e junta o alho e o caril em pó durante 1 minuto. Junta o tomate e o grão, deixa cozinhar em lume brando 10 minutos e volta a juntar o tofu.', 'Junta os espinafres até murcharem, retira do lume e envolve o iogurte para ficar cremoso. Serve sobre o arroz com as ervas.'] },
+      { name: 'Tofu com limão e alho, batatas e brócolos', time: '40 min', x: ['Orégãos secos, sal e pimenta preta'],
+        steps: ['Aquece o forno a 200 °C (180 °C com ventilação). Corta as batatas ao meio, envolve-as em 1 c. chá do azeite, sal e pimenta e assa 15 minutos.', 'Seca o tofu com papel de cozinha e corta-o em cubos grandes. Mistura o resto do azeite com o sumo de limão, o alho esmagado, os orégãos, o sal e a pimenta e envolve o tofu nesta mistura.', 'Junta o tofu e os floretes de brócolos ao tabuleiro e assa mais 20–25 minutos, virando o tofu a meio, até ficar dourado nas pontas.', 'Serve com as batatas e os brócolos. Frio, também fica ótimo para o almoço do dia seguinte.'] },
+      { name: 'Chili de feijão preto e lentilhas', time: '35 min', x: ['1 c. chá de cominhos em pó, 1 c. chá de pimentão-doce fumado, malagueta em pó q.b.'],
+        steps: ['Passa o arroz por água e coze-o em 1,5 vezes o seu volume de água, tapado, durante 12 minutos. Deixa repousar fora do lume.', 'Entretanto, aquece o azeite e cozinha a cebola e o pimento em cubos durante 5 minutos. Junta o alho e as especiarias e cozinha 1 minuto.', 'Junta as lentilhas passadas por água, o tomate e 150 ml de água e deixa cozinhar em lume brando 15 minutos, até as lentilhas estarem macias. Junta o feijão preto e cozinha mais 5 minutos até engrossar, com um pouco de água se for preciso.', 'Serve sobre o arroz com uma colherada de iogurte. Dá bem para cozinhar a dobrar e congelar.'] },
+      { name: 'Esparguete cremoso de tomate e espinafres', time: '20 min', x: ['1 c. chá de orégãos secos, sal e pimenta preta'],
+        steps: ['Coze o esparguete segundo as instruções da embalagem e guarda uma chávena da água da cozedura.', 'Entretanto, aquece o azeite num tacho, cozinha o alho esmagado durante 1 minuto, junta o tomate e os orégãos e deixa cozinhar em lume brando 8 minutos.', 'Tritura o queijo cottage até ficar liso (ou esmaga-o bem com um garfo). Retira o molho do lume e envolve o queijo cottage e os espinafres até murcharem. Não deixes ferver depois de juntar o queijo.', 'Envolve o esparguete no molho, soltando com um pouco da água da cozedura, e serve com o queijo ralado por cima.'] }
+    ],
+    snack: null
   }
 
 };
+(function (p) { var v = p.recipesVeg; v.breakfast[0] = p.recipes.breakfast[0]; v.breakfast[2] = p.recipes.breakfast[2]; v.snack = p.recipes.snack; })(globalThis.FITME_MEALS_PT);

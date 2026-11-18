@@ -19,7 +19,8 @@ export type Subscriber = {
   prot: number;
   units: "metric" | "imperial";
   lang?: "en" | "pt";
-  pending?: { tz: string; intake: number; prot: number; units: "metric" | "imperial"; lang?: "en" | "pt" } | null;
+  diet?: "all" | "veg";
+  pending?: { tz: string; intake: number; prot: number; units: "metric" | "imperial"; lang?: "en" | "pt"; diet?: "all" | "veg" } | null;
   confirmToken: string | null;
   unsubToken: string;
   createdAt: string;
@@ -228,11 +229,11 @@ export function renderConfirmEmail(siteUrl: string, confirmUrl: string, isUpdate
   return { subject: title, html: shell(siteUrl, inner, t.confirmFooter, lang), text };
 }
 
-export function renderDailyEmail(opts: { siteUrl: string; unsubUrl: string; dayIndex: number; dateLabel: string; intake: number; prot: number; imperial: boolean; lang?: Lang }) {
+export function renderDailyEmail(opts: { siteUrl: string; unsubUrl: string; dayIndex: number; dateLabel: string; intake: number; prot: number; imperial: boolean; lang?: Lang; diet?: "all" | "veg" }) {
   const c = COLORS, lang: Lang = opts.lang === "pt" ? "pt" : "en", t = T[lang];
   const kcal = (v: number) => kcalL(v, t.locale);
   const site = sitePath(opts.siteUrl, lang);
-  const meals = M.buildDay(opts.dayIndex, opts.intake, opts.prot, lang);
+  const meals = M.buildDay(opts.dayIndex, opts.intake, opts.prot, lang, opts.diet);
   const tot = M.dayTotals(meals);
   const dayName = lang === "pt" ? (globalThis as any).FITME_MEALS_PT.days[opts.dayIndex].toLowerCase() : M.DAY_NAMES[opts.dayIndex];
   const summary = `<tr><td style="background:${c.card};border:1px solid ${c.line};border-radius:12px;padding:20px 22px;">
@@ -273,10 +274,10 @@ export function renderDailyEmail(opts: { siteUrl: string; unsubUrl: string; dayI
   return { subject, html: shell(opts.siteUrl, summary + cards + cta, footer, lang), text };
 }
 
-export function renderShoppingEmail(opts: { siteUrl: string; unsubUrl: string; dateLabel: string; intake: number; prot: number; imperial: boolean; lang?: Lang }) {
+export function renderShoppingEmail(opts: { siteUrl: string; unsubUrl: string; dateLabel: string; intake: number; prot: number; imperial: boolean; lang?: Lang; diet?: "all" | "veg" }) {
   const c = COLORS, lang: Lang = opts.lang === "pt" ? "pt" : "en", t = T[lang];
   const site = sitePath(opts.siteUrl, lang);
-  const list = M.shoppingList(opts.intake, opts.prot, lang, opts.imperial);
+  const list = M.shoppingList(opts.intake, opts.prot, lang, opts.imperial, opts.diet);
   const head = `<tr><td style="background:${c.card};border:1px solid ${c.line};border-radius:12px;padding:20px 22px;">
 <div style="font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:${c.muted};">${esc(opts.dateLabel)}</div>
 <h1 style="margin:4px 0 8px;font-size:24px;line-height:1.2;">${t.shopTitle}</h1>

@@ -127,9 +127,12 @@
       bar.querySelector('.cc-no').addEventListener('click', function () { choose('denied'); });
       document.body.appendChild(bar);
     }
-    relabel(); bar.hidden = false;
+    relabel(); bar.hidden = false; padForBar();
   }
-  function hideBar() { if (bar) bar.hidden = true; }
+  // Leave room at the bottom of the page so the bar never covers the last button (e.g. "Next").
+  function padForBar() { document.body.style.paddingBottom = bar && !bar.hidden ? (bar.offsetHeight + 24) + 'px' : ''; }
+  window.addEventListener('resize', function () { if (bar && !bar.hidden) padForBar(); });
+  function hideBar() { if (bar) bar.hidden = true; padForBar(); }
 
   function choose(v) {
     var was = getConsent();

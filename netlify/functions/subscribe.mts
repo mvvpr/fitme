@@ -23,6 +23,7 @@ export default async (req: Request, context: Context) => {
     prot: prot >= 40 && prot <= 400 ? prot : Math.round(intake * 0.3 / 4),
     units: input?.units === "imperial" ? "imperial" as const : "metric" as const,
     lang: input?.lang === "pt" ? "pt" as const : "en" as const,
+    diet: input?.diet === "veg" ? "veg" as const : "all" as const,
   };
 
   // Meta measurement context: present only if the visitor accepted Meta cookies on the site.

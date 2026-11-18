@@ -162,6 +162,8 @@ header p { margin: 0; color: var(--muted); max-width: 64ch; }
 .seg.sm button { padding: 4px 10px; font-size: 12.5px; }
 .seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
 .seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.diet-seg:not(.sm) { display: flex; }
+.diet-seg:not(.sm) button { flex: 1; }
 
 .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; padding-top: 14px; border-top: 1px solid var(--line); }
 @media (max-width: 720px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
@@ -538,6 +540,12 @@ body.lang-fading .wrap > .step { opacity: 0; }
               <option value="1.9">Athlete (physical job + training)</option>
             </select></span>
           </div>
+        <div class="field wide"><span class="lbl" id="l-diet">Diet</span>
+          <div class="seg diet-seg" role="group" aria-labelledby="l-diet">
+            <button type="button" data-diet="all" aria-pressed="true">Everything</button>
+            <button type="button" data-diet="veg" aria-pressed="false">Vegetarian</button>
+          </div>
+        </div>
       </div>
     </div>
     <div class="step-nav">
@@ -660,6 +668,10 @@ body.lang-fading .wrap > .step { opacity: 0; }
           <h2 id="h-meals" tabindex="-1">Your weekly meal plan</h2>
           <p id="meals-sub"></p>
         </div>
+        <div class="seg sm diet-seg" role="group" aria-label="Diet">
+          <button type="button" data-diet="all" aria-pressed="true">Everything</button>
+          <button type="button" data-diet="veg" aria-pressed="false">Vegetarian</button>
+        </div>
       </div>
       <div class="days-bar"><div class="days" role="group" aria-label="Day of the week" id="days"></div></div>
       <div class="banner" id="sub-banner" hidden></div>
@@ -762,7 +774,7 @@ body.lang-fading .wrap > .step { opacity: 0; }
   var MAX_WEEKS = 104;
 
   // Internal state is always metric.
-  var DEFAULTS = { units: 'metric', sex: 'f', age: 35, h: 168, w0: 82, goal: 72, act: '1.55', deficit: 500, pace: 1, mode: 'intake', day: 0, done: false };
+  var DEFAULTS = { units: 'metric', sex: 'f', age: 35, h: 168, w0: 82, goal: 72, act: '1.55', diet: 'all', deficit: 500, pace: 1, mode: 'intake', day: 0, done: false };
   // pace: 0 slow, 1 recommended, 2 faster, -1 a deficit typed in Advanced settings. New visitors start on recommended.
   var LIMITS = { age: [18, 90], h: [120, 230], w0: [35, 300], goal: [35, 300], deficit: [0, 1500] };
   var state = Object.assign({}, DEFAULTS);
@@ -1036,7 +1048,7 @@ body.lang-fading .wrap > .step { opacity: 0; }
     var protTarget = M.proteinTarget(s.goal);
     $('meals-sub').innerHTML = L.mealsSub(kcal(T)) +
       L.protGoal(protTarget, nf1.format(M.PROTEIN_PER_KG));
-    var meals = buildDay(day, T, protTarget, LANG);
+    var meals = buildDay(day, T, protTarget, LANG, state.diet);
     var tot = M.dayTotals(meals);
     $('daytot').innerHTML =
       '<div><span class="k">kcal</span><span class="v">' + nf0.format(Math.round(tot.k / 10) * 10) + '<small>/' + nf0.format(Math.round(T / 10) * 10) + '</small></span></div>' +
@@ -1061,14 +1073,15 @@ body.lang-fading .wrap > .step { opacity: 0; }
     renderShop(T, protTarget);
     // "This week" row in the plan's sign-up box: the mains first, then the rest of the pool.
     var seenImg = {}, pics = [];
-    ['lunch', 'dinner', 'breakfast', 'snack'].forEach(function (k) { for (var d = 0; d < 7; d++) { var r = RECIPES[k][d]; if (r && r.img && !seenImg[r.img]) { seenImg[r.img] = 1; pics.push(buildDay(d, T, protTarget, LANG).filter(function (x) { return x.slot.key === k; })[0].rec); } } });
+    ['lunch', 'dinner', 'breakfast', 'snack'].forEach(function (k) { for (var d = 0; d < 7; d++) { var r = M.recipesFor(state.diet)[k][d]; if (r && r.img && !seenImg[r.img]) { seenImg[r.img] = 1; pics.push(buildDay(d, T, protTarget, LANG, state.diet).filter(function (x) { return x.slot.key === k; })[0].rec); } } });
     $('week-strip').innerHTML = '<span class="ws-pics">' + pics.slice(0, 4).map(function (r) { return '<img src="/img/meals/' + r.img + '-thumb.webp" width="52" height="52" alt="' + esc(r.name) + '">'; }).join('') +
       (pics.length > 4 ? '<span class="ws-more">+' + (pics.length - 4) + '</span>' : '') + '</span><span class="ws-cap">' + L.weekStrip + '</span>';
-    subState = { intake: Math.round(T), prot: protTarget, units: state.units, lang: LANG };
+    subState = { intake: Math.round(T), prot: protTarget, units: state.units, lang: LANG, diet: state.diet };
+    document.querySelectorAll('.diet-seg button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.diet === state.diet)); });
     document.querySelectorAll('.sub-kcal').forEach(function (el) { el.textContent = kcal(T) + L.aDay; });
   }
   function renderShop(T, P) {
-    var list = M.shoppingList(T, P, LANG, imp());
+    var list = M.shoppingList(T, P, LANG, imp(), state.diet);
     var html = list.groups.map(function (g) {
       return '<div><h4>' + esc(g.aisle) + '</h4><ul>' + g.items.map(function (it) { return '<li><span>' + esc(it.n) + '</span><span class="q">' + esc(it.q) + '</span></li>'; }).join('') + '</ul></div>';
     }).join('');
@@ -1088,6 +1101,7 @@ body.lang-fading .wrap > .step { opacity: 0; }
   function setUnits(u) { if (state.units === u) return; readInputs(); state.units = u; writeInputs(); render(); }
   $('u-met').addEventListener('click', function () { setUnits('metric'); });
   $('u-imp').addEventListener('click', function () { setUnits('imperial'); });
+  document.querySelectorAll('.diet-seg').forEach(function (g) { g.addEventListener('click', function (e) { var b = e.target.closest('[data-diet]'); if (!b || state.diet === b.dataset.diet) return; state.diet = b.dataset.diet; save(); render(); }); });
 
   $('sug-def').addEventListener('click', function (e) { var b = e.target.closest('.chip'); if (b) { state.pace = +b.dataset.i; render(); } });
 
@@ -1116,7 +1130,7 @@ body.lang-fading .wrap > .step { opacity: 0; }
       try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || tz; } catch (err) {}
       var meta = window.FITME_TRACK ? FITME_TRACK.leadContext() : null;
       var box = form.closest('.sub-box'); if (meta && box) meta.placement = box.getAttribute('data-box');
-      var payload = { email: email, consent: true, website: q('.sub-web').value, tz: tz, intake: subState ? subState.intake : 0, prot: subState ? subState.prot : 0, units: state.units, lang: LANG, meta: meta };
+      var payload = { email: email, consent: true, website: q('.sub-web').value, tz: tz, intake: subState ? subState.intake : 0, prot: subState ? subState.prot : 0, units: state.units, lang: LANG, diet: state.diet, meta: meta };
       q('.sub-btn').disabled = true; subMsg(MSG.sending);
       fetch('/api/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
         .then(function (res) { return res.json().catch(function () { return { ok: false, error: res.status === 429 ? 'rate' : 'unknown' }; }); })

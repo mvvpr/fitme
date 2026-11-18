@@ -63,7 +63,9 @@ var DB = {
   whey: ['Whey protein powder', 400, 80, 8, 6, 'Pantry'],
   blackbeans: ['Black beans (canned, drained)', 110, 7, 17, 0.6, 'Pantry'],
   cod: ['Cod fillet (fresh or frozen)', 82, 18, 0, 0.7, 'Meat & fish'],
-  sweetpot: ['Sweet potatoes', 86, 1.6, 20, 0.1, 'Fruit & veg']
+  sweetpot: ['Sweet potatoes', 86, 1.6, 20, 0.1, 'Fruit & veg'],
+  tofu: ['Firm tofu', 144, 15.5, 2.5, 8.5, 'Dairy & eggs'],
+  vparm: ['Vegetarian hard cheese (parmesan-style)', 410, 33, 0.5, 30, 'Dairy & eggs']
 };
 
 /* Ingredient lines: [key, qty, unit] with unit g | ml | pc | tsp | tbsp, or ['~', 'unscaled extra'] for herbs, spices and seasoning. */
@@ -103,6 +105,32 @@ var POOL = {
       steps: ['Boil the eggs for 8–9 minutes, then cool them in cold water and peel. You can cook a batch for the week.', 'Halve the eggs, season with salt, pepper and chilli flakes, and serve with the sliced cucumber.'] }
   ]
 };
+// Vegetarian pool (eggs and dairy, no meat or fish). Same shape as POOL: breakfasts and snacks are shared,
+// the omelette swaps parmesan (made with animal rennet) for a vegetarian hard cheese, and the four mains are new.
+var POOL_VEG = {
+  breakfast: [
+    POOL.breakfast[0],
+    { name: 'Spinach & cheese omelette with toast', img: 'spinach-parmesan-omelette', time: '12 min',
+      ing: [['egg', 3, 'pc'], ['spinach', 60, 'g'], ['vparm', 10, 'g'], ['bread', 1, 'pc'], ['oil', 1, 'tsp'], ['~', 'Salt and black pepper']],
+      steps: ['Whisk the eggs with a pinch of salt and pepper.', 'Heat the oil in a non-stick pan over medium heat, add the spinach and stir until wilted, about 1 minute.', 'Pour in the eggs, tilt to spread and cook 2–3 minutes until almost set. Grate the cheese over one half, fold and cook 1 minute more.', 'Serve with the toasted bread.'] },
+    POOL.breakfast[2]
+  ],
+  main: [
+    { name: 'Tofu, chickpea & spinach curry', img: 'tofu-chickpea-curry', time: '30 min',
+      ing: [['tofu', 150, 'g'], ['chickpeas', 80, 'g'], ['tins', 200, 'g'], ['spinach', 60, 'g'], ['onion', 0.5, 'pc'], ['garlic', 1, 'pc'], ['yog', 60, 'g'], ['basmati', 50, 'g'], ['oil', 1, 'tsp'], ['~', '2 tsp curry powder, fresh coriander or parsley']],
+      steps: ['Cook the rice according to the pack. Pat the tofu dry with kitchen paper and cut it into cubes.', 'Heat the oil in a non-stick pan and fry the tofu for 5–6 minutes, turning, until golden. Lift it out onto a plate.', 'In the same pan, cook the chopped onion for 5 minutes, then add the garlic and curry powder for 1 minute. Add the tomatoes and chickpeas and simmer for 10 minutes, then return the tofu.', 'Stir in the spinach until wilted, take off the heat and stir in the yogurt for a creamy finish. Serve over the rice with the herbs.'] },
+    { name: 'Lemon-garlic tofu with potatoes & broccoli', img: 'lemon-garlic-tofu', time: '40 min',
+      ing: [['tofu', 180, 'g'], ['potato', 200, 'g'], ['broccoli', 120, 'g'], ['oil', 2, 'tsp'], ['lemon', 15, 'ml'], ['garlic', 1, 'pc'], ['~', 'Dried oregano, salt and black pepper']],
+      steps: ['Heat the oven to 200°C (180°C fan). Halve the potatoes, toss with 1 tsp of the oil, salt and pepper and roast for 15 minutes.', 'Pat the tofu dry with kitchen paper and cut it into thick cubes. Mix the rest of the oil with the lemon juice, crushed garlic, oregano, salt and pepper, and coat the tofu in it.', 'Add the tofu and the broccoli florets to the tray and roast for 20–25 minutes more, turning the tofu halfway, until golden at the edges.', 'Serve with the potatoes and broccoli. It is just as good cold for tomorrow\'s lunch.'] },
+    { name: 'Black bean & lentil chilli', img: 'black-bean-lentil-chilli', time: '35 min',
+      ing: [['lentils', 40, 'g'], ['blackbeans', 100, 'g'], ['tins', 200, 'g'], ['onion', 0.5, 'pc'], ['pepper', 0.5, 'pc'], ['garlic', 1, 'pc'], ['basmati', 50, 'g'], ['oil', 1, 'tsp'], ['yog', 60, 'g'], ['~', '1 tsp ground cumin, 1 tsp smoked paprika, chilli powder to taste']],
+      steps: ['Rinse the rice and cook in 1½ times its volume of water, covered, for 12 minutes. Rest off the heat.', 'Meanwhile, heat the oil and cook the diced onion and pepper for 5 minutes. Add the garlic and spices for 1 minute.', 'Add the rinsed lentils, the tomatoes and 150 ml of water and simmer for 15 minutes until the lentils are soft. Stir in the black beans and cook 5 minutes more until thick, adding a splash of water if needed.', 'Serve over the rice with a spoonful of yogurt. It doubles well for batch cooking.'] },
+    { name: 'Creamy tomato & spinach spaghetti', img: 'creamy-tomato-spaghetti', time: '20 min',
+      ing: [['pasta', 70, 'g'], ['cottage', 150, 'g'], ['tins', 200, 'g'], ['spinach', 50, 'g'], ['garlic', 1, 'pc'], ['vparm', 10, 'g'], ['oil', 1, 'tsp'], ['~', '1 tsp dried oregano, salt and black pepper']],
+      steps: ['Cook the spaghetti according to the pack and keep a cup of the cooking water.', 'Meanwhile, heat the oil in a pan, cook the crushed garlic for 1 minute, then add the tomatoes and oregano and simmer for 8 minutes.', 'Blend the cottage cheese until smooth (or mash it well with a fork). Take the sauce off the heat and stir in the cottage cheese and the spinach until wilted. Do not let it boil once the cheese is in.', 'Toss the spaghetti in the sauce, loosening with a little cooking water, and top with the grated cheese.'] }
+  ],
+  snack: POOL.snack
+};
 // How the pool fills the week. Tonight's dinner is tomorrow's lunch, so a main can be cooked once and eaten twice;
 // lunch and dinner are never the same meal on the same day.
 var WEEK = {
@@ -115,7 +143,8 @@ function weekPlan(pool) {
   function pick(list) { return function (i) { return list[i]; }; }
   return { breakfast: WEEK.breakfast.map(pick(pool.breakfast)), lunch: WEEK.lunch.map(pick(pool.main)), snack: WEEK.snack.map(pick(pool.snack)), dinner: WEEK.dinner.map(pick(pool.main)) };
 }
-var RECIPES = weekPlan(POOL);
+var RECIPES = weekPlan(POOL), RECIPES_VEG = weekPlan(POOL_VEG);
+function recipesFor(diet) { return diet === 'veg' ? RECIPES_VEG : RECIPES; }
 
 /* Shared meal-plan logic: used by the FitMe page (classic script) and the Netlify Functions (side-effect import). */
 var SLOTS = [
@@ -148,6 +177,7 @@ function scaleLine(l, f) {
 function ptData(lang) {
   var pt = lang === 'pt' && globalThis.FITME_MEALS_PT ? globalThis.FITME_MEALS_PT : null;
   if (pt && pt.recipes.main) pt.recipes = weekPlan(pt.recipes); // the Portuguese pool follows the same weekly rotation
+  if (pt && pt.recipesVeg && pt.recipesVeg.main) pt.recipesVeg = weekPlan(pt.recipesVeg);
   return pt;
 }
 function ingName(key, lang) { var pt = ptData(lang); return pt && pt.db[key] ? pt.db[key][0] : DB[key][0]; }
@@ -180,9 +210,10 @@ function proteinTarget(goalKg) { return Math.round(PROTEIN_PER_KG * goalKg); }
 // Build a day's four meals for an intake of T kcal. If P (grams of protein) is given and the
 // calorie-scaled day falls short, protein-rich ingredients are scaled up and the rest scaled down
 // so the day keeps its calories and reaches P.
-function buildDay(i, T, P, lang) {
+function buildDay(i, T, P, lang, diet) {
+  var R = recipesFor(diet);
   var meals = SLOTS.map(function (slot) {
-    var rec = RECIPES[slot.key][i];
+    var rec = R[slot.key][i];
     var base = nutrition(rec.ing);
     return { slot: slot, rec: rec, f: mClamp((T * slot.share) / base.k, 0.5, 2.2) };
   });
@@ -209,7 +240,7 @@ function buildDay(i, T, P, lang) {
     var lines = m.rec.ing.map(function (l) { return l[0] === '~' ? l : scaleLine(l, m.f * (isProteinRich(l[0]) ? a : b)); });
     var out = { slot: m.slot, rec: m.rec, lines: lines, n: nutrition(lines) };
     if (pt) {
-      var tr = pt.recipes[m.slot.key][i], xi = 0;
+      var tr = (diet === 'veg' ? pt.recipesVeg : pt.recipes)[m.slot.key][i], xi = 0;
       out.rec = { name: tr.name, time: tr.time, steps: tr.steps, ing: m.rec.ing, img: m.rec.img };
       out.slot = { key: m.slot.key, label: pt.slots[m.slot.key], share: m.slot.share };
       out.lines = lines.map(function (l) { return l[0] === '~' ? ['~', tr.x[xi++] || l[1]] : l; });
@@ -220,12 +251,12 @@ function buildDay(i, T, P, lang) {
 // Weekly shopping list for the 7-day plan at intake T and protein target P.
 // Returns { groups: [{ aisle, items: [{ n, q }] }], extras } with names, units and numbers in the given language.
 var AISLES = ['Fruit & veg', 'Meat & fish', 'Dairy & eggs', 'Grains & bread', 'Pantry'];
-function shoppingList(T, P, lang, imperial) {
+function shoppingList(T, P, lang, imperial, diet) {
   var pt = ptData(lang), loc = pt ? 'pt-PT' : 'en';
   var W = pt ? { slice: ['fatia', 'fatias'], clove: ['dente', 'dentes'], tsp: 'c. chá', tbsp: 'c. sopa' } : { slice: ['slice', 'slices'], clove: ['clove', 'cloves'], tsp: 'tsp', tbsp: 'tbsp' };
   var num = function (v) { return v.toLocaleString(loc); };
   var totals = {}, extras = {};
-  for (var i = 0; i < 7; i++) buildDay(i, T, P, lang).forEach(function (m) {
+  for (var i = 0; i < 7; i++) buildDay(i, T, P, lang, diet).forEach(function (m) {
     m.rec.ing.forEach(function (l) { if (l[0] === '~') extras[l[1]] = 1; });
     m.lines.forEach(function (l) {
       if (l[0] === '~') return;
@@ -274,4 +305,4 @@ function shoppingList(T, P, lang, imperial) {
 function dayTotals(meals) {
   return meals.reduce(function (a, m) { a.k += m.n.k; a.p += m.n.p; a.c += m.n.c; a.f += m.n.f; return a; }, { k: 0, p: 0, c: 0, f: 0 });
 }
-globalThis.FITME_MEALS = { DB: DB, RECIPES: RECIPES, SLOTS: SLOTS, DAY_NAMES: DAY_NAMES, lineGrams: lineGrams, frac: frac, scaleLine: scaleLine, amountText: amountText, nutrition: nutrition, buildDay: buildDay, dayTotals: dayTotals, ingName: ingName, pieceLabels: pieceLabels, ptData: ptData, proteinTarget: proteinTarget, PROTEIN_PER_KG: PROTEIN_PER_KG, shoppingList: shoppingList };
+globalThis.FITME_MEALS = { DB: DB, RECIPES: RECIPES, RECIPES_VEG: RECIPES_VEG, recipesFor: recipesFor, SLOTS: SLOTS, DAY_NAMES: DAY_NAMES, lineGrams: lineGrams, frac: frac, scaleLine: scaleLine, amountText: amountText, nutrition: nutrition, buildDay: buildDay, dayTotals: dayTotals, ingName: ingName, pieceLabels: pieceLabels, ptData: ptData, proteinTarget: proteinTarget, PROTEIN_PER_KG: PROTEIN_PER_KG, shoppingList: shoppingList };
