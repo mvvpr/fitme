@@ -146,6 +146,28 @@ function weekPlan(pool) {
 var RECIPES = weekPlan(POOL), RECIPES_VEG = weekPlan(POOL_VEG);
 function recipesFor(diet) { return diet === 'veg' ? RECIPES_VEG : RECIPES; }
 
+// Protein preferences. Each main is a template with a meat and a meat-free version (POOL.main[t] / POOL_VEG.main[t]);
+// the person's picked proteins decide which version each day gets. 'fish' has no recipes yet.
+var PROTEINS = ['chicken', 'beef', 'fish', 'eggs', 'tofu', 'beans'];
+var TEMPLATE_PROTEIN = [['chicken', 'tofu'], ['chicken', 'tofu'], ['beef', 'beans'], ['chicken', 'eggs']];
+function prefsOf(diet) {
+  if (Array.isArray(diet)) return diet;
+  return diet === 'veg' ? ['eggs', 'tofu', 'beans'] : ['chicken', 'beef', 'eggs'];
+}
+function useVeg(slotKey, i, diet) {
+  var p = prefsOf(diet), has = function (k) { return p.indexOf(k) >= 0; };
+  var anyMeat = has('chicken') || has('beef') || has('fish');
+  if (slotKey === 'lunch' || slotKey === 'dinner') {
+    var t = POOL.main.indexOf(RECIPES[slotKey][i]), tp = TEMPLATE_PROTEIN[t];
+    if (has(tp[0])) return false;
+    if (has(tp[1])) return true;
+    return true; // neither version picked: the meat-free version never serves a meat they unticked
+  }
+  if (slotKey === 'breakfast') return !anyMeat; // vegetarian cheese in the omelette
+  return false;
+}
+function recipeFor(slotKey, i, diet) { return (useVeg(slotKey, i, diet) ? RECIPES_VEG : RECIPES)[slotKey][i]; }
+
 /* Shared meal-plan logic: used by the FitMe page (classic script) and the Netlify Functions (side-effect import). */
 var SLOTS = [
   { key: 'breakfast', label: 'Breakfast', share: 0.25 },
@@ -212,9 +234,8 @@ function proteinTarget(goalKg) { return Math.round(PROTEIN_PER_KG * goalKg); }
 // calorie-scaled day falls short, protein-rich ingredients are scaled up and the rest scaled down
 // so the day keeps its calories and reaches P.
 function buildDay(i, T, P, lang, diet) {
-  var R = recipesFor(diet);
   var meals = SLOTS.map(function (slot) {
-    var rec = R[slot.key][i];
+    var rec = recipeFor(slot.key, i, diet);
     var base = nutrition(rec.ing);
     return { slot: slot, rec: rec, f: mClamp((T * slot.share) / base.k, 0.5, 2.2) };
   });
@@ -241,7 +262,7 @@ function buildDay(i, T, P, lang, diet) {
     var lines = m.rec.ing.map(function (l) { return l[0] === '~' ? l : scaleLine(l, m.f * (isProteinRich(l[0]) ? a : b)); });
     var out = { slot: m.slot, rec: m.rec, lines: lines, n: nutrition(lines) };
     if (pt) {
-      var tr = (diet === 'veg' ? pt.recipesVeg : pt.recipes)[m.slot.key][i], xi = 0;
+      var tr = (useVeg(m.slot.key, i, diet) ? pt.recipesVeg : pt.recipes)[m.slot.key][i], xi = 0;
       out.rec = { name: tr.name, time: tr.time, steps: tr.steps, ing: m.rec.ing, img: m.rec.img };
       out.slot = { key: m.slot.key, label: pt.slots[m.slot.key], share: m.slot.share };
       out.lines = lines.map(function (l) { return l[0] === '~' ? ['~', tr.x[xi++] || l[1]] : l; });
@@ -306,4 +327,4 @@ function shoppingList(T, P, lang, imperial, diet) {
 function dayTotals(meals) {
   return meals.reduce(function (a, m) { a.k += m.n.k; a.p += m.n.p; a.c += m.n.c; a.f += m.n.f; return a; }, { k: 0, p: 0, c: 0, f: 0 });
 }
-globalThis.FITME_MEALS = { DB: DB, RECIPES: RECIPES, RECIPES_VEG: RECIPES_VEG, recipesFor: recipesFor, SLOTS: SLOTS, DAY_NAMES: DAY_NAMES, lineGrams: lineGrams, frac: frac, scaleLine: scaleLine, amountText: amountText, nutrition: nutrition, buildDay: buildDay, dayTotals: dayTotals, ingName: ingName, pieceLabels: pieceLabels, ptData: ptData, proteinTarget: proteinTarget, PROTEIN_PER_KG: PROTEIN_PER_KG, shoppingList: shoppingList };
+globalThis.FITME_MEALS = { DB: DB, RECIPES: RECIPES, RECIPES_VEG: RECIPES_VEG, recipesFor: recipesFor, PROTEINS: PROTEINS, recipeFor: recipeFor, SLOTS: SLOTS, DAY_NAMES: DAY_NAMES, lineGrams: lineGrams, frac: frac, scaleLine: scaleLine, amountText: amountText, nutrition: nutrition, buildDay: buildDay, dayTotals: dayTotals, ingName: ingName, pieceLabels: pieceLabels, ptData: ptData, proteinTarget: proteinTarget, PROTEIN_PER_KG: PROTEIN_PER_KG, shoppingList: shoppingList };
