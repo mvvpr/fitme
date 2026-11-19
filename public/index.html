@@ -135,6 +135,37 @@ header p { margin: 0; color: var(--muted); max-width: 64ch; }
 
 .results { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
 .lead { display: flex; flex-direction: column; gap: 14px; }
+/* Finish line: celebratory copy + route from today to the goal */
+.lead.celebrate .eyebrow { color: var(--accent); }
+.finish-copy { margin: -6px 0 0; font-size: 16px; line-height: 1.4; color: var(--ink); }
+.finish-copy b { font-weight: 600; }
+.track { position: relative; height: 92px; margin: 4px 30px 2px 10px; }
+.tr-line { position: absolute; left: 0; right: 0; top: 35px; height: 3px; }
+.tr-fill { position: absolute; inset: 0; background: repeating-linear-gradient(90deg, var(--accent) 0 9px, transparent 9px 15px); transform-origin: left center; }
+.tr-m { position: absolute; top: 0; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; text-align: center; white-space: nowrap; }
+.tr-m .dot { margin-top: 29px; width: 14px; height: 14px; border-radius: 50%; background: var(--surface); border: 3px solid var(--accent); }
+.tr-m.start .dot { background: var(--accent); }
+.tr-m .lab { margin-top: 8px; font-size: 12px; line-height: 1.25; color: var(--muted); }
+.tr-m .lab b { display: block; font-size: 13px; color: var(--ink); font-weight: 600; }
+.tr-m.start { transform: none; align-items: flex-start; text-align: left; left: 0; }
+.tr-m.start .dot { margin-left: -7px; }
+.tr-m.finish { transform: none; right: 0; left: auto; align-items: flex-end; text-align: right; }
+.tr-m.finish .lab b { color: var(--accent); }
+.flag { position: relative; width: 4px; height: 44px; margin-top: 2px; margin-right: -2px; background: var(--ink); border-radius: 2px; }
+.flag::after { content: ''; position: absolute; left: 4px; top: 0; width: 26px; height: 18px; border-radius: 0 2px 2px 0;
+  background: conic-gradient(var(--ink) 25%, var(--surface) 0 50%, var(--ink) 0 75%, var(--surface) 0) 0 0 / 9px 9px; border: 1px solid var(--ink); transform-origin: left center; }
+.tr-m.finish .lab { margin-top: 2px; }
+/* one-time reveal */
+.track.anim .tr-fill { animation: tr-draw 1.3s cubic-bezier(.4,0,.2,1) .25s both; }
+.track.anim .tr-m:not(.start) { animation: tr-pop .35s ease-out both; animation-delay: calc(.25s + var(--at) * 1.3s); }
+.track.anim .flag::after { animation: tr-wave .6s ease-in-out calc(1.55s) 2 alternate both; }
+@keyframes tr-draw { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes tr-pop { from { opacity: 0; transform: translate(-50%, 6px); } to { opacity: 1; transform: translate(-50%, 0); } }
+.tr-m.finish { --x: 0; }
+.track.anim .tr-m.finish { animation-name: tr-pop-f; }
+@keyframes tr-pop-f { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes tr-wave { from { transform: skewY(0deg) scaleX(1); } to { transform: skewY(-8deg) scaleX(.9); } }
+@media (prefers-reduced-motion: reduce) { .track.anim * , .track.anim *::after { animation: none !important; } }
 .lead-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
 .eyebrow { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
 .big {
@@ -602,6 +633,8 @@ body.lang-fading .wrap > .step { opacity: 0; }
           <h2 class="sr-only" id="h-plan" tabindex="-1">Your plan</h2>
           <div class="eyebrow" id="eyebrow">Goal reached</div>
           <div class="big" id="big">–</div>
+          <p class="finish-copy" id="finish-copy" hidden></p>
+          <div class="track" id="track" hidden></div>
           <div class="today">
             <div><span class="k">Eat about</span><span class="v" id="plan-kcal">–</span></div>
             <div><span class="k">Protein</span><span class="v" id="plan-prot">–</span></div>
@@ -849,6 +882,27 @@ body.lang-fading .wrap > .step { opacity: 0; }
 
   // Day-by-day simulation. "intake" mode eats the same calories every day (the deficit shrinks as
   // maintenance drops); "deficit" mode lowers intake to keep the deficit constant. Holds at goal once reached.
+  // The finish line: a line of copy plus the route from today to the goal, with up to two milestones.
+  var trackPlayed = false;
+  function renderFinish(s, base, sd) {
+    var toLose = s.w0 - s.goal, reach = base.reach, ms = [];
+    var unitStep = imp() ? 10 * LB : 5;               // first milestone: -5 kg / -10 lb
+    function dayFor(target) { for (var i = 1; i < base.weeks.length; i++) if (base.weeks[i].w <= target + 1e-9) return Math.min(i * 7, reach); return reach; }
+    if (toLose >= unitStep * 1.6) ms.push({ at: dayFor(s.w0 - unitStep) / reach, top: '−' + wtShort(unitStep) + ' ' + wu(), d: dayFor(s.w0 - unitStep) });
+    ms.push({ at: dayFor(s.w0 - toLose / 2) / reach, top: L.halfway, d: dayFor(s.w0 - toLose / 2) });
+    // keep labels apart: at least 24% from each other and from both ends; halfway wins a clash
+    ms = ms.filter(function (m) { return m.at >= 0.24 && m.at <= 0.76; });
+    if (ms.length === 2 && ms[1].at - ms[0].at < 0.24) ms = [ms[1]];
+    $('finish-copy').innerHTML = L.finishLine(wtShort(s.goal) + ' ' + wu(), weeksText(reach));
+    var html = '<div class="tr-line"><span class="tr-fill"></span></div>' +
+      '<div class="tr-m start"><span class="dot"></span><span class="lab"><b>' + L.today + '</b>' + wtShort(s.w0) + ' ' + wu() + '</span></div>' +
+      ms.map(function (m) { return '<div class="tr-m" style="left:' + (m.at * 100).toFixed(1) + '%;--at:' + m.at.toFixed(3) + '"><span class="dot"></span><span class="lab"><b>' + m.top + '</b>' + dfShort.format(addDays(sd, m.d)) + '</span></div>'; }).join('') +
+      '<div class="tr-m finish" style="--at:1"><span class="flag"></span><span class="lab"><b>' + wtShort(s.goal) + ' ' + wu() + '</b>' + dfShort.format(addDays(sd, reach)) + '</span></div>';
+    var t = $('track'); t.innerHTML = html;
+    t.setAttribute('role', 'img');
+    t.setAttribute('aria-label', L.trackAria(wtShort(s.w0) + ' ' + wu(), wtShort(s.goal) + ' ' + wu(), dfLong.format(addDays(sd, reach))));
+    if (!trackPlayed && current === 'plan') { trackPlayed = true; t.classList.remove('anim'); void t.offsetWidth; t.classList.add('anim'); }
+  }
   function simulate(s, deficit) {
     var w = s.w0, fixedIntake = tdee(s, s.w0) - deficit;
     var reach = null, minIntake = Infinity, maxPct = 0, weekStart = w;
@@ -957,7 +1011,9 @@ body.lang-fading .wrap > .step { opacity: 0; }
     if (base.reach) {
       $('eyebrow').textContent = L.reachIn(wt(s.goal), weeksText(base.reach));
       $('big').textContent = dfLong.format(addDays(sd, base.reach));
+      renderFinish(s, base, sd);
     } else {
+      $('finish-copy').hidden = true; $('track').hidden = true;
       var endW = base.weeks[MAX_WEEKS].w;
       $('eyebrow').textContent = L.notReached;
       $('big').textContent = wt(endW);
@@ -986,6 +1042,11 @@ body.lang-fading .wrap > .step { opacity: 0; }
     if (bmi(s, s.goal) < 18.5) warns.push(L.warnBmi(nf1.format(bmi(s, s.goal))));
     $('warn-list').innerHTML = warns.map(function (w) { return '<li>' + w + '</li>'; }).join('');
     $('warn').hidden = warns.length === 0;
+    // Only celebrate plans we're not warning about.
+    var party = !!base.reach && warns.length === 0;
+    document.querySelector('.lead').classList.toggle('celebrate', party);
+    if (base.reach) $('eyebrow').textContent = party ? L.finishEyebrow : L.reachIn(wt(s.goal), weeksText(base.reach));
+    $('finish-copy').hidden = !party; $('track').hidden = !party;
 
     // Ledger
     var rows = [], last = base.reach ? reachWk : MAX_WEEKS;
