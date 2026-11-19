@@ -149,24 +149,60 @@ function recipesFor(diet) { return diet === 'veg' ? RECIPES_VEG : RECIPES; }
 // Protein preferences. Each main is a template with a meat and a meat-free version (POOL.main[t] / POOL_VEG.main[t]);
 // the person's picked proteins decide which version each day gets. 'fish' has no recipes yet.
 var PROTEINS = ['chicken', 'beef', 'fish', 'eggs', 'tofu', 'beans'];
-var TEMPLATE_PROTEIN = [['chicken', 'tofu'], ['chicken', 'tofu'], ['beef', 'beans'], ['chicken', 'eggs']];
+
+// Fish variants of the main templates (same order as POOL.main; null = no fish version of that template).
+var POOL_FISH = [
+  { name: 'Prawn, chickpea & spinach curry', img: 'prawn-chickpea-curry', time: '25 min',
+    ing: [['prawns', 150, 'g'], ['chickpeas', 80, 'g'], ['tins', 200, 'g'], ['spinach', 60, 'g'], ['onion', 0.5, 'pc'], ['garlic', 1, 'pc'], ['yog', 60, 'g'], ['basmati', 50, 'g'], ['oil', 1, 'tsp'], ['~', '2 tsp curry powder, fresh coriander or parsley']],
+    steps: ['Cook the rice according to the pack.', 'Heat the oil in a pan and cook the chopped onion for 5 minutes, then add the garlic and curry powder for 1 minute.', 'Add the tomatoes and chickpeas and simmer for 10 minutes. Stir in the prawns and cook for 3–4 minutes, until pink all the way through.', 'Stir in the spinach until wilted, take off the heat and stir in the yogurt for a creamy finish. Serve over the rice with the herbs.'] },
+  { name: 'Lemon-garlic salmon with potatoes & broccoli', img: 'lemon-garlic-salmon', time: '35 min',
+    ing: [['salmon', 140, 'g'], ['potato', 200, 'g'], ['broccoli', 120, 'g'], ['oil', 2, 'tsp'], ['lemon', 15, 'ml'], ['garlic', 1, 'pc'], ['~', 'Dried oregano, salt and black pepper']],
+    steps: ['Heat the oven to 200°C (180°C fan). Halve the potatoes, toss with 1 tsp of the oil, salt and pepper and roast for 15 minutes.', 'Mix the rest of the oil with the lemon juice, crushed garlic, oregano, salt and pepper.', 'Add the broccoli to the tray and lay the salmon on top. Spoon the lemon-garlic mix over the salmon and roast for 12–15 minutes, until it flakes easily.', 'Serve with the potatoes and broccoli. It is also good cold for tomorrow\'s lunch.'] },
+  null, null
+];
+
+// Each main template and the protein each version serves: 'meat' = POOL, 'veg' = POOL_VEG, 'fish' = POOL_FISH.
+var TEMPLATE_VARIANTS = [
+  [['chicken', 'meat'], ['tofu', 'veg'], ['fish', 'fish']],   // curry
+  [['chicken', 'meat'], ['tofu', 'veg'], ['fish', 'fish']],   // lemon-garlic tray bake
+  [['beef', 'meat'], ['beans', 'veg']],                       // chilli
+  [['chicken', 'meat'], ['eggs', 'veg']]                      // pasta (turkey meatballs / creamy cottage cheese)
+];
 function prefsOf(diet) {
   if (Array.isArray(diet)) return diet;
   return diet === 'veg' ? ['eggs', 'tofu', 'beans'] : ['chicken', 'beef', 'eggs'];
 }
-function useVeg(slotKey, i, diet) {
-  var p = prefsOf(diet), has = function (k) { return p.indexOf(k) >= 0; };
-  var anyMeat = has('chicken') || has('beef') || has('fish');
-  if (slotKey === 'lunch' || slotKey === 'dinner') {
-    var t = POOL.main.indexOf(RECIPES[slotKey][i]), tp = TEMPLATE_PROTEIN[t];
-    if (has(tp[0])) return false;
-    if (has(tp[1])) return true;
-    return true; // neither version picked: the meat-free version never serves a meat they unticked
-  }
-  if (slotKey === 'breakfast') return !anyMeat; // vegetarian cheese in the omelette
-  return false;
+// For a set of picked proteins, choose one version per template for the whole week (lunch and dinner share
+// templates, so a batch-cooked dinner stays the same dish for tomorrow's lunch). Spread the picks: each template
+// takes the picked protein used least so far. No picked protein fits a template: its meat-free version.
+var _choiceCache = {};
+function templateChoice(diet) {
+  var p = prefsOf(diet), key = p.slice().sort().join(',');
+  if (_choiceCache[key]) return _choiceCache[key];
+  var used = {}, out = TEMPLATE_VARIANTS.map(function (vars) {
+    var ok = vars.filter(function (v) { return p.indexOf(v[0]) >= 0; });
+    if (!ok.length) return 'veg';
+    ok.sort(function (a, b) { return (used[a[0]] || 0) - (used[b[0]] || 0); });
+    used[ok[0][0]] = (used[ok[0][0]] || 0) + 1;
+    return ok[0][1];
+  });
+  return (_choiceCache[key] = out);
 }
-function recipeFor(slotKey, i, diet) { return (useVeg(slotKey, i, diet) ? RECIPES_VEG : RECIPES)[slotKey][i]; }
+function sourceFor(slotKey, i, diet) {
+  var p = prefsOf(diet);
+  if (slotKey === 'lunch' || slotKey === 'dinner') {
+    var t = POOL.main.indexOf(RECIPES[slotKey][i]);
+    return { src: templateChoice(diet)[t], t: t };
+  }
+  var anyMeat = p.indexOf('chicken') >= 0 || p.indexOf('beef') >= 0 || p.indexOf('fish') >= 0;
+  return { src: slotKey === 'breakfast' && !anyMeat ? 'veg' : 'meat', t: -1 }; // vegetarian cheese in the omelette
+}
+function useVeg(slotKey, i, diet) { return sourceFor(slotKey, i, diet).src === 'veg'; }
+function recipeFor(slotKey, i, diet) {
+  var s = sourceFor(slotKey, i, diet);
+  if (s.src === 'fish') return POOL_FISH[s.t];
+  return (s.src === 'veg' ? RECIPES_VEG : RECIPES)[slotKey][i];
+}
 
 /* Shared meal-plan logic: used by the FitMe page (classic script) and the Netlify Functions (side-effect import). */
 var SLOTS = [
@@ -262,7 +298,7 @@ function buildDay(i, T, P, lang, diet) {
     var lines = m.rec.ing.map(function (l) { return l[0] === '~' ? l : scaleLine(l, m.f * (isProteinRich(l[0]) ? a : b)); });
     var out = { slot: m.slot, rec: m.rec, lines: lines, n: nutrition(lines) };
     if (pt) {
-      var tr = (useVeg(m.slot.key, i, diet) ? pt.recipesVeg : pt.recipes)[m.slot.key][i], xi = 0;
+      var srcI = sourceFor(m.slot.key, i, diet), tr = srcI.src === 'fish' ? pt.recipesFish[srcI.t] : (srcI.src === 'veg' ? pt.recipesVeg : pt.recipes)[m.slot.key][i], xi = 0;
       out.rec = { name: tr.name, time: tr.time, steps: tr.steps, ing: m.rec.ing, img: m.rec.img };
       out.slot = { key: m.slot.key, label: pt.slots[m.slot.key], share: m.slot.share };
       out.lines = lines.map(function (l) { return l[0] === '~' ? ['~', tr.x[xi++] || l[1]] : l; });

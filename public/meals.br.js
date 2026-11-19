@@ -64,6 +64,14 @@ globalThis.FITME_MEALS_BR = {
         steps: ['Cozinhe os ovos por 8–9 minutos, esfrie em água fria e descasque. Dá para cozinhar vários de uma vez para a semana.', 'Corte os ovos ao meio, tempere com sal, pimenta e pimenta calabresa e sirva com o pepino em rodelas.'] }
     ]
   },
+  // Fish versions of the main templates, same order as POOL_FISH in meals.js.
+  recipesFish: [
+    { name: 'Curry de camarão, grão-de-bico e espinafre', time: '25 min', x: ['2 c. chá de curry em pó, coentro ou salsinha frescos'],
+      steps: ['Cozinhe o arroz conforme as instruções da embalagem.', 'Aqueça o azeite em uma panela e refogue a cebola picada por 5 minutos; junte o alho e o curry por 1 minuto.', 'Acrescente o tomate e o grão-de-bico e cozinhe em fogo baixo por 10 minutos. Junte o camarão e cozinhe por 3–4 minutos, até ficar rosado por inteiro.', 'Junte o espinafre até murchar, tire do fogo e misture o iogurte para ficar cremoso. Sirva sobre o arroz com as ervas.'] },
+    { name: 'Salmão com limão e alho, batatas e brócolis', time: '35 min', x: ['Orégano seco, sal e pimenta-do-reino'],
+      steps: ['Preaqueça o forno a 200 °C. Corte as batatas ao meio, misture com 1 c. chá do azeite, sal e pimenta e asse por 15 minutos.', 'Misture o restante do azeite com o suco de limão, o alho amassado, o orégano, o sal e a pimenta.', 'Coloque o brócolis na assadeira e o salmão por cima. Regue o salmão com a mistura de limão e alho e asse por 12–15 minutos, até desfiar com facilidade.', 'Sirva com as batatas e o brócolis. Frio, também fica ótimo para o almoço do dia seguinte.'] },
+    null, null
+  ],
   // Vegetarian pool, same order as POOL_VEG in meals.js.
   recipesVeg: {
     breakfast: [

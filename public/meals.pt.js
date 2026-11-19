@@ -63,6 +63,14 @@ globalThis.FITME_MEALS_PT = {
         steps: ['Coze os ovos durante 8–9 minutos, arrefece-os em água fria e descasca-os. Podes cozer um lote para a semana.', 'Corta os ovos ao meio, tempera com sal, pimenta e flocos de malagueta e serve com o pepino às rodelas.'] }
     ]
   },
+  // Fish versions of the main templates, same order as POOL_FISH in meals.js.
+  recipesFish: [
+    { name: 'Caril de camarão, grão e espinafres', time: '25 min', x: ['2 c. chá de caril em pó, coentros ou salsa frescos'],
+      steps: ['Coze o arroz segundo as instruções da embalagem.', 'Aquece o azeite num tacho e cozinha a cebola picada durante 5 minutos; junta o alho e o caril em pó durante 1 minuto.', 'Junta o tomate e o grão e deixa cozinhar em lume brando 10 minutos. Junta o camarão e cozinha 3–4 minutos, até ficar rosado por completo.', 'Junta os espinafres até murcharem, retira do lume e envolve o iogurte para ficar cremoso. Serve sobre o arroz com as ervas.'] },
+    { name: 'Salmão com limão e alho, batatas e brócolos', time: '35 min', x: ['Orégãos secos, sal e pimenta preta'],
+      steps: ['Aquece o forno a 200 °C (180 °C com ventilação). Corta as batatas ao meio, envolve-as em 1 c. chá do azeite, sal e pimenta e assa 15 minutos.', 'Mistura o resto do azeite com o sumo de limão, o alho esmagado, os orégãos, o sal e a pimenta.', 'Junta os brócolos ao tabuleiro e coloca o salmão por cima. Rega o salmão com a mistura de limão e alho e assa 12–15 minutos, até se desfazer facilmente.', 'Serve com as batatas e os brócolos. Frio, também fica ótimo para o almoço do dia seguinte.'] },
+    null, null
+  ],
   // Vegetarian pool, same order as POOL_VEG in meals.js.
   recipesVeg: {
     breakfast: [
