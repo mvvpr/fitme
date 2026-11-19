@@ -151,21 +151,35 @@ header p { margin: 0; color: var(--muted); max-width: 64ch; }
 .tr-m.start .dot { margin-left: -7px; }
 .tr-m.finish { transform: none; right: 0; left: auto; align-items: flex-end; text-align: right; }
 .tr-m.finish .lab b { color: var(--accent); }
-.flag { position: relative; width: 4px; height: 44px; margin-top: 2px; margin-right: -2px; background: var(--ink); border-radius: 2px; }
-.flag::after { content: ''; position: absolute; left: 4px; top: 0; width: 26px; height: 18px; border-radius: 0 2px 2px 0;
-  background: conic-gradient(var(--ink) 25%, var(--surface) 0 50%, var(--ink) 0 75%, var(--surface) 0) 0 0 / 9px 9px; border: 1px solid var(--ink); transform-origin: left center; }
+.flag { position: relative; display: block; width: 36px; height: 48px; margin-top: -2px; margin-right: -32px; }
+.flag .pole { position: absolute; left: 0; top: 0; width: 4px; height: 48px; border-radius: 2px; background: var(--ink); }
+.flag .cloth { position: absolute; left: 4px; top: 2px; display: flex; filter: drop-shadow(0 1px 1px rgba(0,0,0,.18)); }
+.flag .cloth i { display: block; width: 6px; height: 18px; background: repeating-linear-gradient(180deg, #1e1c1a 0 6px, #fff 6px 12px);
+  animation: fl-wave 1.6s ease-in-out infinite; animation-delay: calc(var(--i) * -0.18s); transform-origin: left center; }
+.flag .cloth i:nth-child(even) { background: repeating-linear-gradient(180deg, #fff 0 6px, #1e1c1a 6px 12px); }
+.flag .cloth i:first-child { border-radius: 1px 0 0 1px; }
+.flag .cloth i:last-child { border-radius: 0 1px 1px 0; }
+@keyframes fl-wave {
+  0%, 100% { transform: translateY(0) skewY(0deg); filter: brightness(1); }
+  25% { transform: translateY(-2px) skewY(-6deg); filter: brightness(1.06); }
+  50% { transform: translateY(0) skewY(0deg); filter: brightness(.92); }
+  75% { transform: translateY(2px) skewY(6deg); filter: brightness(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .flag .cloth i { animation: none; }
+  .flag .cloth i:nth-child(2), .flag .cloth i:nth-child(4) { transform: translateY(-1px); }
+  .flag .cloth i:nth-child(3) { transform: translateY(1px); }
+}
 .tr-m.finish .lab { margin-top: 2px; }
 /* one-time reveal */
 .track.anim .tr-fill { animation: tr-draw 1.3s cubic-bezier(.4,0,.2,1) .25s both; }
 .track.anim .tr-m:not(.start) { animation: tr-pop .35s ease-out both; animation-delay: calc(.25s + var(--at) * 1.3s); }
-.track.anim .flag::after { animation: tr-wave .6s ease-in-out calc(1.55s) 2 alternate both; }
 @keyframes tr-draw { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 @keyframes tr-pop { from { opacity: 0; transform: translate(-50%, 6px); } to { opacity: 1; transform: translate(-50%, 0); } }
 .tr-m.finish { --x: 0; }
 .track.anim .tr-m.finish { animation-name: tr-pop-f; }
 @keyframes tr-pop-f { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-@keyframes tr-wave { from { transform: skewY(0deg) scaleX(1); } to { transform: skewY(-8deg) scaleX(.9); } }
-@media (prefers-reduced-motion: reduce) { .track.anim * , .track.anim *::after { animation: none !important; } }
+@media (prefers-reduced-motion: reduce) { .track.anim .tr-fill, .track.anim .tr-m { animation: none !important; } }
 .lead-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
 .eyebrow { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
 .big {
@@ -897,7 +911,7 @@ body.lang-fading .wrap > .step { opacity: 0; }
     var html = '<div class="tr-line"><span class="tr-fill"></span></div>' +
       '<div class="tr-m start"><span class="dot"></span><span class="lab"><b>' + L.today + '</b>' + wtShort(s.w0) + ' ' + wu() + '</span></div>' +
       ms.map(function (m) { return '<div class="tr-m" style="left:' + (m.at * 100).toFixed(1) + '%;--at:' + m.at.toFixed(3) + '"><span class="dot"></span><span class="lab"><b>' + m.top + '</b>' + dfShort.format(addDays(sd, m.d)) + '</span></div>'; }).join('') +
-      '<div class="tr-m finish" style="--at:1"><span class="flag"></span><span class="lab"><b>' + wtShort(s.goal) + ' ' + wu() + '</b>' + dfShort.format(addDays(sd, reach)) + '</span></div>';
+      '<div class="tr-m finish" style="--at:1"><span class="flag"><span class="pole"></span><span class="cloth">' + [0, 1, 2, 3, 4].map(function (i) { return '<i style="--i:' + i + '"></i>'; }).join('') + '</span></span><span class="lab"><b>' + wtShort(s.goal) + ' ' + wu() + '</b>' + dfShort.format(addDays(sd, reach)) + '</span></div>';
     var t = $('track'); t.innerHTML = html;
     t.setAttribute('role', 'img');
     t.setAttribute('aria-label', L.trackAria(wtShort(s.w0) + ' ' + wu(), wtShort(s.goal) + ' ' + wu(), dfLong.format(addDays(sd, reach))));
