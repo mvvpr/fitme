@@ -4,7 +4,7 @@ import type { Config, Context } from "@netlify/functions";
 import { sendMetaEvents, requestUser, FBP_RE, FBC_RE, EVENT_ID_RE } from "../lib/core.mts";
 
 // Standard events plus one custom event per step of the journey.
-const ALLOWED = new Set(["PageView", "ViewContent", "Step1_About", "Step2_Goal", "Step3_Plan", "Step4_Meals"]);
+const ALLOWED = new Set(["PageView", "ViewContent", "Step1_About", "Step2_Goal", "Step3_Plan", "Step4_Meals", "Step4_Proteins"]);
 
 export default async (req: Request, context: Context) => {
   let input: any;

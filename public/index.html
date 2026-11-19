@@ -179,6 +179,11 @@ header p { margin: 0; color: var(--muted); max-width: 64ch; }
 .prot-chips button:disabled .prot-lbl { opacity: .6; }
 .prot-lbl { line-height: 1.1; }
 .prot-chips .soon { position: absolute; top: 0; right: 4px; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; background: var(--line); color: var(--ink); border-radius: 999px; padding: 2px 6px; }
+#step-proteins .prot-chips { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 18px; }
+#step-proteins .prot-chips button { min-height: 132px; font-size: 15px; gap: 10px; padding: 12px 4px; }
+#step-proteins .prot-chips .prot-ic { width: 88px; height: 88px; }
+#step-proteins .prot-hint { white-space: nowrap; font-size: inherit; }
+@media (max-width: 400px) { #step-proteins .prot-chips .prot-ic { width: 72px; height: 72px; } #step-proteins .prot-chips button { min-height: 116px; } }
 .prot-chips button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; padding-top: 14px; border-top: 1px solid var(--line); }
@@ -484,7 +489,8 @@ body.lang-fading .wrap > .step { opacity: 0; }
         <li><a href="#about" data-step="about"><span class="num">1</span><span class="lab">About you</span></a></li>
         <li><a href="#goal" data-step="goal"><span class="num">2</span><span class="lab">Your goal</span></a></li>
         <li><a href="#plan" data-step="plan"><span class="num">3</span><span class="lab">Your plan</span></a></li>
-        <li><a href="#meals" data-step="meals"><span class="num">4</span><span class="lab">Your meals</span></a></li>
+        <li><a href="#proteins" data-step="proteins"><span class="num">4</span><span class="lab">Proteins</span></a></li>
+        <li><a href="#meals" data-step="meals"><span class="num">5</span><span class="lab">Your meals</span></a></li>
       </ol>
     </nav>
   </header>
@@ -665,12 +671,32 @@ body.lang-fading .wrap > .step { opacity: 0; }
     </div>
     <div class="step-nav">
       <button type="button" class="btn ghost" data-go="goal">Back</button>
-      <button type="button" class="btn primary" data-go="meals">See my meal plan</button>
+      <button type="button" class="btn primary" data-go="proteins">Choose my proteins</button>
     </div>
     <p class="foot">This is an estimate built from the figures you entered, not medical advice. It assumes about 7,700 kcal per kg of body weight (3,500 per lb) and recalculates maintenance every day as your weight falls. Real loss is rarely a straight line: water, glycogen and metabolic adaptation make weekly numbers bounce around, and long-term loss is usually a little slower than this model shows. Once the goal is reached the projection switches to maintenance. For very low intakes or medical conditions, plan with a doctor or registered dietitian.</p>
   </section>
 
-  <!-- Step 4: Your meals -->
+  <!-- Step 4: Your proteins -->
+  <section class="step narrow" id="step-proteins" data-step="proteins" aria-labelledby="h-prot" hidden>
+    <div class="panel step-panel">
+      <h2 class="step-title" id="h-prot" tabindex="-1">Which proteins do you like?</h2>
+      <p class="step-intro">Every lunch and dinner is built around the proteins you pick. <span class="prot-hint" id="prot-hint">Pick 2 or more.</span></p>
+      <div class="prot-chips" role="group" aria-labelledby="h-prot">
+          <button type="button" data-prot="chicken" aria-pressed="true"><img class="prot-ic" src="/img/protein/chicken.webp" width="88" height="88" alt=""><span class="prot-lbl">Chicken</span></button>
+          <button type="button" data-prot="beef" aria-pressed="true"><img class="prot-ic" src="/img/protein/beef.webp" width="88" height="88" alt=""><span class="prot-lbl">Beef</span></button>
+          <button type="button" data-prot="fish" aria-pressed="false"><img class="prot-ic" src="/img/protein/fish.webp" width="88" height="88" alt=""><span class="prot-lbl">Fish</span></button>
+          <button type="button" data-prot="eggs" aria-pressed="true"><img class="prot-ic" src="/img/protein/eggs.webp" width="88" height="88" alt=""><span class="prot-lbl">Eggs</span></button>
+          <button type="button" data-prot="tofu" aria-pressed="false"><img class="prot-ic" src="/img/protein/tofu.webp" width="88" height="88" alt=""><span class="prot-lbl">Tofu</span></button>
+          <button type="button" data-prot="beans" aria-pressed="false"><img class="prot-ic" src="/img/protein/beans.webp" width="88" height="88" alt=""><span class="prot-lbl">Beans</span></button>
+        </div>
+    </div>
+    <div class="step-nav">
+      <button type="button" class="btn ghost" data-go="plan">Back</button>
+      <button type="button" class="btn primary" data-go="meals">See my meal plan</button>
+    </div>
+  </section>
+
+  <!-- Step 5: Your meals -->
   <section class="step" id="step-meals" data-step="meals" aria-labelledby="h-meals" hidden>
     <div class="summary" id="summary-meals"></div>
     <section class="panel" id="meal-plan">
@@ -678,17 +704,6 @@ body.lang-fading .wrap > .step { opacity: 0; }
         <div>
           <h2 id="h-meals" tabindex="-1">Your weekly meal plan</h2>
           <p id="meals-sub"></p>
-        </div>
-      </div>
-      <div class="prot-panel">
-        <div class="prot-head"><span class="prot-title" id="l-prot">Your proteins</span><span class="prot-hint" id="prot-hint">Pick 2 or more</span></div>
-        <div class="prot-chips" role="group" aria-labelledby="l-prot">
-          <button type="button" data-prot="chicken" aria-pressed="true"><img class="prot-ic" src="/img/protein/chicken.webp" width="56" height="56" alt="" loading="lazy"><span class="prot-lbl">Chicken</span></button>
-          <button type="button" data-prot="beef" aria-pressed="true"><img class="prot-ic" src="/img/protein/beef.webp" width="56" height="56" alt="" loading="lazy"><span class="prot-lbl">Beef</span></button>
-          <button type="button" data-prot="fish" aria-pressed="false"><img class="prot-ic" src="/img/protein/fish.webp" width="56" height="56" alt="" loading="lazy"><span class="prot-lbl">Fish</span></button>
-          <button type="button" data-prot="eggs" aria-pressed="true"><img class="prot-ic" src="/img/protein/eggs.webp" width="56" height="56" alt="" loading="lazy"><span class="prot-lbl">Eggs</span></button>
-          <button type="button" data-prot="tofu" aria-pressed="false"><img class="prot-ic" src="/img/protein/tofu.webp" width="56" height="56" alt="" loading="lazy"><span class="prot-lbl">Tofu</span></button>
-          <button type="button" data-prot="beans" aria-pressed="false"><img class="prot-ic" src="/img/protein/beans.webp" width="56" height="56" alt="" loading="lazy"><span class="prot-lbl">Beans</span></button>
         </div>
       </div>
       <div class="days-bar"><div class="days" role="group" aria-label="Day of the week" id="days"></div></div>
@@ -732,7 +747,7 @@ body.lang-fading .wrap > .step { opacity: 0; }
       </details>
     </section>
     <div class="step-nav">
-      <button type="button" class="btn ghost" data-go="plan">Back to my plan</button>
+      <button type="button" class="btn ghost" data-go="proteins">Back</button>
     </div>
     <p class="foot">Meal plan nutrition is estimated from standard ingredient values; portions are rounded for real kitchens, so daily totals land near, not exactly on, your target. Check labels if you have allergies. Not medical advice.</p>
   </section>
@@ -1027,7 +1042,7 @@ body.lang-fading .wrap > .step { opacity: 0; }
       '<span class="chip-s">' + paceName(s) + '</span>' +
       '<a href="#about">' + L.editDetails + '</a>';
     $('summary').innerHTML = html;
-    $('summary-meals').innerHTML = html;
+    $('summary-meals').innerHTML = html.replace('<a href="#about">', '<a href="#proteins">' + L.changeProteins + '</a><a href="#about">');
   }
 
   // ---- Suggestions ----
@@ -1181,14 +1196,15 @@ body.lang-fading .wrap > .step { opacity: 0; }
     });
   });
   // ---- Steps / router ----
-  var STEPS = ['start', 'about', 'goal', 'plan', 'meals'];
-  var ORDER = { about: 1, goal: 2, plan: 3, meals: 4 };
+  var STEPS = ['start', 'about', 'goal', 'plan', 'proteins', 'meals'];
+  var ORDER = { about: 1, goal: 2, plan: 3, proteins: 4, meals: 5 };
   var current = null;
   function showStep(name, opts) {
     opts = opts || {};
     if (STEPS.indexOf(name) < 0) name = 'start';
-    if ((name === 'plan' || name === 'meals') && !state.done) name = 'about';
-    if (name === 'plan' || name === 'meals') { readInputs(); if (state.goal >= state.w0) { name = 'goal'; } }
+    var deep = name === 'plan' || name === 'proteins' || name === 'meals';
+    if (deep && !state.done) name = 'about';
+    if (deep) { readInputs(); if (state.goal >= state.w0) { name = 'goal'; } }
     current = name;
     document.querySelectorAll('.step').forEach(function (el) { el.hidden = el.dataset.step !== name; });
     $('progress').hidden = name === 'start';
@@ -1208,7 +1224,7 @@ body.lang-fading .wrap > .step { opacity: 0; }
     trackStep(name);
   }
   // One Meta event per step (once per session); the plan also counts as the standard ViewContent.
-  var STEP_EVENTS = { about: [1, 'Step1_About', 'About you'], goal: [2, 'Step2_Goal', 'Your goal'], plan: [3, 'Step3_Plan', 'Your plan'], meals: [4, 'Step4_Meals', 'Your meals'] };
+  var STEP_EVENTS = { about: [1, 'Step1_About', 'About you'], goal: [2, 'Step2_Goal', 'Your goal'], plan: [3, 'Step3_Plan', 'Your plan'], proteins: [4, 'Step4_Proteins', 'Proteins'], meals: [5, 'Step4_Meals', 'Your meals'] };
   function trackStep(name) {
     var e = STEP_EVENTS[name];
     if (!e || !window.FITME_TRACK) return;
