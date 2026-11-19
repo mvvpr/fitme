@@ -1296,12 +1296,12 @@ body.lang-fading .wrap > .step { opacity: 0; }
     $('building-list').innerHTML = lines.map(function (t) { return '<li><span class="tick" aria-hidden="true">✓</span><span>' + t + '</span></li>'; }).join('');
     var items = el.querySelectorAll('li');
     el.hidden = false; requestAnimationFrame(function () { el.classList.add('show'); });
-    var STEP = 340;
+    var STEP = 750;
     items.forEach(function (li, i) {
       timers.push(setTimeout(function () { li.classList.add('on'); }, i * STEP));
-      timers.push(setTimeout(function () { li.classList.remove('on'); li.classList.add('ok'); }, i * STEP + STEP - 40));
+      timers.push(setTimeout(function () { li.classList.remove('on'); li.classList.add('ok'); }, i * STEP + STEP - 120));
     });
-    timers.push(setTimeout(finish, items.length * STEP + 200));
+    timers.push(setTimeout(finish, items.length * STEP + 600));
   }
   document.addEventListener('click', function (e) {
     var b = e.target.closest('[data-go]');
