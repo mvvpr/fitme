@@ -311,12 +311,6 @@ tbody tr.goal td { font-weight: 500; color: var(--accent); }
 .meal-more summary::after { content: ' ▾'; }
 .meal-more[open] summary::after { content: ' ▴'; }
 .meal-more-body { display: flex; flex-direction: column; gap: 12px; padding-top: 8px; }
-.week-strip { display: flex; align-items: center; gap: 12px; }
-.ws-pics { display: flex; flex: none; }
-.ws-pics img, .ws-more { width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--surface); object-fit: cover; margin-left: -10px; }
-.ws-pics img:first-child { margin-left: 0; }
-.ws-more { display: inline-flex; align-items: center; justify-content: center; background: var(--accent); color: var(--accent-ink); font-size: 13px; font-weight: 600; }
-.ws-cap { font-size: 12.5px; color: var(--muted); line-height: 1.35; }
 .meal-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
 .meal .slot { font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); }
 .meal .time { font-size: 12px; color: var(--muted); }
@@ -425,15 +419,10 @@ header.topbar { flex-direction: row; align-items: center; justify-content: space
 .summary .chip-s { background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; color: var(--ink); }
 .summary a { color: var(--accent); font-weight: 600; text-decoration: none; }
 .summary a:hover { text-decoration: underline; }
-.plan-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 320px); grid-template-areas: 'main side' 'how side'; gap: 0 20px; align-items: start; }
-.plan-main { grid-area: main; } .plan-side { grid-area: side; } .plan-grid > .how { grid-area: how; margin-top: 20px; }
+.plan-grid { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-areas: 'main' 'how'; gap: 0 20px; align-items: start; }
+.plan-main { grid-area: main; } .plan-grid > .how { grid-area: how; margin-top: 20px; }
 .how-body .stats { border-top: 0; padding-top: 0; }
-@media (max-width: 900px) { .plan-grid { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'main' 'side' 'how'; } }
 .plan-main { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
-.plan-side { position: sticky; top: 16px; }
-@media (max-width: 900px) { .plan-side { position: static; } }
-.plan-side .sub-box { margin-top: 0; grid-template-columns: minmax(0, 1fr); }
-@media (max-width: 900px) { .plan-side .sub-box { margin-top: 16px; } }
 .today { display: flex; flex-wrap: wrap; gap: 10px; }
 .today > div { background: var(--field); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; display: flex; flex-direction: column; flex: 1 1 130px; max-width: 260px; }
 @media (max-width: 640px) { .today .v { font-size: 21px; } }
@@ -605,7 +594,7 @@ body.lang-fading .wrap > .step { opacity: 0; }
   </section>
 
   <!-- Step 3: Your plan -->
-  <section class="step" id="step-plan" data-step="plan" aria-labelledby="h-plan" hidden>
+  <section class="step narrow" id="step-plan" data-step="plan" aria-labelledby="h-plan" hidden>
     <div class="summary" id="summary"></div>
     <div class="plan-grid">
       <div class="plan-main">
@@ -622,24 +611,6 @@ body.lang-fading .wrap > .step { opacity: 0; }
         </section>
 
       </div>
-      <aside class="plan-side">
-        <div class="sub-box" data-box="plan">
-          <div class="week-strip" id="week-strip"></div>
-          <div>
-            <h3>Get each day's meals by email</h3>
-            <p>Every morning at 7:00 your time: four meals with ingredients and method, sized to <strong class="sub-kcal">your calories</strong>. Plus your shopping list for the week every Saturday.</p>
-          </div>
-          <form class="sub-form" novalidate>
-            <div class="sub-row">
-              <label class="box"><input class="sub-email" type="email" autocomplete="email" placeholder="you@example.com" aria-label="Email address" required></label>
-              <button type="submit" class="sub-btn">Subscribe</button>
-            </div>
-            <label class="hp" aria-hidden="true">Website <input class="sub-web" tabindex="-1" autocomplete="off"></label>
-            <label class="consent"><input type="checkbox" class="sub-consent"> <span>I agree to receive a daily meal-plan email from FitMe. We store your email, time zone and calorie settings to send it, and you can unsubscribe at any time. <a class="privacy-link" href="/privacy.html" target="_blank" rel="noopener">Privacy policy</a></span></label>
-            <div class="sub-msg" role="status" aria-live="polite"></div>
-          </form>
-        </div>
-      </aside>
         <details class="panel how">
           <summary>How we calculated this</summary>
           <div class="how-body">
@@ -1112,11 +1083,6 @@ body.lang-fading .wrap > .step { opacity: 0; }
         '<div><h4>' + L.method + '</h4><ol>' + steps + '</ol></div></div></details></div></article>';
     }).join('');
     renderShop(T, protTarget);
-    // "This week" row in the plan's sign-up box: the mains first, then the rest of the pool.
-    var seenImg = {}, pics = [];
-    ['lunch', 'dinner', 'breakfast', 'snack'].forEach(function (k) { for (var d = 0; d < 7; d++) { var r = M.recipeFor(k, d, prefs()); if (r && r.img && !seenImg[r.img]) { seenImg[r.img] = 1; pics.push(buildDay(d, T, protTarget, LANG, prefs()).filter(function (x) { return x.slot.key === k; })[0].rec); } } });
-    $('week-strip').innerHTML = '<span class="ws-pics">' + pics.slice(0, 4).map(function (r) { return '<img src="/img/meals/' + r.img + '-thumb.webp" width="52" height="52" alt="' + esc(r.name) + '">'; }).join('') +
-      (pics.length > 4 ? '<span class="ws-more">+' + (pics.length - 4) + '</span>' : '') + '</span><span class="ws-cap">' + L.weekStrip + '</span>';
     subState = { intake: Math.round(T), prot: protTarget, units: state.units, lang: LANG, diet: state.diet };
     var pp = prefs(); document.querySelectorAll('.prot-chips [data-prot]').forEach(function (b) { if (!b.disabled) b.setAttribute('aria-pressed', String(pp.indexOf(b.dataset.prot) >= 0)); });
     document.querySelectorAll('.sub-kcal').forEach(function (el) { el.textContent = kcal(T) + L.aDay; });
