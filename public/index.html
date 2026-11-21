@@ -447,6 +447,9 @@ header.topbar { flex-direction: row; align-items: center; justify-content: space
 .perks li::before { content: ''; flex: none; width: 9px; height: 9px; border-radius: 50%; background: var(--lost); transform: translateY(-1px); }
 .perks b { color: var(--ink); font-weight: 600; }
 .hint { margin: 0; font-size: 13px; color: var(--muted); }
+/* Quiet links for search engines and returning visitors; kept well below the start button so ad traffic isn't distracted. */
+.site-links { margin: 40px 0 0; text-align: center; font-size: 13px; color: var(--muted); }
+.site-links a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
 .btn { font: inherit; font-weight: 600; font-size: 15px; border-radius: 8px; padding: 12px 22px; cursor: pointer; border: 1px solid transparent; }
 .btn.primary { background: var(--accent); color: var(--accent-ink); }
 .btn.primary:hover { filter: brightness(1.08); }
@@ -557,6 +560,8 @@ body.lang-fading .wrap > .step { opacity: 0; }
     </ul>
     <button type="button" class="btn primary big-btn" data-go="about">Get my free plan</button>
     <p class="hint">About 1 minute · Free · No sign-up needed</p>
+    <!--site-links (hrefs set per language by markLangSwitch and by netlify/edge-functions/meta-locale.ts)-->
+    <p class="site-links"><a href="/recipes/" data-href-en="/recipes/" data-href-pt="/pt/receitas/" data-href-br="/br/receitas/">High protein recipes</a><span aria-hidden="true"> · </span><a href="/privacy.html" data-href-en="/privacy.html" data-href-pt="/pt/privacy.html" data-href-br="/br/privacy.html">Privacy</a></p>
   </section>
 
   <!-- Step 1: About you -->
@@ -817,7 +822,10 @@ body.lang-fading .wrap > .step { opacity: 0; }
     try { document.cookie = 'nf_country=' + (lang === 'br' ? 'BR' : lang === 'pt' ? 'PT' : 'ZZ') + '; path=/; max-age=31536000; SameSite=Lax' + (location.protocol === 'https:' ? '; Secure' : ''); } catch (err) {}
   }
   function canPushPath() { return location.protocol !== 'file:' && !/claude|artifact/.test(location.hostname); }
-  function markLangSwitch() { document.querySelectorAll('.lang-switch a').forEach(function (a) { a.setAttribute('aria-current', String(a.dataset.lang === LANG)); }); }
+  function markLangSwitch() {
+    document.querySelectorAll('.lang-switch a').forEach(function (a) { a.setAttribute('aria-current', String(a.dataset.lang === LANG)); });
+    document.querySelectorAll('.site-links a').forEach(function (a) { var h = a.getAttribute('data-href-' + LANG); if (h) a.setAttribute('href', h); });
+  }
   markLangSwitch();
   function switchLang(lang, fromHistory) {
     if (lang === LANG) return;

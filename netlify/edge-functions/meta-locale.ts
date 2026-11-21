@@ -42,6 +42,10 @@ export default async (req: Request, context: Context) => {
 <meta name="twitter:card" content="summary_large_image">
 <!--meta:end-->`;
   const html = (await res.text()).replace(/<!--meta:start[\s\S]*?<!--meta:end-->/, block)
+    // Quiet homepage links: point them at this language's pages for crawlers that don't run the page script
+    // (the words stay English here; the page script translates them, and keeps them right when the visitor switches language).
+    .replace('href="/recipes/" data-href-en', `href="/${lang}/receitas/" data-href-en`)
+    .replace('href="/privacy.html" data-href-en', `href="/${lang}/privacy.html" data-href-en`)
     .replace(/<html lang="en">/, `<html lang="${lang === "br" ? "pt-BR" : "pt-PT"}">`);
   const headers = new Headers(res.headers);
   headers.delete("content-length");
