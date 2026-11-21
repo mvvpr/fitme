@@ -43,17 +43,23 @@ const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replac
 const r5 = (n) => Math.round(n / 5) * 5;
 
 // Find a recipe's source (pool + index) by its image slug, and its translation.
+// Protein variant pools (top-level vars in meals.js) and their translation arrays in meals.pt.js / meals.br.js.
+const VARIANTS = [['POOL_PORK', 'recipesPork'], ['POOL_FISH', 'recipesFish']];
 function source(img) {
   for (const k of ['breakfast', 'lunch', 'snack', 'dinner']) {
     const i = M.RECIPES[k].findIndex((r) => r.img === img);
     if (i >= 0) return { k, i, rec: M.RECIPES[k][i] };
   }
+  for (const [pool, trKey] of VARIANTS) {
+    const t = (ctx[pool] || []).findIndex((r) => r && r.img === img);
+    if (t >= 0) return { trKey, t, rec: ctx[pool][t] };
+  }
   throw new Error('No recipe with img ' + img);
 }
 function data(img, lang) {
-  const { k, i, rec } = source(img);
+  const { k, i, trKey, t, rec } = source(img);
   const nu = M.nutrition(rec.ing);
-  const tr = lang === 'en' ? null : M.ptData(lang).recipes[k][i];
+  const tr = lang === 'en' ? null : trKey ? M.ptData(lang)[trKey][t] : M.ptData(lang).recipes[k][i];
   let x = 0;
   const ing = rec.ing.map((l) => {
     if (l[0] === '~') { const extra = tr ? tr.x[x] : l[1]; x++; return extra; }
