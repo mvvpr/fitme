@@ -20,7 +20,8 @@ A calorie-deficit weight loss calculator. Enter your details and a daily deficit
 ## Stack
 
 - `public/`: the static site (`index.html`, shared recipe and portion logic in `meals.js`, Portuguese recipes in `meals.pt.js`, interface text in `i18n.js`, brand assets). No build step. `/pt/` is served by a rewrite in `netlify.toml`.
-- `netlify/functions/`: `subscribe`, `confirm`, `unsubscribe` and the hourly scheduled `send-daily`.
+- `netlify/functions/`: `subscribe`, `confirm`, `unsubscribe`, `track` and the hourly scheduled `send-daily`. Emails use the subscriber's protein picks (`prots`), falling back to `diet` for older sign-ups.
+- `netlify/edge-functions/meta-locale.ts`: swaps the title, description and share (Open Graph) tags for `/pt/` and `/br/`, since crawlers don't run the page script. Share images: `public/img/og/fitme-{en,pt,br}.jpg` (1200×630).
 - Subscribers are stored in Netlify Blobs (store `fitme-subscribers`, EU region `eu-central-1`). Emails are sent through the Mailgun API.
 
 ## Email setup (Netlify environment variables, scope: Functions)
@@ -42,7 +43,8 @@ Until `MAILGUN_API_KEY` and `MAILGUN_DOMAIN` are set, sign-up shows "opens soon"
   - `ViewContent`: first time the plan is shown, Pixel + CAPI via `/api/track`
   - `Lead`: new email sign-up, Pixel + CAPI from `/api/subscribe` (hashed email)
   - `CompleteRegistration`: double opt-in confirmed, CAPI only from `/api/confirm`
-  - Custom step events, once per browser session, Pixel + CAPI: `Step1_About`, `Step2_Goal`, `Step3_Plan`, `Step4_Meals` (custom_data: step, content_name, lang)
+  - Custom step events, once per browser session, Pixel + CAPI: `Step1_About` (1), `Step2_Goal` (2), `Step3_Plan` (3), `Step4_Proteins` (4), `Step4_Meals` (5; name kept for continuity) (custom_data: step, content_name, lang)
+- The Pixel's own history-change PageViews are off (`fbq.disablePushState`): the steps change the URL hash, and only the page-load PageView (with its server copy) should count.
 - Privacy policy (EN/PT): `public/privacy.html`, served at `/privacy.html` and `/pt/privacy.html`; linked from the banner, the footers and the sign-up consent line. Unconfirmed sign-ups are deleted after 30 days by `send-daily`.
 - Server events are sent only for visitors who accepted cookies. `fbp`/`fbc` are kept on the subscriber record until confirmation, then deleted.
 

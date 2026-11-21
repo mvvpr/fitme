@@ -1,6 +1,6 @@
 // POST /api/subscribe — store a pending subscriber and send a double opt-in email.
 import type { Config, Context } from "@netlify/functions";
-import { subscribers, sha256, subKey, tokKey, unsKey, newToken, validTimeZone, mailConfig, sendMail, renderConfirmEmail, sendMetaEvents, requestUser, FBP_RE, FBC_RE, EVENT_ID_RE, asLang, type Subscriber } from "../lib/core.mts";
+import { subscribers, sha256, subKey, tokKey, unsKey, newToken, validTimeZone, mailConfig, sendMail, renderConfirmEmail, sendMetaEvents, requestUser, FBP_RE, FBC_RE, EVENT_ID_RE, asLang, cleanProts, type Subscriber } from "../lib/core.mts";
 
 const CONSENT_TEXT = "I agree to receive a daily meal-plan email from FitMe. We store your email, time zone and calorie settings to send it, and you can unsubscribe at any time. (privacy policy version 2026-11-13)";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -24,6 +24,7 @@ export default async (req: Request, context: Context) => {
     units: input?.units === "imperial" ? "imperial" as const : "metric" as const,
     lang: asLang(input?.lang),
     diet: input?.diet === "veg" ? "veg" as const : "all" as const,
+    prots: cleanProts(input?.prots),
   };
 
   // Meta measurement context: present only if the visitor accepted Meta cookies on the site.

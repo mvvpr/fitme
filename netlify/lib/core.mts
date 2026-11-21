@@ -21,7 +21,9 @@ export type Subscriber = {
   units: "metric" | "imperial";
   lang?: "en" | "pt" | "br";
   diet?: "all" | "veg";
-  pending?: { tz: string; intake: number; prot: number; units: "metric" | "imperial"; lang?: "en" | "pt" | "br"; diet?: "all" | "veg" } | null;
+  // Protein picks from the site (2 or more of M.PROTEINS); shape the lunches and dinners. Older records only have diet.
+  prots?: string[];
+  pending?: { tz: string; intake: number; prot: number; units: "metric" | "imperial"; lang?: "en" | "pt" | "br"; diet?: "all" | "veg"; prots?: string[] } | null;
   confirmToken: string | null;
   unsubToken: string;
   createdAt: string;
@@ -34,6 +36,15 @@ export type Subscriber = {
   // Set only when the visitor accepted Meta cookies at sign-up; removed once CompleteRegistration is sent.
   meta?: { fbp?: string; fbc?: string; url?: string } | null;
 };
+
+// Protein picks sent by the site: known proteins only, no duplicates, at least 2 (as the picker requires); otherwise undefined.
+export function cleanProts(v: unknown): string[] | undefined {
+  if (!Array.isArray(v)) return undefined;
+  const out = [...new Set(v.filter((x) => typeof x === "string" && M.PROTEINS.includes(x)))] as string[];
+  return out.length >= 2 ? out : undefined;
+}
+// What the meal-plan logic takes as "diet": the protein picks when we have them, else the older all/veg choice.
+export const planDiet = (s: { prots?: string[]; diet?: "all" | "veg" }) => (s.prots && s.prots.length ? s.prots : s.diet === "veg" ? "veg" : "all");
 
 export async function sha256(text: string) {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
@@ -252,7 +263,7 @@ export function renderConfirmEmail(siteUrl: string, confirmUrl: string, isUpdate
   return { subject: title, html: shell(siteUrl, inner, t.confirmFooter, lang), text };
 }
 
-export function renderDailyEmail(opts: { siteUrl: string; unsubUrl: string; dayIndex: number; dateLabel: string; intake: number; prot: number; imperial: boolean; lang?: Lang; diet?: "all" | "veg" }) {
+export function renderDailyEmail(opts: { siteUrl: string; unsubUrl: string; dayIndex: number; dateLabel: string; intake: number; prot: number; imperial: boolean; lang?: Lang; diet?: "all" | "veg" | string[] }) {
   const c = COLORS, lang: Lang = asLang(opts.lang), t = T[lang];
   const kcal = (v: number) => kcalL(v, t.locale);
   const site = sitePath(opts.siteUrl, lang);
@@ -275,7 +286,7 @@ export function renderDailyEmail(opts: { siteUrl: string; unsubUrl: string; dayI
     }).join("");
     const steps = m.rec.steps.map((st: string) => `<li style="margin:0 0 6px;">${esc(st)}</li>`).join("");
     // Dish photo (JPEG, not WebP, so it shows in every mail app). Served from the site: public/img/email/<slug>.jpg.
-    const photo = m.rec.img ? `<img src="${esc(opts.siteUrl)}/img/email/${esc(m.rec.img)}.jpg" width="556" alt="${esc(m.rec.name)}" style="display:block;width:100%;max-width:100%;height:auto;border:0;border-radius:12px 12px 0 0;background:#e8e5df;">` : "";
+    const photo = m.rec.img && !m.rec.noPhoto ? `<img src="${esc(opts.siteUrl)}/img/email/${esc(m.rec.img)}.jpg" width="556" alt="${esc(m.rec.name)}" style="display:block;width:100%;max-width:100%;height:auto;border:0;border-radius:12px 12px 0 0;background:#e8e5df;">` : "";
     return `<tr><td style="height:14px;"></td></tr><tr><td style="background:${c.card};border:1px solid ${c.line};border-radius:12px;padding:0;overflow:hidden;">${photo}<div style="padding:18px 22px 20px;">
 <div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:${c.accent};">${esc(m.slot.label)} · ${esc(m.rec.time)}</div>
 <h2 style="margin:4px 0 8px;font-size:19px;line-height:1.25;">${esc(m.rec.name)}</h2>
@@ -299,7 +310,7 @@ export function renderDailyEmail(opts: { siteUrl: string; unsubUrl: string; dayI
   return { subject, html: shell(opts.siteUrl, summary + cards + cta, footer, lang), text };
 }
 
-export function renderShoppingEmail(opts: { siteUrl: string; unsubUrl: string; dateLabel: string; intake: number; prot: number; imperial: boolean; lang?: Lang; diet?: "all" | "veg" }) {
+export function renderShoppingEmail(opts: { siteUrl: string; unsubUrl: string; dateLabel: string; intake: number; prot: number; imperial: boolean; lang?: Lang; diet?: "all" | "veg" | string[] }) {
   const c = COLORS, lang: Lang = asLang(opts.lang), t = T[lang];
   const site = sitePath(opts.siteUrl, lang);
   const list = M.shoppingList(opts.intake, opts.prot, lang, opts.imperial, opts.diet);

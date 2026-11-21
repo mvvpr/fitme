@@ -60,6 +60,8 @@
       if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = '2.0'; n.queue = [];
       t = b.createElement(e); t.async = !0; t.src = v; s = b.getElementsByTagName(e)[0]; s.parentNode.insertBefore(t, s);
     }(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
+    // Steps change the URL hash; without this the Pixel sends its own PageView on every step (no event_id, no server copy).
+    window.fbq.disablePushState = true;
     window.fbq('consent', 'grant');
     window.fbq('init', PIXEL_ID);
   }

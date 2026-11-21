@@ -2,7 +2,7 @@
 // when it is 07:xx in their own time zone (once per local day), and on Saturdays at 08:xx
 // their shopping list for the week (once per Saturday).
 import type { Config, Context } from "@netlify/functions";
-import { subscribers, subKey, tokKey, unsKey, mailConfig, sendMail, renderDailyEmail, renderShoppingEmail, asLang, type Subscriber } from "../lib/core.mts";
+import { subscribers, subKey, tokKey, unsKey, mailConfig, sendMail, renderDailyEmail, renderShoppingEmail, asLang, planDiet, type Subscriber } from "../lib/core.mts";
 
 const SEND_HOUR = 7;
 const SHOP_HOUR = 8;
@@ -48,7 +48,7 @@ export default async (req: Request, context: Context) => {
       const lang = asLang(sub.lang);
       const local = localParts(now, sub.tz, lang);
       const unsubUrl = `${siteUrl}/api/unsubscribe?u=${sub.unsubToken}${lang !== "en" ? "&l=" + lang : ""}`;
-      const base = { siteUrl, unsubUrl, dateLabel: local.label, intake: sub.intake, prot: sub.prot, imperial: sub.units === "imperial", lang, diet: sub.diet === "veg" ? "veg" : "all" } as const;
+      const base = { siteUrl, unsubUrl, dateLabel: local.label, intake: sub.intake, prot: sub.prot, imperial: sub.units === "imperial", lang, diet: planDiet(sub) };
       try {
         if (local.hour === SEND_HOUR && sub.lastSentDate !== local.date) {
           await sendMail(cfg!, { to: sub.email, ...renderDailyEmail({ ...base, dayIndex: local.dayIndex }), unsubUrl, tag: "daily-plan" });

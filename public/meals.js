@@ -151,11 +151,13 @@ function recipesFor(diet) { return diet === 'veg' ? RECIPES_VEG : RECIPES; }
 var PROTEINS = ['chicken', 'beef', 'fish', 'eggs', 'tofu', 'beans'];
 
 // Fish variants of the main templates (same order as POOL.main; null = no fish version of that template).
+// noPhoto: the site image is still a placeholder and there is no email photo yet, so emails skip the photo.
+// Remove it once real photos are in img/meals and img/email.
 var POOL_FISH = [
-  { name: 'Prawn, chickpea & spinach curry', img: 'prawn-chickpea-curry', time: '25 min',
+  { name: 'Prawn, chickpea & spinach curry', img: 'prawn-chickpea-curry', noPhoto: true, time: '25 min',
     ing: [['prawns', 150, 'g'], ['chickpeas', 80, 'g'], ['tins', 200, 'g'], ['spinach', 60, 'g'], ['onion', 0.5, 'pc'], ['garlic', 1, 'pc'], ['yog', 60, 'g'], ['basmati', 50, 'g'], ['oil', 1, 'tsp'], ['~', '2 tsp curry powder, fresh coriander or parsley']],
     steps: ['Cook the rice according to the pack.', 'Heat the oil in a pan and cook the chopped onion for 5 minutes, then add the garlic and curry powder for 1 minute.', 'Add the tomatoes and chickpeas and simmer for 10 minutes. Stir in the prawns and cook for 3–4 minutes, until pink all the way through.', 'Stir in the spinach until wilted, take off the heat and stir in the yogurt for a creamy finish. Serve over the rice with the herbs.'] },
-  { name: 'Lemon-garlic salmon with potatoes & broccoli', img: 'lemon-garlic-salmon', time: '35 min',
+  { name: 'Lemon-garlic salmon with potatoes & broccoli', img: 'lemon-garlic-salmon', noPhoto: true, time: '35 min',
     ing: [['salmon', 140, 'g'], ['potato', 200, 'g'], ['broccoli', 120, 'g'], ['oil', 2, 'tsp'], ['lemon', 15, 'ml'], ['garlic', 1, 'pc'], ['~', 'Dried oregano, salt and black pepper']],
     steps: ['Heat the oven to 200°C (180°C fan). Halve the potatoes, toss with 1 tsp of the oil, salt and pepper and roast for 15 minutes.', 'Mix the rest of the oil with the lemon juice, crushed garlic, oregano, salt and pepper.', 'Add the broccoli to the tray and lay the salmon on top. Spoon the lemon-garlic mix over the salmon and roast for 12–15 minutes, until it flakes easily.', 'Serve with the potatoes and broccoli. It is also good cold for tomorrow\'s lunch.'] },
   null, null
@@ -299,7 +301,7 @@ function buildDay(i, T, P, lang, diet) {
     var out = { slot: m.slot, rec: m.rec, lines: lines, n: nutrition(lines) };
     if (pt) {
       var srcI = sourceFor(m.slot.key, i, diet), tr = srcI.src === 'fish' ? pt.recipesFish[srcI.t] : (srcI.src === 'veg' ? pt.recipesVeg : pt.recipes)[m.slot.key][i], xi = 0;
-      out.rec = { name: tr.name, time: tr.time, steps: tr.steps, ing: m.rec.ing, img: m.rec.img };
+      out.rec = { name: tr.name, time: tr.time, steps: tr.steps, ing: m.rec.ing, img: m.rec.img, noPhoto: m.rec.noPhoto };
       out.slot = { key: m.slot.key, label: pt.slots[m.slot.key], share: m.slot.share };
       out.lines = lines.map(function (l) { return l[0] === '~' ? ['~', tr.x[xi++] || l[1]] : l; });
     }
