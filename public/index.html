@@ -241,11 +241,12 @@ header p { margin: 0; color: var(--muted); max-width: 64ch; }
 .prot-chips button:disabled .prot-lbl { opacity: .6; }
 .prot-lbl { line-height: 1.1; }
 .prot-chips .soon { position: absolute; top: 0; right: 4px; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; background: var(--line); color: var(--ink); border-radius: 999px; padding: 2px 6px; }
-#step-proteins .prot-chips { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 18px; }
-#step-proteins .prot-chips button { min-height: 132px; font-size: 15px; gap: 10px; padding: 12px 4px; }
+/* 7 proteins: rows of 4 then 3, the last row centred. */
+#step-proteins .prot-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 18px; }
+#step-proteins .prot-chips button { flex: 0 0 calc((100% - 36px) / 4); min-height: 132px; font-size: 15px; gap: 10px; padding: 12px 4px; }
 #step-proteins .prot-chips .prot-ic { width: 88px; height: 88px; }
 #step-proteins .prot-hint { white-space: nowrap; font-size: inherit; }
-@media (max-width: 400px) { #step-proteins .prot-chips .prot-ic { width: 72px; height: 72px; } #step-proteins .prot-chips button { min-height: 116px; } }
+@media (max-width: 480px) { #step-proteins .prot-chips { gap: 8px; } #step-proteins .prot-chips button { flex-basis: calc((100% - 24px) / 4); min-height: 104px; font-size: 14px; gap: 6px; } #step-proteins .prot-chips .prot-ic { width: 60px; height: 60px; } }
 .prot-chips button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; padding-top: 14px; border-top: 1px solid var(--line); }
@@ -724,6 +725,7 @@ body.lang-fading .wrap > .step { opacity: 0; }
       <div class="prot-chips" role="group" aria-labelledby="h-prot">
           <button type="button" data-prot="chicken" aria-pressed="true"><img class="prot-ic" src="/img/protein/chicken.webp" width="88" height="88" alt=""><span class="prot-lbl">Chicken</span></button>
           <button type="button" data-prot="beef" aria-pressed="true"><img class="prot-ic" src="/img/protein/beef.webp" width="88" height="88" alt=""><span class="prot-lbl">Beef</span></button>
+          <button type="button" data-prot="pork" aria-pressed="false"><img class="prot-ic" src="/img/protein/pork.webp" width="88" height="88" alt=""><span class="prot-lbl">Pork</span></button>
           <button type="button" data-prot="fish" aria-pressed="false"><img class="prot-ic" src="/img/protein/fish.webp" width="88" height="88" alt=""><span class="prot-lbl">Fish</span></button>
           <button type="button" data-prot="eggs" aria-pressed="true"><img class="prot-ic" src="/img/protein/eggs.webp" width="88" height="88" alt=""><span class="prot-lbl">Eggs</span></button>
           <button type="button" data-prot="tofu" aria-pressed="false"><img class="prot-ic" src="/img/protein/tofu.webp" width="88" height="88" alt=""><span class="prot-lbl">Tofu</span></button>
@@ -1218,7 +1220,7 @@ body.lang-fading .wrap > .step { opacity: 0; }
       p.splice(at, 1);
     } else p.push(k);
     hint.classList.remove('warn');
-    state.prots = p; state.diet = p.some(function (x) { return x === 'chicken' || x === 'beef' || x === 'fish'; }) ? 'all' : 'veg';
+    state.prots = p; state.diet = p.some(function (x) { return x === 'chicken' || x === 'beef' || x === 'pork' || x === 'fish'; }) ? 'all' : 'veg';
     save(); render();
   });
 

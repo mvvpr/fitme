@@ -148,7 +148,7 @@ function recipesFor(diet) { return diet === 'veg' ? RECIPES_VEG : RECIPES; }
 
 // Protein preferences. Each main is a template with a meat and a meat-free version (POOL.main[t] / POOL_VEG.main[t]);
 // the person's picked proteins decide which version each day gets.
-var PROTEINS = ['chicken', 'beef', 'fish', 'eggs', 'tofu', 'beans'];
+var PROTEINS = ['chicken', 'beef', 'pork', 'fish', 'eggs', 'tofu', 'beans'];
 
 // Fish variants of the main templates (same order as POOL.main; null = no fish version of that template).
 // A recipe with noPhoto: true has no real photo yet (site shows a placeholder, emails skip the photo).
@@ -162,12 +162,27 @@ var POOL_FISH = [
   null, null
 ];
 
-// Each main template and the protein each version serves: 'meat' = POOL, 'veg' = POOL_VEG, 'fish' = POOL_FISH.
+// Pork variants of the main templates (same order as POOL.main; null = no pork version of that template).
+// One side each: rice (curry slot), potatoes (tray-bake slot), couscous (pasta slot).
+var POOL_PORK = [
+  { name: 'Honey-soy pork stir-fry with rice', img: 'honey-soy-pork-stir-fry', noPhoto: true, time: '25 min',
+    ing: [['pork', 140, 'g'], ['pepper', 0.5, 'pc'], ['broccoli', 100, 'g'], ['garlic', 1, 'pc'], ['soy', 1, 'tbsp'], ['honey', 1, 'tsp'], ['basmati', 50, 'g'], ['oil', 1, 'tsp'], ['~', 'Ground or fresh ginger, chilli flakes (optional)']],
+    steps: ['Cook the rice according to the pack. Slice the pork into thin strips, the pepper into strips and the broccoli into small florets.', 'Mix the soy sauce, honey, crushed garlic and a pinch of ginger with 2 tbsp of water.', 'Heat the oil in a large frying pan or wok over a high heat and stir-fry the pork for 3–4 minutes until browned and cooked through. Lift it onto a plate.', 'Stir-fry the pepper and broccoli for 3–4 minutes with a splash of water. Return the pork, pour in the sauce and toss for 1 minute until glossy. Serve over the rice.'] },
+  { name: 'Paprika pork with roast potatoes & green beans', img: 'paprika-pork-potatoes', noPhoto: true, time: '40 min',
+    ing: [['pork', 150, 'g'], ['potato', 200, 'g'], ['greenbeans', 120, 'g'], ['oil', 2, 'tsp'], ['garlic', 1, 'pc'], ['~', '1 tsp smoked paprika, dried oregano, salt and black pepper']],
+    steps: ['Heat the oven to 200°C (180°C fan). Halve the potatoes, toss with 1 tsp of the oil, salt and pepper and roast for 15 minutes.', 'Mix the rest of the oil with the paprika, crushed garlic, oregano, salt and pepper and rub it all over the pork.', 'Add the pork and the green beans to the tray and roast for 20 minutes, until the pork is cooked through and the juices run clear.', 'Rest the pork for 5 minutes, slice it and serve with the potatoes and beans. Leftovers make a good cold lunch.'] },
+  null,
+  { name: 'Greek-style pork with couscous & yogurt sauce', img: 'greek-pork-couscous', noPhoto: true, time: '20 min',
+    ing: [['pork', 140, 'g'], ['couscous', 55, 'g'], ['cherry', 80, 'g'], ['cucumber', 80, 'g'], ['yog', 60, 'g'], ['lemon', 10, 'ml'], ['oil', 1, 'tsp'], ['garlic', 1, 'pc'], ['~', 'Dried oregano, salt and black pepper, fresh parsley or mint (optional)']],
+    steps: ['Put the couscous in a bowl, pour over about 80 ml of boiling water, cover and leave for 5 minutes. Fluff it up with a fork.', 'Slice the pork into 1 cm medallions and toss with half the lemon juice, half the crushed garlic, the oregano, salt and pepper.', 'Heat the oil in a frying pan over a medium-high heat and cook the pork for about 3 minutes on each side, until cooked through.', 'Mix the yogurt with the rest of the garlic and a pinch of salt. Chop the tomatoes and cucumber and stir them into the couscous with the rest of the lemon juice. Serve the pork on the couscous with the yogurt sauce.'] }
+];
+
+// Each main template and the protein each version serves: 'meat' = POOL, 'veg' = POOL_VEG, 'fish' = POOL_FISH, 'pork' = POOL_PORK.
 var TEMPLATE_VARIANTS = [
-  [['chicken', 'meat'], ['tofu', 'veg'], ['fish', 'fish']],   // curry
-  [['chicken', 'meat'], ['tofu', 'veg'], ['fish', 'fish']],   // lemon-garlic tray bake
-  [['beef', 'meat'], ['beans', 'veg']],                       // chilli
-  [['chicken', 'meat'], ['eggs', 'veg']]                      // pasta (turkey meatballs / creamy cottage cheese)
+  [['chicken', 'meat'], ['tofu', 'veg'], ['fish', 'fish'], ['pork', 'pork']],   // curry (pork: honey-soy stir-fry with rice)
+  [['chicken', 'meat'], ['tofu', 'veg'], ['fish', 'fish'], ['pork', 'pork']],   // lemon-garlic tray bake (pork: paprika pork with potatoes)
+  [['beef', 'meat'], ['beans', 'veg']],                                         // chilli
+  [['chicken', 'meat'], ['eggs', 'veg'], ['pork', 'pork']]                      // pasta (turkey meatballs / creamy cottage cheese; pork: couscous)
 ];
 function prefsOf(diet) {
   if (Array.isArray(diet)) return diet;
@@ -195,13 +210,14 @@ function sourceFor(slotKey, i, diet) {
     var t = POOL.main.indexOf(RECIPES[slotKey][i]);
     return { src: templateChoice(diet)[t], t: t };
   }
-  var anyMeat = p.indexOf('chicken') >= 0 || p.indexOf('beef') >= 0 || p.indexOf('fish') >= 0;
+  var anyMeat = p.indexOf('chicken') >= 0 || p.indexOf('beef') >= 0 || p.indexOf('pork') >= 0 || p.indexOf('fish') >= 0;
   return { src: slotKey === 'breakfast' && !anyMeat ? 'veg' : 'meat', t: -1 }; // vegetarian cheese in the omelette
 }
 function useVeg(slotKey, i, diet) { return sourceFor(slotKey, i, diet).src === 'veg'; }
 function recipeFor(slotKey, i, diet) {
   var s = sourceFor(slotKey, i, diet);
   if (s.src === 'fish') return POOL_FISH[s.t];
+  if (s.src === 'pork') return POOL_PORK[s.t];
   return (s.src === 'veg' ? RECIPES_VEG : RECIPES)[slotKey][i];
 }
 
@@ -299,7 +315,7 @@ function buildDay(i, T, P, lang, diet) {
     var lines = m.rec.ing.map(function (l) { return l[0] === '~' ? l : scaleLine(l, m.f * (isProteinRich(l[0]) ? a : b)); });
     var out = { slot: m.slot, rec: m.rec, lines: lines, n: nutrition(lines) };
     if (pt) {
-      var srcI = sourceFor(m.slot.key, i, diet), tr = srcI.src === 'fish' ? pt.recipesFish[srcI.t] : (srcI.src === 'veg' ? pt.recipesVeg : pt.recipes)[m.slot.key][i], xi = 0;
+      var srcI = sourceFor(m.slot.key, i, diet), tr = srcI.src === 'fish' ? pt.recipesFish[srcI.t] : srcI.src === 'pork' ? pt.recipesPork[srcI.t] : (srcI.src === 'veg' ? pt.recipesVeg : pt.recipes)[m.slot.key][i], xi = 0;
       out.rec = { name: tr.name, time: tr.time, steps: tr.steps, ing: m.rec.ing, img: m.rec.img, noPhoto: m.rec.noPhoto };
       out.slot = { key: m.slot.key, label: pt.slots[m.slot.key], share: m.slot.share };
       out.lines = lines.map(function (l) { return l[0] === '~' ? ['~', tr.x[xi++] || l[1]] : l; });

@@ -72,6 +72,16 @@ globalThis.FITME_MEALS_BR = {
       steps: ['Preaqueça o forno a 200 °C. Corte as batatas ao meio, misture com 1 c. chá do azeite, sal e pimenta e asse por 15 minutos.', 'Misture o restante do azeite com o suco de limão, o alho amassado, o orégano, o sal e a pimenta.', 'Coloque o brócolis na assadeira e o salmão por cima. Regue o salmão com a mistura de limão e alho e asse por 12–15 minutos, até desfiar com facilidade.', 'Sirva com as batatas e o brócolis. Frio, também fica ótimo para o almoço do dia seguinte.'] },
     null, null
   ],
+  // Pork versions of the main templates, same order as POOL_PORK in meals.js.
+  recipesPork: [
+    { name: 'Tiras de lombo de porco no shoyu e mel com arroz', time: '25 min', x: ['Gengibre em pó ou fresco, pimenta calabresa (opcional)'],
+      steps: ['Cozinhe o arroz conforme a embalagem. Corte o porco em tiras finas, o pimentão em tiras e o brócolis em buquês pequenos.', 'Misture o shoyu, o mel, o alho amassado e uma pitada de gengibre com 2 c. sopa de água.', 'Aqueça o azeite em uma frigideira grande ou wok em fogo alto e refogue o porco por 3–4 minutos, até dourar e ficar bem cozido. Reserve em um prato.', 'Refogue o pimentão e o brócolis por 3–4 minutos com um pouco de água. Volte o porco para a frigideira, junte o molho e misture por 1 minuto, até ficar brilhante. Sirva com o arroz.'] },
+    { name: 'Lombo de porco com páprica, batata assada e vagem', time: '40 min', x: ['1 c. chá de páprica defumada, orégano seco, sal e pimenta-do-reino'],
+      steps: ['Preaqueça o forno a 200 °C. Corte as batatas ao meio, misture com 1 c. chá do azeite, sal e pimenta e asse por 15 minutos.', 'Misture o restante do azeite com a páprica, o alho amassado, o orégano, o sal e a pimenta e esfregue bem no lombo.', 'Coloque o porco e a vagem na assadeira e asse por 20 minutos, até o porco estar bem cozido e o caldo sair claro.', 'Deixe o porco descansar por 5 minutos, corte em fatias e sirva com as batatas e a vagem. Frio, fica ótimo na marmita do dia seguinte.'] },
+    null,
+    { name: 'Porco à grega com cuscuz marroquino e molho de iogurte', time: '20 min', x: ['Orégano seco, sal e pimenta-do-reino, salsinha ou hortelã frescas (opcional)'],
+      steps: ['Coloque o cuscuz em uma tigela, junte cerca de 80 ml de água fervente, tampe e deixe descansar por 5 minutos. Solte com um garfo.', 'Corte o porco em medalhões de 1 cm e tempere com metade do suco de limão, metade do alho amassado, o orégano, sal e pimenta.', 'Aqueça o azeite em uma frigideira em fogo médio-alto e doure o porco por cerca de 3 minutos de cada lado, até estar bem cozido.', 'Misture o iogurte com o restante do alho e uma pitada de sal. Pique o tomate e o pepino e misture ao cuscuz com o restante do suco de limão. Sirva o porco sobre o cuscuz, com o molho de iogurte.'] }
+  ],
   // Vegetarian pool, same order as POOL_VEG in meals.js.
   recipesVeg: {
     breakfast: [

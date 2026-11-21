@@ -71,6 +71,16 @@ globalThis.FITME_MEALS_PT = {
       steps: ['Aquece o forno a 200 °C (180 °C com ventilação). Corta as batatas ao meio, envolve-as em 1 c. chá do azeite, sal e pimenta e assa 15 minutos.', 'Mistura o resto do azeite com o sumo de limão, o alho esmagado, os orégãos, o sal e a pimenta.', 'Junta os brócolos ao tabuleiro e coloca o salmão por cima. Rega o salmão com a mistura de limão e alho e assa 12–15 minutos, até se desfazer facilmente.', 'Serve com as batatas e os brócolos. Frio, também fica ótimo para o almoço do dia seguinte.'] },
     null, null
   ],
+  // Pork versions of the main templates, same order as POOL_PORK in meals.js.
+  recipesPork: [
+    { name: 'Salteado de porco com soja e mel, com arroz', time: '25 min', x: ['Gengibre em pó ou fresco, flocos de malagueta (opcional)'],
+      steps: ['Coze o arroz segundo as instruções da embalagem. Corta o porco em tiras finas, o pimento em tiras e os brócolos em floretes pequenos.', 'Mistura o molho de soja, o mel, o alho esmagado e uma pitada de gengibre com 2 c. sopa de água.', 'Aquece o azeite numa frigideira grande ou wok em lume forte e salteia o porco durante 3–4 minutos, até alourar e ficar bem cozinhado. Retira para um prato.', 'Salteia o pimento e os brócolos durante 3–4 minutos com um pouco de água. Volta a juntar o porco, deita o molho e envolve durante 1 minuto, até ficar brilhante. Serve com o arroz.'] },
+    { name: 'Lombinho de porco com pimentão-doce, batatas assadas e feijão-verde', time: '40 min', x: ['1 c. chá de pimentão-doce fumado, orégãos secos, sal e pimenta preta'],
+      steps: ['Aquece o forno a 200 °C (180 °C com ventilação). Corta as batatas ao meio, envolve-as em 1 c. chá do azeite, sal e pimenta e assa 15 minutos.', 'Mistura o resto do azeite com o pimentão-doce, o alho esmagado, os orégãos, o sal e a pimenta e esfrega bem o lombinho.', 'Junta o porco e o feijão-verde ao tabuleiro e assa 20 minutos, até o porco estar bem cozinhado e os sucos saírem claros.', 'Deixa o porco repousar 5 minutos, corta-o às fatias e serve com as batatas e o feijão-verde. O que sobrar fica bem frio no almoço do dia seguinte.'] },
+    null,
+    { name: 'Porco à grega com cuscuz e molho de iogurte', time: '20 min', x: ['Orégãos secos, sal e pimenta preta, salsa ou hortelã frescas (opcional)'],
+      steps: ['Põe o cuscuz numa taça, junta cerca de 80 ml de água a ferver, tapa e deixa repousar 5 minutos. Solta-o com um garfo.', 'Corta o porco em medalhões de 1 cm e envolve-os em metade do sumo de limão, metade do alho esmagado, os orégãos, sal e pimenta.', 'Aquece o azeite numa frigideira em lume médio-forte e cozinha o porco cerca de 3 minutos de cada lado, até estar bem cozinhado.', 'Mistura o iogurte com o resto do alho e uma pitada de sal. Pica o tomate e o pepino e junta-os ao cuscuz com o resto do sumo de limão. Serve o porco sobre o cuscuz, com o molho de iogurte.'] }
+  ],
   // Vegetarian pool, same order as POOL_VEG in meals.js.
   recipesVeg: {
     breakfast: [
