@@ -165,14 +165,14 @@ var POOL_FISH = [
 // Pork variants of the main templates (same order as POOL.main; null = no pork version of that template).
 // One side each: rice (curry slot), potatoes (tray-bake slot), couscous (pasta slot).
 var POOL_PORK = [
-  { name: 'Honey-soy pork stir-fry with rice', img: 'honey-soy-pork-stir-fry', noPhoto: true, time: '25 min',
+  { name: 'Honey-soy pork stir-fry with rice', img: 'honey-soy-pork-stir-fry', time: '25 min',
     ing: [['pork', 140, 'g'], ['pepper', 0.5, 'pc'], ['broccoli', 100, 'g'], ['garlic', 1, 'pc'], ['soy', 1, 'tbsp'], ['honey', 1, 'tsp'], ['basmati', 50, 'g'], ['oil', 1, 'tsp'], ['~', 'Ground or fresh ginger, chilli flakes (optional)']],
     steps: ['Cook the rice according to the pack. Slice the pork into thin strips, the pepper into strips and the broccoli into small florets.', 'Mix the soy sauce, honey, crushed garlic and a pinch of ginger with 2 tbsp of water.', 'Heat the oil in a large frying pan or wok over a high heat and stir-fry the pork for 3–4 minutes until browned and cooked through. Lift it onto a plate.', 'Stir-fry the pepper and broccoli for 3–4 minutes with a splash of water. Return the pork, pour in the sauce and toss for 1 minute until glossy. Serve over the rice.'] },
-  { name: 'Paprika pork with roast potatoes & green beans', img: 'paprika-pork-potatoes', noPhoto: true, time: '40 min',
+  { name: 'Paprika pork with roast potatoes & green beans', img: 'paprika-pork-potatoes', time: '40 min',
     ing: [['pork', 150, 'g'], ['potato', 200, 'g'], ['greenbeans', 120, 'g'], ['oil', 2, 'tsp'], ['garlic', 1, 'pc'], ['~', '1 tsp smoked paprika, dried oregano, salt and black pepper']],
     steps: ['Heat the oven to 200°C (180°C fan). Halve the potatoes, toss with 1 tsp of the oil, salt and pepper and roast for 15 minutes.', 'Mix the rest of the oil with the paprika, crushed garlic, oregano, salt and pepper and rub it all over the pork.', 'Add the pork and the green beans to the tray and roast for 20 minutes, until the pork is cooked through and the juices run clear.', 'Rest the pork for 5 minutes, slice it and serve with the potatoes and beans. Leftovers make a good cold lunch.'] },
   null,
-  { name: 'Greek-style pork with couscous & yogurt sauce', img: 'greek-pork-couscous', noPhoto: true, time: '20 min',
+  { name: 'Greek-style pork with couscous & yogurt sauce', img: 'greek-pork-couscous', time: '20 min',
     ing: [['pork', 140, 'g'], ['couscous', 55, 'g'], ['cherry', 80, 'g'], ['cucumber', 80, 'g'], ['yog', 60, 'g'], ['lemon', 10, 'ml'], ['oil', 1, 'tsp'], ['garlic', 1, 'pc'], ['~', 'Dried oregano, salt and black pepper, fresh parsley or mint (optional)']],
     steps: ['Put the couscous in a bowl, pour over about 80 ml of boiling water, cover and leave for 5 minutes. Fluff it up with a fork.', 'Slice the pork into 1 cm medallions and toss with half the lemon juice, half the crushed garlic, the oregano, salt and pepper.', 'Heat the oil in a frying pan over a medium-high heat and cook the pork for about 3 minutes on each side, until cooked through.', 'Mix the yogurt with the rest of the garlic and a pinch of salt. Chop the tomatoes and cucumber and stir them into the couscous with the rest of the lemon juice. Serve the pork on the couscous with the yogurt sauce.'] }
 ];
