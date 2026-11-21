@@ -161,7 +161,7 @@ export const RECIPES = [
       description: 'Overnight oats with Greek yogurt and berries: 27 g of protein and about 410 calories per portion. Five minutes the night before, no cooking.',
       intro: ['Five minutes the night before and breakfast is waiting in the fridge. Greek yogurt brings the protein to 27 g per portion without any protein powder. Frozen berries work as well as fresh and cost less.'],
       fits: 'At about 410 kcal, these oats are a little under a quarter of an 1,800-calorie day. A protein-heavy breakfast makes the gap until lunch much easier.',
-      tips: [],
+      tips: ['<b>Forgot to make it the night before?</b> Mix everything, microwave it for 1 minute, then leave it in the fridge for 30 minutes.'],
     },
     pt: {
       slug: 'aveia-de-vespera-com-frutos-vermelhos',
@@ -170,7 +170,7 @@ export const RECIPES = [
       description: 'Pequeno-almoço proteico de aveia de véspera com iogurte grego e frutos vermelhos: 27 g de proteína e cerca de 410 calorias. Sem cozinhar.',
       intro: ['Cinco minutos na noite anterior e o pequeno-almoço fica à tua espera no frigorífico. O iogurte grego leva a proteína a 27 g por dose, sem proteína em pó. Os frutos vermelhos congelados funcionam tão bem como os frescos e são mais baratos.'],
       fits: 'Com cerca de 410 kcal, este pequeno-almoço é um pouco menos de um quarto de um dia de 1800 calorias. Começar o dia com proteína torna a manhã até ao almoço bem mais fácil.',
-      tips: [],
+      tips: ['<b>Esqueceste-te de a preparar na véspera?</b> Mistura tudo, leva ao micro-ondas durante 1 minuto e deixa no frigorífico 30 minutos.'],
     },
     br: {
       slug: 'overnight-oats-proteico',
@@ -179,7 +179,7 @@ export const RECIPES = [
       description: 'Café da manhã proteico: overnight oats com iogurte grego e frutas vermelhas, 27 g de proteína e cerca de 410 calorias. Sem fogão, sem whey.',
       intro: ['Cinco minutos na noite anterior e o café da manhã já está pronto na geladeira. O iogurte grego leva a proteína a 27 g por porção, sem whey. Frutas vermelhas congeladas funcionam tão bem quanto as frescas e saem mais em conta.'],
       fits: 'Com cerca de 410 kcal, este café da manhã é um pouco menos de um quarto de um dia de 1.800 calorias. Começar o dia com proteína deixa a manhã até o almoço bem mais tranquila.',
-      tips: [],
+      tips: ['<b>Esqueceu de deixar pronto na noite anterior?</b> Misture tudo, leve ao micro-ondas por 1 minuto e deixe na geladeira por 30 minutos.'],
     },
   },
   {
