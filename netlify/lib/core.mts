@@ -88,11 +88,11 @@ export async function sendMail(cfg: NonNullable<ReturnType<typeof mailConfig>>, 
   body.set("html", mail.html);
   body.set("text", mail.text);
   body.set("o:tag", mail.tag);
-  // Open and click tracking (email.mg.fitmeplan.com), over https. Clicks only in the HTML part, so plain-text links stay as written.
+  // Open and click tracking (email.mg.fitmeplan.com). Clicks only in the HTML part, so plain-text links stay as written.
+  // https for tracking links is a domain setting in Mailgun (Domain settings → Tracking), not a per-message option.
   body.set("o:tracking", "yes");
   body.set("o:tracking-opens", "yes");
   body.set("o:tracking-clicks", "htmlonly");
-  body.set("o:tracking-protocol", "https");
   if (mail.unsubUrl) {
     body.set("h:List-Unsubscribe", `<${mail.unsubUrl}>`);
     body.set("h:List-Unsubscribe-Post", "List-Unsubscribe=One-Click");
