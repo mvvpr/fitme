@@ -1,21 +1,25 @@
-/* FitMe measurement: Meta Pixel (browser) + Conversions API relay (server), gated on cookie consent.
-   Nothing from Meta loads, and no _fbp/_fbc cookies are set, until the visitor accepts.
+/* FitMe measurement: Meta Pixel (browser) + Conversions API relay (server) + Google Tag Manager, gated on cookie consent.
+   Nothing from Meta or Google loads, and no _fbp/_fbc/_ga cookies are set, until the visitor accepts.
+   Tracked events are also pushed to the GTM dataLayer (event = the same name: PageView, ViewContent, Step1_About, ..., Lead),
+   so tags in GTM can use them. Don't add a Meta Pixel tag in GTM: it is already here, with server-side deduplication.
    Every browser event carries an event_id; the server sends the same id so Meta counts it once. */
 (function () {
   'use strict';
   var PIXEL_ID = '1320302420180623';
-  var KEY = 'fitme-consent';
+  var GTM_ID = 'GTM-MR4N337L';
+  // v2 since Google Tag Manager was added (22 Nov 2026): earlier choices only covered Meta, so everyone is asked again.
+  var KEY = 'fitme-consent-v2';
   var TXT = {
     en: {
-      text: 'FitMe is free. Meta cookies help us see which ads bring people here, so we can keep it that way. They load only if you accept, and you can change your mind anytime.',
+      text: 'FitMe is free. Meta and Google cookies help us see which ads bring people here and how the site is used, so we can keep it that way. They load only if you accept, and you can change your mind anytime.',
       accept: 'Accept', decline: 'Decline', settings: 'Cookie settings', label: 'Cookie consent', privacy: 'Privacy policy'
     },
     pt: {
-      text: 'O FitMe é grátis. Os cookies da Meta ajudam-nos a perceber que anúncios trazem pessoas até aqui, para continuar assim. Só são carregados se aceitares, e podes mudar de ideias a qualquer momento.',
+      text: 'O FitMe é grátis. Os cookies da Meta e da Google ajudam-nos a perceber que anúncios trazem pessoas até aqui e como o site é usado, para continuar assim. Só são carregados se aceitares, e podes mudar de ideias a qualquer momento.',
       accept: 'Aceitar', decline: 'Recusar', settings: 'Definições de cookies', label: 'Consentimento de cookies', privacy: 'Política de privacidade'
     },
     br: {
-      text: 'O FitMe é grátis. Os cookies da Meta ajudam a gente a entender quais anúncios trazem pessoas até aqui, para continuar assim. Eles só são carregados se você aceitar, e você pode mudar de ideia quando quiser.',
+      text: 'O FitMe é grátis. Os cookies da Meta e do Google ajudam a gente a entender quais anúncios trazem pessoas até aqui e como o site é usado, para continuar assim. Eles só são carregados se você aceitar, e você pode mudar de ideia quando quiser.',
       accept: 'Aceitar', decline: 'Recusar', settings: 'Configurações de cookies', label: 'Consentimento de cookies', privacy: 'Política de privacidade'
     }
   };
@@ -51,8 +55,32 @@
     return { fbp: fbp, fbc: fbc };
   }
 
+  // Google Tag Manager (only after consent). Consent Mode is set to granted because nothing loads before the visitor accepts.
+  var gtmLoaded = false;
+  function gtag() { window.dataLayer.push(arguments); }
+  function loadGTM() {
+    if (gtmLoaded) return; gtmLoaded = true;
+    window.dataLayer = window.dataLayer || [];
+    gtag('consent', 'default', { ad_storage: 'granted', ad_user_data: 'granted', ad_personalization: 'granted', analytics_storage: 'granted' });
+    window.dataLayer.push({ 'gtm.start': Date.now(), event: 'gtm.js', fitme_lang: lang() });
+    var t = document.createElement('script'); t.async = true; t.src = 'https://www.googletagmanager.com/gtm.js?id=' + GTM_ID;
+    document.head.appendChild(t);
+  }
+  function dl(obj) { if (gtmLoaded) window.dataLayer.push(obj); }
+  // Google's cookies are set on the whole domain (.fitmeplan.com), so clear them there too.
+  function clearGoogleCookies() {
+    document.cookie.split(';').forEach(function (c) {
+      var n = c.split('=')[0].trim();
+      if (/^(_ga|_ga_.*|_gid|_gcl_.*)$/.test(n)) {
+        clearCookie(n);
+        document.cookie = n + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.' + location.hostname.replace(/^www\./, '');
+      }
+    });
+  }
+
   var loaded = false;
   function loadPixel() {
+    loadGTM();
     if (loaded) return; loaded = true;
     /* Meta Pixel base code */
     !function (f, b, e, v, n, t, s) {
@@ -74,6 +102,7 @@
     var ids = ensureIds();
     var id = newId();
     window.fbq(STANDARD[name] ? 'track' : 'trackCustom', name, custom || {}, { eventID: id });
+    var d = { event: name, event_id: id }; for (var k in (custom || {})) d['fitme_' + k] = custom[k]; dl(d);
     try {
       fetch('/api/track', {
         method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json' },
@@ -90,7 +119,10 @@
     var ids = ensureIds();
     return { event_id: newId(), fbp: ids.fbp, fbc: ids.fbc || '', url: location.href };
   }
-  function leadDone(ctx) { if (ctx && granted() && window.fbq) window.fbq('track', 'Lead', ctx.placement ? { content_category: ctx.placement } : {}, { eventID: ctx.event_id }); }
+  function leadDone(ctx) {
+    if (ctx && granted() && window.fbq) window.fbq('track', 'Lead', ctx.placement ? { content_category: ctx.placement } : {}, { eventID: ctx.event_id });
+    if (ctx && granted()) dl({ event: 'Lead', event_id: ctx.event_id, fitme_content_category: ctx.placement || '' });
+  }
 
   // Once per browser session (survives reloads and going back and forth between steps).
   function trackOnce(name, custom) {
@@ -146,7 +178,8 @@
     if (v === 'granted' && was !== 'granted') { track('PageView'); if (startHook) startHook(); }
     if (v === 'denied' && was === 'granted') {
       if (window.fbq) window.fbq('consent', 'revoke');
-      clearCookie('_fbp'); clearCookie('_fbc');
+      if (gtmLoaded) gtag('consent', 'update', { ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied', analytics_storage: 'denied' });
+      clearCookie('_fbp'); clearCookie('_fbc'); clearGoogleCookies();
     }
   }
 
