@@ -1256,7 +1256,7 @@ body.lang-fading .wrap > .step { opacity: 0; }
       fetch('/api/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
         .then(function (res) { return res.json().catch(function () { return { ok: false, error: res.status === 429 ? 'rate' : 'unknown' }; }); })
         .then(function (data) {
-          if (data && data.ok) { subMsg(MSG.ok, 'ok'); form.reset(); if (window.FITME_TRACK) FITME_TRACK.leadDone(meta); }
+          if (data && data.ok) { subMsg(MSG.ok, 'ok'); form.reset(); if (window.FITME_TRACK && data.lead) FITME_TRACK.leadDone(meta); }
           else subMsg(data && data.error === 'rate' ? MSG.rate : (MSG[data && data.error] || MSG.error), 'err');
         })
         .catch(function () { subMsg(MSG.preview, 'err'); })

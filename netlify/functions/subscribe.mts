@@ -86,8 +86,10 @@ export default async (req: Request, context: Context) => {
     console.error("confirm email failed", err);
     return Response.json({ ok: false, error: "send_failed" }, { status: 502 });
   }
-  // Lead: a new sign-up (not a settings update), same event_id as the browser Pixel event.
-  if (meta && !isUpdate) {
+  // Lead: a brand-new address only (not a settings update or a repeat sign-up before confirming), same event_id as the
+  // browser Pixel event. The response says whether it was a lead, so the browser fires its copy only then.
+  const isLead = !existing;
+  if (meta && isLead) {
     const send = sendMetaEvents([{
       event_name: "Lead",
       event_id: meta.event_id,
@@ -97,7 +99,7 @@ export default async (req: Request, context: Context) => {
     }]);
     if (typeof (context as any).waitUntil === "function") (context as any).waitUntil(send); else await send;
   }
-  return Response.json({ ok: true });
+  return Response.json({ ok: true, lead: isLead });
 };
 
 export const config: Config = {
