@@ -7,6 +7,9 @@
   'use strict';
   var PIXEL_ID = '1320302420180623';
   var GTM_ID = 'GTM-MR4N337L';
+  // Google Ads: tag + Sign-up conversion, fired in code on a new sign-up (same moment as Meta's Lead).
+  var ADS_ID = 'AW-18588647321';
+  var ADS_SIGNUP = ADS_ID + '/xGGECKyq-LwdEJn_4J9F';
   // v2 since Google Tag Manager was added (22 Nov 2026): earlier choices only covered Meta, so everyone is asked again.
   var KEY = 'fitme-consent-v2';
   var TXT = {
@@ -65,6 +68,11 @@
     window.dataLayer.push({ 'gtm.start': Date.now(), event: 'gtm.js', fitme_lang: lang() });
     var t = document.createElement('script'); t.async = true; t.src = 'https://www.googletagmanager.com/gtm.js?id=' + GTM_ID;
     document.head.appendChild(t);
+    // Google Ads tag (links ad clicks to sign-ups via the _gcl_au cookie).
+    var a = document.createElement('script'); a.async = true; a.src = 'https://www.googletagmanager.com/gtag/js?id=' + ADS_ID;
+    document.head.appendChild(a);
+    gtag('js', new Date());
+    gtag('config', ADS_ID);
   }
   function dl(obj) { if (gtmLoaded) window.dataLayer.push(obj); }
   // Google's cookies are set on the whole domain (.fitmeplan.com), so clear them there too.
@@ -121,7 +129,11 @@
   }
   function leadDone(ctx) {
     if (ctx && granted() && window.fbq) window.fbq('track', 'Lead', ctx.placement ? { content_category: ctx.placement } : {}, { eventID: ctx.event_id });
-    if (ctx && granted()) dl({ event: 'Lead', event_id: ctx.event_id, fitme_content_category: ctx.placement || '' });
+    if (ctx && granted()) {
+      dl({ event: 'Lead', event_id: ctx.event_id, fitme_content_category: ctx.placement || '' });
+      // Google Ads Sign-up conversion; transaction_id stops it counting twice.
+      if (gtmLoaded) gtag('event', 'conversion', { send_to: ADS_SIGNUP, value: 1.0, currency: 'USD', transaction_id: ctx.event_id });
+    }
   }
 
   // Once per browser session (survives reloads and going back and forth between steps).
