@@ -35,6 +35,24 @@ export type Subscriber = {
   lastShopDate?: string;
   // Set only when the visitor accepted Meta cookies at sign-up; removed once CompleteRegistration is sent.
   meta?: { fbp?: string; fbc?: string; url?: string } | null;
+  // Which ad link brought them (utm_* labels from the URL at first sign-up) and their country then. First-party only.
+  src?: { source?: string; medium?: string; campaign?: string; content?: string; term?: string } | null;
+  country?: string;
+};
+
+// utm_* labels from the sign-up form: short plain strings only.
+export function cleanSrc(v: unknown): Subscriber["src"] {
+  if (!v || typeof v !== "object") return null;
+  const out: Record<string, string> = {};
+  for (const k of ["source", "medium", "campaign", "content", "term"]) {
+    const x = (v as any)[k];
+    if (typeof x === "string" && x.trim()) out[k] = x.trim().slice(0, 100);
+  }
+  return Object.keys(out).length ? out : null;
+}
+export const countryOf = (context: any): string | undefined => {
+  const c = context?.geo?.country?.code;
+  return typeof c === "string" && /^[A-Z]{2}$/.test(c) ? c : undefined;
 };
 
 // Protein picks sent by the site: known proteins only, no duplicates, at least 2 (as the picker requires); otherwise undefined.

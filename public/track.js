@@ -14,15 +14,15 @@
   var KEY = 'fitme-consent-v2';
   var TXT = {
     en: {
-      text: 'FitMe is free. Meta and Google cookies help us see which ads bring people here and how the site is used, so we can keep it that way. They load only if you accept, and you can change your mind anytime.',
+      text: 'FitMe is free. Meta and Google cookies show us which ads bring people here, which helps keep it that way. They load only if you accept, and you can change your mind anytime.',
       accept: 'Accept', decline: 'Decline', settings: 'Cookie settings', label: 'Cookie consent', privacy: 'Privacy policy'
     },
     pt: {
-      text: 'O FitMe é grátis. Os cookies da Meta e da Google ajudam-nos a perceber que anúncios trazem pessoas até aqui e como o site é usado, para continuar assim. Só são carregados se aceitares, e podes mudar de ideias a qualquer momento.',
+      text: 'O FitMe é grátis. Os cookies da Meta e da Google mostram-nos que anúncios trazem pessoas até aqui, o que nos ajuda a mantê-lo assim. Só são carregados se aceitares, e podes mudar de ideias a qualquer momento.',
       accept: 'Aceitar', decline: 'Recusar', settings: 'Definições de cookies', label: 'Consentimento de cookies', privacy: 'Política de privacidade'
     },
     br: {
-      text: 'O FitMe é grátis. Os cookies da Meta e do Google ajudam a gente a entender quais anúncios trazem pessoas até aqui e como o site é usado, para continuar assim. Eles só são carregados se você aceitar, e você pode mudar de ideia quando quiser.',
+      text: 'O FitMe é grátis. Os cookies da Meta e do Google mostram quais anúncios trazem pessoas até aqui, o que ajuda a manter o site assim. Eles só são carregados se você aceitar, e você pode mudar de ideia quando quiser.',
       accept: 'Aceitar', decline: 'Recusar', settings: 'Configurações de cookies', label: 'Consentimento de cookies', privacy: 'Política de privacidade'
     }
   };
@@ -32,6 +32,12 @@
   function getConsent() { try { return localStorage.getItem(KEY); } catch (e) { return null; } }
   function setConsent(v) { try { localStorage.setItem(KEY, v); } catch (e) {} }
   function granted() { return getConsent() === 'granted'; }
+  function undecided() { var c = getConsent(); return c !== 'granted' && c !== 'denied'; }
+
+  // Anonymous count of consent choices per country (no id, no cookie): shown / granted / denied, and where it was given.
+  function ping(c, via) {
+    try { fetch('/api/cc', { method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ c: c, via: via || 'banner' }) }).catch(function () {}); } catch (e) {}
+  }
 
   function newId() {
     if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
@@ -184,9 +190,11 @@
   window.addEventListener('resize', function () { if (bar && !bar.hidden) padForBar(); });
   function hideBar() { if (bar) bar.hidden = true; padForBar(); }
 
-  function choose(v) {
+  function choose(v, via) {
     var was = getConsent();
     setConsent(v); hideBar();
+    if (v !== was) ping(v, via);
+    try { window.dispatchEvent(new CustomEvent('fitme-consent', { detail: v })); } catch (e) {}
     if (v === 'granted' && was !== 'granted') { track('PageView'); if (startHook) startHook(); }
     if (v === 'denied' && was === 'granted') {
       if (window.fbq) window.fbq('consent', 'revoke');
@@ -210,10 +218,14 @@
     relabel();
     var c = getConsent();
     if (c === 'granted') track('PageView');
-    else if (c !== 'denied') showBar();
+    else if (c !== 'denied') { showBar(); ping('shown'); }
     // Follow in-place language switches.
     new MutationObserver(relabel).observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
   }
 
-  window.FITME_TRACK = { init: init, track: track, trackOnce: trackOnce, leadContext: leadContext, leadDone: leadDone, granted: granted, showSettings: showBar };
+  // Optional box on the sign-up form, shown only to visitors who haven't answered the banner. Ticking it is the same
+  // choice as "Accept" on the banner (never asked again of someone who declined).
+  function grantFromForm() { if (undecided()) choose('granted', 'form'); }
+
+  window.FITME_TRACK = { init: init, track: track, trackOnce: trackOnce, leadContext: leadContext, leadDone: leadDone, granted: granted, undecided: undecided, grantFromForm: grantFromForm, showSettings: showBar };
 })();

@@ -762,6 +762,7 @@ body.lang-fading .wrap > .step { opacity: 0; }
             </div>
             <label class="hp" aria-hidden="true">Website <input class="sub-web" tabindex="-1" autocomplete="off"></label>
             <label class="consent"><input type="checkbox" class="sub-consent"> <span>I agree to receive a daily meal-plan email from FitMe. We store your email, time zone and calorie settings to send it, and you can unsubscribe at any time. <a class="privacy-link" href="/privacy.html" target="_blank" rel="noopener">Privacy policy</a></span></label>
+            <label class="consent sub-measure" hidden><input type="checkbox" class="sub-ads"> <span>Optional: allow Meta and Google cookies so FitMe can see which ad brought you here. This is the same as accepting the cookie banner, and you can change it anytime in Cookie settings.</span></label>
             <div class="sub-msg" role="status" aria-live="polite"></div>
           </form>
         </div>
@@ -780,6 +781,7 @@ body.lang-fading .wrap > .step { opacity: 0; }
             </div>
             <label class="hp" aria-hidden="true">Website <input class="sub-web" tabindex="-1" autocomplete="off"></label>
             <label class="consent"><input type="checkbox" class="sub-consent"> <span>I agree to receive a daily meal-plan email from FitMe. We store your email, time zone and calorie settings to send it, and you can unsubscribe at any time. <a class="privacy-link" href="/privacy.html" target="_blank" rel="noopener">Privacy policy</a></span></label>
+            <label class="consent sub-measure" hidden><input type="checkbox" class="sub-ads"> <span>Optional: allow Meta and Google cookies so FitMe can see which ad brought you here. This is the same as accepting the cookie banner, and you can change it anytime in Cookie settings.</span></label>
             <div class="sub-msg" role="status" aria-live="polite"></div>
           </form>
         </div>
@@ -1239,6 +1241,19 @@ body.lang-fading .wrap > .step { opacity: 0; }
     document.querySelectorAll('.sub-msg').forEach(function (el) { el.textContent = ''; el.className = 'sub-msg'; });
     var b = $('sub-banner'); if (b && !b.hidden) b.hidden = true;
   };
+  // Optional measurement box: only for visitors who haven't answered the cookie banner yet.
+  function syncMeasure() {
+    var show = !!(window.FITME_TRACK && FITME_TRACK.undecided && FITME_TRACK.undecided());
+    document.querySelectorAll('.sub-measure').forEach(function (l) { l.hidden = !show; if (!show) l.querySelector('input').checked = false; });
+  }
+  syncMeasure();
+  window.addEventListener('fitme-consent', syncMeasure);
+  // Which ad link brought the visitor (utm_* labels in the URL, kept with the subscription; no cookie, no Meta id).
+  function adSource() {
+    var u = new URLSearchParams(location.search), out = {}, any = false;
+    ['source', 'medium', 'campaign', 'content', 'term'].forEach(function (k) { var v = u.get('utm_' + k); if (v) { out[k] = v.slice(0, 100); any = true; } });
+    return any ? out : null;
+  }
   document.querySelectorAll('.sub-form').forEach(function (form) {
     var q = function (c) { return form.querySelector(c); };
     function subMsg(text, kind) { var el = q('.sub-msg'); el.textContent = text; el.className = 'sub-msg' + (kind ? ' ' + kind : ''); }
@@ -1249,9 +1264,10 @@ body.lang-fading .wrap > .step { opacity: 0; }
       if (!q('.sub-consent').checked) { subMsg(MSG.consent_required, 'err'); return; }
       var tz = 'Europe/Lisbon';
       try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || tz; } catch (err) {}
+      if (window.FITME_TRACK && q('.sub-ads') && q('.sub-ads').checked) FITME_TRACK.grantFromForm();
       var meta = window.FITME_TRACK ? FITME_TRACK.leadContext() : null;
       var box = form.closest('.sub-box'); if (meta && box) meta.placement = box.getAttribute('data-box');
-      var payload = { email: email, consent: true, website: q('.sub-web').value, tz: tz, intake: subState ? subState.intake : 0, prot: subState ? subState.prot : 0, units: state.units, lang: LANG, diet: state.diet, prots: prefs(), meta: meta };
+      var payload = { email: email, consent: true, website: q('.sub-web').value, tz: tz, intake: subState ? subState.intake : 0, prot: subState ? subState.prot : 0, units: state.units, lang: LANG, diet: state.diet, prots: prefs(), meta: meta, src: adSource() };
       q('.sub-btn').disabled = true; subMsg(MSG.sending);
       fetch('/api/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
         .then(function (res) { return res.json().catch(function () { return { ok: false, error: res.status === 429 ? 'rate' : 'unknown' }; }); })
