@@ -414,6 +414,11 @@ tbody tr.goal td { font-weight: 500; color: var(--accent); }
 .sub-msg { font-size: 13px; min-height: 1em; }
 .sub-msg.ok { color: var(--accent); font-weight: 600; }
 .sub-msg.err { color: var(--range); }
+.sub-msg.fix { color: var(--ink, inherit); }
+.sub-msg .fix-q strong { font-weight: 700; }
+.sub-msg .fix-btns { display: inline-flex; gap: 8px; margin-left: 6px; flex-wrap: wrap; }
+.sub-msg .fix-btns button { font: inherit; font-size: 13px; padding: 4px 10px; border-radius: 6px; cursor: pointer; border: 1px solid var(--accent); background: transparent; color: var(--accent); }
+.sub-msg .fix-btns button.fix-yes { background: var(--accent); color: #fff; font-weight: 600; }
 .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
 .banner { background: var(--accent); color: var(--accent-ink); border-radius: 8px; padding: 10px 14px; font-size: 14px; font-weight: 500; margin-bottom: 14px; }
 .hdr-links { margin-top: 6px; font-size: 13.5px; }
@@ -802,6 +807,7 @@ body.lang-fading .wrap > .step { opacity: 0; }
 <script src="meals.pt.js"></script>
 <script src="meals.br.js"></script>
 <script src="i18n.js"></script>
+<script src="email-check.js"></script>
 <script src="track.js"></script>
 <script>
 (function () {
@@ -1257,9 +1263,31 @@ body.lang-fading .wrap > .step { opacity: 0; }
   document.querySelectorAll('.sub-form').forEach(function (form) {
     var q = function (c) { return form.querySelector(c); };
     function subMsg(text, kind) { var el = q('.sub-msg'); el.textContent = text; el.className = 'sub-msg' + (kind ? ' ' + kind : ''); }
+    // Probable email typo (missing @, gmial.com, mail.com, .comi…): ask "Did you mean …?" with fix / keep buttons.
+    var CHECK = window.FITME_EMAIL_CHECK;
+    function typoFor(email) { return CHECK && form.dataset.keep !== email ? CHECK.suggest(email) : null; }
+    function submitNow() { if (form.requestSubmit) form.requestSubmit(); else q('.sub-btn').click(); }
+    function askFix(typed, sug) {
+      var el = q('.sub-msg'); el.className = 'sub-msg fix'; el.textContent = '';
+      var parts = MSG.didYouMean.split('{email}'), qs = document.createElement('span'), b = document.createElement('strong');
+      qs.className = 'fix-q'; b.textContent = sug; qs.append(parts[0], b, parts[1] || '');
+      var btns = document.createElement('span'); btns.className = 'fix-btns';
+      var yes = document.createElement('button'); yes.type = 'button'; yes.className = 'fix-yes'; yes.textContent = MSG.fixYes;
+      var no = document.createElement('button'); no.type = 'button'; no.className = 'fix-no'; no.textContent = MSG.fixNo;
+      yes.addEventListener('click', function () { q('.sub-email').value = sug; subMsg(''); if (q('.sub-consent').checked) submitNow(); else q('.sub-consent').focus(); });
+      no.addEventListener('click', function () { form.dataset.keep = typed; subMsg(''); if (q('.sub-consent').checked) submitNow(); });
+      btns.append(yes, no); el.append(qs, btns);
+    }
+    q('.sub-email').addEventListener('blur', function () {
+      var v = this.value.trim(), sug = v && typoFor(v);
+      if (sug) askFix(v, sug);
+      else if (q('.sub-msg').classList.contains('fix')) subMsg('');
+    });
     form.addEventListener('submit', function (e) {
       e.preventDefault();
       var email = q('.sub-email').value.trim();
+      var sug = typoFor(email);
+      if (sug) { askFix(email, sug); return; }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { subMsg(MSG.invalid_email, 'err'); q('.sub-email').focus(); return; }
       if (!q('.sub-consent').checked) { subMsg(MSG.consent_required, 'err'); return; }
       var tz = 'Europe/Lisbon';
@@ -1267,12 +1295,13 @@ body.lang-fading .wrap > .step { opacity: 0; }
       if (window.FITME_TRACK && q('.sub-ads') && q('.sub-ads').checked) FITME_TRACK.grantFromForm();
       var meta = window.FITME_TRACK ? FITME_TRACK.leadContext() : null;
       var box = form.closest('.sub-box'); if (meta && box) meta.placement = box.getAttribute('data-box');
-      var payload = { email: email, consent: true, website: q('.sub-web').value, tz: tz, intake: subState ? subState.intake : 0, prot: subState ? subState.prot : 0, units: state.units, lang: LANG, diet: state.diet, prots: prefs(), meta: meta, src: adSource() };
+      var payload = { email: email, consent: true, website: q('.sub-web').value, tz: tz, intake: subState ? subState.intake : 0, prot: subState ? subState.prot : 0, units: state.units, lang: LANG, diet: state.diet, prots: prefs(), meta: meta, src: adSource(), typoOk: form.dataset.keep === email };
       q('.sub-btn').disabled = true; subMsg(MSG.sending);
       fetch('/api/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
         .then(function (res) { return res.json().catch(function () { return { ok: false, error: res.status === 429 ? 'rate' : 'unknown' }; }); })
         .then(function (data) {
           if (data && data.ok) { subMsg(MSG.ok, 'ok'); form.reset(); if (window.FITME_TRACK && data.lead) FITME_TRACK.leadDone(meta); }
+          else if (data && data.error === 'typo' && data.suggest) askFix(email, data.suggest);
           else subMsg(data && data.error === 'rate' ? MSG.rate : (MSG[data && data.error] || MSG.error), 'err');
         })
         .catch(function () { subMsg(MSG.preview, 'err'); })

@@ -172,6 +172,7 @@
       slice: ['slice', 'slices'], clove: ['clove', 'cloves'], tsp: 'tsp', tbsp: 'tbsp',
       extrasHead: 'Herbs, spices & extras', shopNote: '· 1 person, 7 days',
       msg: {
+        didYouMean: 'Did you mean {email}?', fixYes: 'Yes, fix it', fixNo: 'No, keep it',
         invalid_email: 'Please enter a valid email address.', consent_required: 'Please tick the box to agree to the daily email.',
         invalid_intake: 'Your daily intake looks off. Check your details above.', not_configured: 'Email sign-up opens soon. Please check back in a few days.',
         send_failed: 'We couldn’t send the confirmation email. Please try again in a moment.',
@@ -217,6 +218,7 @@
       slice: ['fatia', 'fatias'], clove: ['dente', 'dentes'], tsp: 'c. chá', tbsp: 'c. sopa',
       extrasHead: 'Ervas, especiarias e extras', shopNote: '· 1 pessoa, 7 dias',
       msg: {
+        didYouMean: 'Querias dizer {email}?', fixYes: 'Sim, corrigir', fixNo: 'Não, manter',
         invalid_email: 'Introduz um endereço de email válido.', consent_required: 'Marca a caixa para aceitar o email diário.',
         invalid_intake: 'A tua ingestão diária parece estranha. Confirma os teus dados.', not_configured: 'A subscrição por email abre em breve. Volta dentro de alguns dias.',
         send_failed: 'Não conseguimos enviar o email de confirmação. Tenta novamente daqui a pouco.',
@@ -262,6 +264,7 @@
       slice: ['fatia', 'fatias'], clove: ['dente', 'dentes'], tsp: 'c. chá', tbsp: 'c. sopa',
       extrasHead: 'Ervas, temperos e extras', shopNote: '· 1 pessoa, 7 dias',
       msg: {
+        didYouMean: 'Você quis dizer {email}?', fixYes: 'Sim, corrigir', fixNo: 'Não, manter',
         invalid_email: 'Digite um endereço de e-mail válido.', consent_required: 'Marque a caixa para aceitar o e-mail diário.',
         invalid_intake: 'Sua ingestão diária parece estranha. Confira seus dados.', not_configured: 'A inscrição por e-mail abre em breve. Volte daqui a alguns dias.',
         send_failed: 'Não conseguimos enviar o e-mail de confirmação. Tente de novo daqui a pouco.',

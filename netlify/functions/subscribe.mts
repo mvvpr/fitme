@@ -1,5 +1,6 @@
 // POST /api/subscribe — store a pending subscriber and send a double opt-in email.
 import type { Config, Context } from "@netlify/functions";
+import "../../public/email-check.js";
 import { subscribers, sha256, subKey, tokKey, unsKey, newToken, validTimeZone, mailConfig, sendMail, renderConfirmEmail, sendMetaEvents, requestUser, FBP_RE, FBC_RE, EVENT_ID_RE, asLang, cleanProts, cleanSrc, countryOf, type Subscriber } from "../lib/core.mts";
 
 const CONSENT_TEXT = "I agree to receive a daily meal-plan email from FitMe. We store your email, time zone and calorie settings to send it, and you can unsubscribe at any time. (privacy policy version 2026-11-13)";
@@ -10,6 +11,9 @@ export default async (req: Request, context: Context) => {
   try { input = await req.json(); } catch { return Response.json({ ok: false, error: "bad_request" }, { status: 400 }); }
 
   const email = String(input?.email || "").trim().toLowerCase();
+  // Probable typo (gmial.com, .comi, mail.com…): send the suggestion back unless the visitor chose to keep what they typed.
+  const suggestion = input?.typoOk === true ? null : (globalThis as any).FITME_EMAIL_CHECK?.suggest(email);
+  if (suggestion) return Response.json({ ok: false, error: "typo", suggest: suggestion }, { status: 400 });
   if (!EMAIL_RE.test(email) || email.length > 254) return Response.json({ ok: false, error: "invalid_email" }, { status: 400 });
   if (input?.consent !== true) return Response.json({ ok: false, error: "consent_required" }, { status: 400 });
   if (typeof input?.website === "string" && input.website) return Response.json({ ok: true }); // honeypot
