@@ -1,6 +1,7 @@
 // /pt/ and /br/ serve the same index.html as /. Crawlers (Facebook, WhatsApp, Google) don't run the page script that
 // translates it, so this swaps the <head> tags between <!--meta:start--> and <!--meta:end--> for the visitor's language.
 import type { Config, Context } from "@netlify/edge-functions";
+import "../../public/i18n.js";
 
 const SITE = "https://fitmeplan.com";
 const META = {
@@ -19,6 +20,26 @@ const META = {
 } as const;
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+const decode = (s: string) => s.replace(/&nbsp;/g, " ").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, "&");
+const has = (m: Record<string, string>, k: string) => Object.prototype.hasOwnProperty.call(m, k);
+
+// Translate the page's fixed text (the same table the page script uses) so search engines get Portuguese text without
+// running JavaScript. Only <body>; script, style and comments are left alone. Text the table doesn't know stays as is.
+export function translateBody(html: string, map: Record<string, string>): string {
+  const i = html.search(/<body[\s>]/);
+  if (i < 0 || !map) return html;
+  const body = html.slice(i).replace(
+    /(<script\b[\s\S]*?<\/script>|<style\b[\s\S]*?<\/style>|<!--[\s\S]*?-->)|(\s(?:placeholder|aria-label|title)=")([^"]*)(")|>([^<]+)(?=<)/g,
+    (m, keep, attrA, attrV, attrB, text) => {
+      if (keep) return m;
+      if (attrA) { const k = decode(attrV); return has(map, k) ? attrA + esc(map[k]) + attrB : m; }
+      const k = decode(text).replace(/\s+/g, " ").trim();
+      if (!k || !has(map, k)) return m;
+      return ">" + text.match(/^\s*/)![0] + esc(map[k]) + text.match(/\s*$/)![0];
+    },
+  );
+  return html.slice(0, i) + body;
+}
 
 export default async (req: Request, context: Context) => {
   const res = await context.next();
@@ -41,7 +62,8 @@ export default async (req: Request, context: Context) => {
 <meta property="og:image:alt" content="${esc(m.title)}">
 <meta name="twitter:card" content="summary_large_image">
 <!--meta:end-->`;
-  const html = (await res.text()).replace(/<!--meta:start[\s\S]*?<!--meta:end-->/, block)
+  const STATIC = (globalThis as any).FITME_I18N?.STATIC;
+  const html = translateBody((await res.text()), STATIC?.[lang]).replace(/<!--meta:start[\s\S]*?<!--meta:end-->/, block)
     // Quiet homepage links: point them at this language's pages for crawlers that don't run the page script
     // (the words stay English here; the page script translates them, and keeps them right when the visitor switches language).
     .replace('href="/recipes/" data-href-en', `href="/${lang}/receitas/" data-href-en`)

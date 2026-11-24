@@ -2,7 +2,9 @@
    STATIC_PT maps the page's fixed English text (and placeholder/aria-label values) to Portuguese.
    STR holds text the script builds at run time, for both languages. */
 (function () {
-  var LANG = /^\/br(\/|$)/.test(location.pathname) ? 'br' : /^\/pt(\/|$)/.test(location.pathname) ? 'pt' : 'en';
+  // Also loaded by the /pt/ and /br/ edge function (no location there), which uses STATIC to send the page already translated.
+  var PATH = typeof location !== 'undefined' ? location.pathname : '/';
+  var LANG = /^\/br(\/|$)/.test(PATH) ? 'br' : /^\/pt(\/|$)/.test(PATH) ? 'pt' : 'en';
 
   var STATIC_PT = {
     'About you': 'Sobre ti', 'Your goal': 'O teu objetivo', 'Your plan': 'O teu plano', 'Your meals': 'As tuas refeições',
@@ -134,6 +136,13 @@
   };
 
   var STATIC = { pt: STATIC_PT, br: STATIC_BR };
+  // Portuguese text -> English key, for text the edge function already translated on /pt/ and /br/ (so switching to English still works).
+  var REVERSE = {};
+  [STATIC_BR, STATIC_PT].forEach(function (m) { for (var k in m) if (Object.prototype.hasOwnProperty.call(m, k)) REVERSE[m[k].replace(/\s+/g, ' ').trim()] = k; });
+  function enKey(v) {
+    if (Object.prototype.hasOwnProperty.call(STATIC_PT, v)) return v;
+    return Object.prototype.hasOwnProperty.call(REVERSE, v) ? REVERSE[v] : undefined;
+  }
 
   var STR = {
     en: {
@@ -284,9 +293,10 @@
       if (node.parentElement && node.parentElement.closest('script,style')) return;
       var en = origText.get(node);
       if (en === undefined) {
-        var key = node.nodeValue.replace(/\s+/g, ' ').trim();
-        if (!key || !Object.prototype.hasOwnProperty.call(STATIC_PT, key)) return; // STATIC_PT and STATIC_BR share the same keys
-        en = node.nodeValue; origText.set(node, en);
+        var raw = node.nodeValue, key = raw.replace(/\s+/g, ' ').trim();
+        var k0 = key && enKey(key); // STATIC_PT and STATIC_BR share the same keys
+        if (k0 === undefined) return;
+        en = raw.match(/^\s*/)[0] + k0 + raw.match(/\s*$/)[0]; origText.set(node, en);
       }
       var k = en.replace(/\s+/g, ' ').trim(), lead = en.match(/^\s*/)[0], trail = en.match(/\s*$/)[0];
       var map = STATIC[lang], next = map && map[k] != null ? lead + map[k] + trail : en;
@@ -296,7 +306,7 @@
       ['placeholder', 'aria-label', 'title'].forEach(function (a) {
         var store = 'i18nEn' + a.replace(/-./g, function (m) { return m[1].toUpperCase(); }).replace(/^./, function (c) { return c.toUpperCase(); });
         var en = el.dataset[store];
-        if (en === undefined) { var v = el.getAttribute(a); if (!v || !Object.prototype.hasOwnProperty.call(STATIC_PT, v)) return; en = v; el.dataset[store] = en; }
+        if (en === undefined) { var v = el.getAttribute(a), kv = v && enKey(v); if (kv === undefined) return; en = kv; el.dataset[store] = en; }
         el.setAttribute(a, STATIC[lang] && STATIC[lang][en] != null ? STATIC[lang][en] : en);
       });
     });
@@ -304,7 +314,7 @@
   function translateStatic(root) { if (LANG !== 'en') applyStatic(root, LANG); }
 
   var api = {
-    lang: LANG, L: STR[LANG], STR: STR, translateStatic: translateStatic,
+    lang: LANG, L: STR[LANG], STR: STR, STATIC: STATIC, translateStatic: translateStatic,
     // Switch language in place (no page reload).
     setLang: function (lang) { api.lang = lang; api.L = STR[lang]; applyStatic(document.body, lang); return api.L; }
   };
