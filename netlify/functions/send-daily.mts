@@ -2,7 +2,7 @@
 // when it is 07:xx in their own time zone (once per local day), and on Saturdays at 08:xx
 // their shopping list for the week (once per Saturday).
 import type { Config, Context } from "@netlify/functions";
-import { subscribers, subKey, tokKey, unsKey, mailConfig, sendMail, renderDailyEmail, renderShoppingEmail, asLang, planDiet, type Subscriber } from "../lib/core.mts";
+import { subscribers, subKey, tokKey, unsKey, actKey, ensureClickToken, pruneActivity, type Activity, mailConfig, sendMail, renderDailyEmail, renderShoppingEmail, asLang, planDiet, type Subscriber } from "../lib/core.mts";
 
 const SEND_HOUR = 7;
 const SHOP_HOUR = 8;
@@ -37,7 +37,7 @@ export default async (req: Request, context: Context) => {
   async function worker() {
     while (queue.length && Date.now() - started < TIME_BUDGET_MS) {
       const { key } = queue.shift()!;
-      const sub = (await store.get(key, { type: "json" })) as Subscriber | null;
+      let sub = (await store.get(key, { type: "json" })) as Subscriber | null;
       if (sub && sub.status === "pending" && Date.now() - Date.parse(sub.lastConfirmMailAt || sub.createdAt) > PENDING_TTL_MS) {
         await store.delete(key);
         if (sub.confirmToken) await store.delete(tokKey(sub.confirmToken));
@@ -49,16 +49,21 @@ export default async (req: Request, context: Context) => {
       const local = localParts(now, sub.tz, lang);
       const unsubUrl = `${siteUrl}/api/unsubscribe?u=${sub.unsubToken}${lang !== "en" ? "&l=" + lang : ""}`;
       const base = { siteUrl, unsubUrl, dateLabel: local.label, intake: sub.intake, prot: sub.prot, imperial: sub.units === "imperial", lang, diet: planDiet(sub) };
+      const due = (local.hour === SEND_HOUR && sub.lastSentDate !== local.date) || (local.hour === SHOP_HOUR && local.dayIndex === SHOP_DAY && sub.lastShopDate !== local.date);
+      if (!due) { skipped++; continue; }
       try {
+        sub = await ensureClickToken(store, key, sub); // tracked links (/api/go) need the subscriber's click code
+        const tracked = { ...base, clickToken: sub.clickToken };
         if (local.hour === SEND_HOUR && sub.lastSentDate !== local.date) {
-          await sendMail(cfg!, { to: sub.email, ...renderDailyEmail({ ...base, dayIndex: local.dayIndex }), unsubUrl, tag: "daily-plan", firstName: sub.profile?.firstName, lang: base.lang });
+          await sendMail(cfg!, { to: sub.email, ...renderDailyEmail({ ...tracked, dayIndex: local.dayIndex }), unsubUrl, tag: "daily-plan", firstName: sub.profile?.firstName, lang: base.lang });
           await store.setJSON(key, { ...sub, lastSentDate: local.date });
           sent++;
+          await pruneClicks(store, key);
         } else if (local.hour === SHOP_HOUR && local.dayIndex === SHOP_DAY && sub.lastShopDate !== local.date) {
-          await sendMail(cfg!, { to: sub.email, ...renderShoppingEmail(base), unsubUrl, tag: "weekly-shopping", firstName: sub.profile?.firstName, lang: base.lang });
+          await sendMail(cfg!, { to: sub.email, ...renderShoppingEmail(tracked), unsubUrl, tag: "weekly-shopping", firstName: sub.profile?.firstName, lang: base.lang });
           await store.setJSON(key, { ...sub, lastShopDate: local.date });
           shops++;
-        } else skipped++;
+        }
       } catch (err) {
         failed++;
         console.error("send failed", key, err);
@@ -68,5 +73,17 @@ export default async (req: Request, context: Context) => {
   await Promise.all(Array.from({ length: CONCURRENCY }, worker));
   console.log(`send-daily: ${sent} plans, ${shops} shopping lists, ${skipped} skipped, ${failed} failed, ${expired} expired, ${queue.length} left (of ${blobs.length})`);
 };
+
+// Keeps email click history to the last 120 days (privacy policy): drops older days, deletes the record when none are left.
+async function pruneClicks(store: ReturnType<typeof subscribers>, key: string) {
+  try {
+    const k = actKey(key.slice(4));
+    const a = (await store.get(k, { type: "json" })) as Activity | null;
+    if (!a) return;
+    const kept = pruneActivity(a);
+    if (!kept) await store.delete(k);
+    else if (Object.keys(kept.days).length !== Object.keys(a.days).length) await store.setJSON(k, kept);
+  } catch (err) { console.error("click prune failed", key, err); }
+}
 
 export const config: Config = { schedule: "0 * * * *" }; // hourly at :00 UTC; plans at 07:00 local, shopping lists Saturdays 08:00 local

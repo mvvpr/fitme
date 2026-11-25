@@ -38,6 +38,8 @@ export type Subscriber = {
   confirmedVia?: "email" | "r1" | "r2";
   lastSentDate?: string;
   lastShopDate?: string;
+  // Random code in the tracked links of the daily and Saturday emails (/api/go?c=…); maps back via clk/<token>.
+  clickToken?: string;
   // Set only when the visitor accepted Meta cookies at sign-up; removed once CompleteRegistration is sent.
   meta?: { fbp?: string; fbc?: string; url?: string } | null;
   // Which ad link brought them (utm_* labels from the URL at first sign-up) and their country then. First-party only.
@@ -153,6 +155,82 @@ export async function sha256(text: string) {
 export const subKey = (hash: string) => `sub/${hash}`;
 export const tokKey = (token: string) => `tok/${token}`;
 export const unsKey = (token: string) => `uns/${token}`;
+export const clkKey = (token: string) => `clk/${token}`;
+export const actKey = (hash: string) => `act/${hash}`;
+
+// ---------- Email click tracking (first-party) ----------
+// Links in the daily and Saturday emails go through /api/go on our own domain (HTTPS), which records the click on the
+// subscriber's activity record (act/<hash>) and redirects to the page. Mailgun's own click tracking stays off.
+// Never wrap one-time links (confirm, log in) or the unsubscribe link.
+export const CLICK_KINDS = ["week", "shop", "account", "recalc"] as const;
+export type ClickKind = (typeof CLICK_KINDS)[number];
+export const ACT_KEEP_DAYS = 120;
+// Kept apart from the subscriber record so a click never races with send-daily writing that record.
+// Only clicks per day and link kind, for the last ACT_KEEP_DAYS days (privacy policy); older days are dropped.
+export type Activity = { last: string; days: Record<string, Partial<Record<ClickKind, number>>> };
+
+// Where /api/go may send people: a path on this site only (no other hosts, no protocol-relative "//", no backslashes).
+export function safeTarget(to: string | null): string {
+  if (!to || to.length > 300 || !/^\/(?![\/\\])[^\s\\]*$/.test(to)) return "/";
+  return to;
+}
+
+// Link checkers in mail systems (Outlook Safe Links, Proofpoint, Mimecast…) and crawlers open links nobody clicked.
+const BOT_UA = /bot|crawl|spider|slurp|preview|scanner|safelinks|proofpoint|mimecast|barracuda|forcepoint|symantec|trendmicro|headless|python|curl|wget|go-http|java\/|okhttp|axios|node-fetch|httpclient|facebookexternalhit|whatsapp|telegram|skype/i;
+export function isBotClick(req: Request): boolean {
+  if (req.method !== "GET") return true;
+  const ua = req.headers.get("user-agent") || "";
+  return !ua || BOT_UA.test(ua);
+}
+
+// Turns a link to this site into its tracked /api/go form. Without a click token (or for another site) the link is left as is.
+export function trackedLink(siteUrl: string, clickToken: string | undefined, kind: ClickKind, url: string): string {
+  if (!clickToken) return url;
+  let u: URL, base: URL;
+  try { u = new URL(url); base = new URL(siteUrl); } catch { return url; }
+  if (u.origin !== base.origin) return url;
+  const to = u.pathname + u.search + u.hash;
+  return `${base.origin}/api/go?c=${clickToken}&k=${kind}&to=${encodeURIComponent(to)}`;
+}
+
+// Gives a subscriber a click token (and its clk/ lookup) the first time they're sent a tracked email.
+export async function ensureClickToken(store: ReturnType<typeof subscribers>, key: string, sub: Subscriber): Promise<Subscriber> {
+  if (sub.clickToken) return sub;
+  const token = newToken();
+  await store.set(clkKey(token), key.replace(/^sub\//, ""));
+  const updated = { ...sub, clickToken: token };
+  await store.setJSON(key, updated);
+  return updated;
+}
+
+// Drops days older than ACT_KEEP_DAYS. Returns null when nothing is left (the record should then be deleted).
+export function pruneActivity(a: Activity | null, now = new Date()): Activity | null {
+  if (!a || !a.days) return null;
+  const cutoff = new Date(now.getTime() - ACT_KEEP_DAYS * 864e5).toISOString().slice(0, 10);
+  const days = Object.fromEntries(Object.entries(a.days).filter(([d]) => d >= cutoff));
+  return Object.keys(days).length ? { last: a.last, days } : null;
+}
+
+// Adds one click (on the given link kind) to the subscriber's activity.
+export function addClick(prev: Activity | null, kind: ClickKind, now = new Date()): Activity {
+  const iso = now.toISOString(), day = iso.slice(0, 10);
+  const a = pruneActivity(prev, now) || { last: iso, days: {} };
+  const d = { ...(a.days[day] || {}) };
+  d[kind] = (d[kind] || 0) + 1;
+  return { last: iso, days: { ...a.days, [day]: d } };
+}
+
+// Totals over the days kept, optionally only from a given day (YYYY-MM-DD) on.
+export function clickTotals(a: Activity | null, fromDay = "") {
+  const out = { clicks: 0, activeDays: 0, byKind: {} as Record<string, number> };
+  for (const [d, kinds] of Object.entries(a?.days || {})) {
+    if (d < fromDay) continue;
+    let n = 0;
+    for (const [k, v] of Object.entries(kinds)) { n += v || 0; out.byKind[k] = (out.byKind[k] || 0) + (v || 0); }
+    if (n) { out.clicks += n; out.activeDays++; }
+  }
+  return out;
+}
 
 export function newToken() {
   return crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "").slice(0, 16);
@@ -290,7 +368,7 @@ export const T = {
     ignore: "If you didn't sign up, ignore this email and nothing will happen.", confirmFooter: "You're receiving this because this address was entered on FitMe.",
     yourDayPlan: (d: string) => `Your ${d} meal plan`, calories: "Calories", protein: "Protein", carbs: "Carbs", fat: "Fat", macro: ["P", "C", "F"],
     ingredients: "Ingredients", method: "Method", fullWeek: "See the full week and shopping list on FitMe →",
-    footer: (k: string, site: string, unsub: string) => `Portions are sized for your daily intake of ${k}. Nutrition is estimated from standard ingredient values, so check labels if you have allergies. This is not medical advice.<br>Change your proteins or details in <a href="${site}account/" style="color:#6b655e;">your account</a>. To change your calories, recalculate on <a href="${site}" style="color:#6b655e;">FitMe</a> with the same email. <a href="${unsub}" style="color:#6b655e;">Unsubscribe</a>.`,
+    footer: (k: string, home: string, account: string, unsub: string) => `Portions are sized for your daily intake of ${k}. Nutrition is estimated from standard ingredient values, so check labels if you have allergies. This is not medical advice.<br>Change your proteins or details in <a href="${account}" style="color:#6b655e;">your account</a>. To change your calories, recalculate on <a href="${home}" style="color:#6b655e;">FitMe</a> with the same email. <a href="${unsub}" style="color:#6b655e;">Unsubscribe</a>.`,
     subject: (d: string, lunch: string) => `Your ${d} meal plan: ${lunch} & more`,
     textFull: "Full week", textAccount: "Your account", textUnsub: "Unsubscribe", textConfirm: "Confirm",
     expiredTitle: "This link has expired", expiredBody: (u: string) => `It may have been used already or replaced by a newer email. You can <a href="${u}" style="color:#2e6b4f;">sign up again on FitMe</a>.`,
@@ -299,7 +377,7 @@ export const T = {
     shopSubject: "Your shopping list for the week", shopTitle: "Your shopping list for the week",
     shopIntro: (k: string) => `Everything for the week's 28 meals, with portions sized to your daily intake of ${k}. Amounts are rounded up so you won't run short.`,
     shopExtras: "Herbs, spices & extras (check your cupboard)", shopCta: "See this week's recipes on FitMe →",
-    shopFooter: (site: string, unsub: string) => `You get this list every Saturday as part of your FitMe meal plan. Change your proteins or details in <a href="${site}account/" style="color:#6b655e;">your account</a>. To change your calories, recalculate on <a href="${site}" style="color:#6b655e;">FitMe</a> with the same email. <a href="${unsub}" style="color:#6b655e;">Unsubscribe</a>.`,
+    shopFooter: (home: string, account: string, unsub: string) => `You get this list every Saturday as part of your FitMe meal plan. Change your proteins or details in <a href="${account}" style="color:#6b655e;">your account</a>. To change your calories, recalculate on <a href="${home}" style="color:#6b655e;">FitMe</a> with the same email. <a href="${unsub}" style="color:#6b655e;">Unsubscribe</a>.`,
     doneTitle: "You're unsubscribed", doneBody: (u: string) => `Your email and settings have been deleted. You can <a href="${u}" style="color:#2e6b4f;">sign up again</a> any time.`,
   },
   pt: {
@@ -311,7 +389,7 @@ export const T = {
     ignore: "Se não fizeste esta subscrição, ignora este email e nada acontecerá.", confirmFooter: "Recebes este email porque este endereço foi introduzido no FitMe.",
     yourDayPlan: (d: string) => `O teu plano de ${d}`, calories: "Calorias", protein: "Proteína", carbs: "Hidratos", fat: "Gordura", macro: ["P", "H", "G"],
     ingredients: "Ingredientes", method: "Preparação", fullWeek: "Vê a semana completa e a lista de compras no FitMe →",
-    footer: (k: string, site: string, unsub: string) => `As porções estão ajustadas à tua ingestão diária de ${k}. Os valores nutricionais são estimados a partir de valores-padrão dos ingredientes, por isso confirma os rótulos se tiveres alergias. Não é aconselhamento médico.<br>Muda as proteínas ou os teus dados na <a href="${site}account/" style="color:#6b655e;">tua conta</a>. Para mudar as calorias, recalcula no <a href="${site}" style="color:#6b655e;">FitMe</a> com o mesmo email. <a href="${unsub}" style="color:#6b655e;">Cancelar subscrição</a>.`,
+    footer: (k: string, home: string, account: string, unsub: string) => `As porções estão ajustadas à tua ingestão diária de ${k}. Os valores nutricionais são estimados a partir de valores-padrão dos ingredientes, por isso confirma os rótulos se tiveres alergias. Não é aconselhamento médico.<br>Muda as proteínas ou os teus dados na <a href="${account}" style="color:#6b655e;">tua conta</a>. Para mudar as calorias, recalcula no <a href="${home}" style="color:#6b655e;">FitMe</a> com o mesmo email. <a href="${unsub}" style="color:#6b655e;">Cancelar subscrição</a>.`,
     subject: (d: string, lunch: string) => `O teu plano de ${d}: ${lunch} ao almoço`,
     textFull: "Semana completa", textAccount: "A tua conta", textUnsub: "Cancelar subscrição", textConfirm: "Confirmar",
     expiredTitle: "Este link expirou", expiredBody: (u: string) => `Pode já ter sido usado ou substituído por um email mais recente. Podes <a href="${u}" style="color:#2e6b4f;">voltar a subscrever no FitMe</a>.`,
@@ -320,7 +398,7 @@ export const T = {
     shopSubject: "A tua lista de compras da semana", shopTitle: "A tua lista de compras da semana",
     shopIntro: (k: string) => `Tudo o que precisas para as 28 refeições da semana, com porções ajustadas à tua ingestão diária de ${k}. As quantidades estão arredondadas para cima, para não te faltar nada.`,
     shopExtras: "Ervas, especiarias e extras (confirma na despensa)", shopCta: "Vê as receitas desta semana no FitMe →",
-    shopFooter: (site: string, unsub: string) => `Recebes esta lista todos os sábados como parte do teu plano de refeições FitMe. Muda as proteínas ou os teus dados na <a href="${site}account/" style="color:#6b655e;">tua conta</a>. Para mudar as calorias, recalcula no <a href="${site}" style="color:#6b655e;">FitMe</a> com o mesmo email. <a href="${unsub}" style="color:#6b655e;">Cancelar subscrição</a>.`,
+    shopFooter: (home: string, account: string, unsub: string) => `Recebes esta lista todos os sábados como parte do teu plano de refeições FitMe. Muda as proteínas ou os teus dados na <a href="${account}" style="color:#6b655e;">tua conta</a>. Para mudar as calorias, recalcula no <a href="${home}" style="color:#6b655e;">FitMe</a> com o mesmo email. <a href="${unsub}" style="color:#6b655e;">Cancelar subscrição</a>.`,
     doneTitle: "Subscrição cancelada", doneBody: (u: string) => `O teu email e as tuas definições foram apagados. Podes <a href="${u}" style="color:#2e6b4f;">voltar a subscrever</a> quando quiseres.`,
   },
   br: {
@@ -332,7 +410,7 @@ export const T = {
     ignore: "Se você não fez essa inscrição, ignore este e-mail e nada vai acontecer.", confirmFooter: "Você está recebendo este e-mail porque este endereço foi informado no FitMe.",
     yourDayPlan: (d: string) => `Seu plano de ${d}`, calories: "Calorias", protein: "Proteína", carbs: "Carboidratos", fat: "Gordura", macro: ["P", "C", "G"],
     ingredients: "Ingredientes", method: "Modo de preparo", fullWeek: "Veja a semana completa e a lista de compras no FitMe →",
-    footer: (k: string, site: string, unsub: string) => `As porções estão na medida da sua ingestão diária de ${k}. Os valores nutricionais são estimados a partir de valores-padrão dos ingredientes, então confira os rótulos se tiver alergias. Não é orientação médica.<br>Mude as proteínas ou seus dados na <a href="${site}account/" style="color:#6b655e;">sua conta</a>. Para mudar as calorias, recalcule no <a href="${site}" style="color:#6b655e;">FitMe</a> com o mesmo e-mail. <a href="${unsub}" style="color:#6b655e;">Cancelar inscrição</a>.`,
+    footer: (k: string, home: string, account: string, unsub: string) => `As porções estão na medida da sua ingestão diária de ${k}. Os valores nutricionais são estimados a partir de valores-padrão dos ingredientes, então confira os rótulos se tiver alergias. Não é orientação médica.<br>Mude as proteínas ou seus dados na <a href="${account}" style="color:#6b655e;">sua conta</a>. Para mudar as calorias, recalcule no <a href="${home}" style="color:#6b655e;">FitMe</a> com o mesmo e-mail. <a href="${unsub}" style="color:#6b655e;">Cancelar inscrição</a>.`,
     subject: (d: string, lunch: string) => `Seu plano de ${d}: ${lunch} no almoço`,
     textFull: "Semana completa", textAccount: "Sua conta", textUnsub: "Cancelar inscrição", textConfirm: "Confirmar",
     expiredTitle: "Este link expirou", expiredBody: (u: string) => `Ele pode já ter sido usado ou substituído por um e-mail mais recente. Você pode <a href="${u}" style="color:#2e6b4f;">se inscrever de novo no FitMe</a>.`,
@@ -341,7 +419,7 @@ export const T = {
     shopSubject: "Sua lista de compras da semana", shopTitle: "Sua lista de compras da semana",
     shopIntro: (k: string) => `Tudo o que você precisa para as 28 refeições da semana, com porções na medida da sua ingestão diária de ${k}. As quantidades estão arredondadas para cima, para não faltar nada.`,
     shopExtras: "Ervas, temperos e extras (confira na despensa)", shopCta: "Veja as receitas desta semana no FitMe →",
-    shopFooter: (site: string, unsub: string) => `Você recebe esta lista todo sábado como parte do seu plano de refeições FitMe. Mude as proteínas ou seus dados na <a href="${site}account/" style="color:#6b655e;">sua conta</a>. Para mudar as calorias, recalcule no <a href="${site}" style="color:#6b655e;">FitMe</a> com o mesmo e-mail. <a href="${unsub}" style="color:#6b655e;">Cancelar inscrição</a>.`,
+    shopFooter: (home: string, account: string, unsub: string) => `Você recebe esta lista todo sábado como parte do seu plano de refeições FitMe. Mude as proteínas ou seus dados na <a href="${account}" style="color:#6b655e;">sua conta</a>. Para mudar as calorias, recalcule no <a href="${home}" style="color:#6b655e;">FitMe</a> com o mesmo e-mail. <a href="${unsub}" style="color:#6b655e;">Cancelar inscrição</a>.`,
     doneTitle: "Inscrição cancelada", doneBody: (u: string) => `Seu e-mail e suas configurações foram apagados. Você pode <a href="${u}" style="color:#2e6b4f;">se inscrever de novo</a> quando quiser.`,
   },
 };
@@ -423,10 +501,13 @@ export function renderReminderEmail(siteUrl: string, confirmUrl: string, unsubUr
   return { subject: m.subject, html: shell(siteUrl, inner, r.footer(esc(unsubUrl)), lang), text };
 }
 
-export function renderDailyEmail(opts: { siteUrl: string; unsubUrl: string; dayIndex: number; dateLabel: string; intake: number; prot: number; imperial: boolean; lang?: Lang; diet?: "all" | "veg" | string[] }) {
+export function renderDailyEmail(opts: { siteUrl: string; unsubUrl: string; clickToken?: string; dayIndex: number; dateLabel: string; intake: number; prot: number; imperial: boolean; lang?: Lang; diet?: "all" | "veg" | string[] }) {
   const c = COLORS, lang: Lang = asLang(opts.lang), t = T[lang];
   const kcal = (v: number) => kcalL(v, t.locale);
   const site = sitePath(opts.siteUrl, lang);
+  const weekUrl = trackedLink(opts.siteUrl, opts.clickToken, "week", `${site}#meals`);
+  const accountUrl = trackedLink(opts.siteUrl, opts.clickToken, "account", `${site}account/`);
+  const homeUrl = trackedLink(opts.siteUrl, opts.clickToken, "recalc", site);
   const meals = M.buildDay(opts.dayIndex, opts.intake, opts.prot, lang, opts.diet);
   const tot = M.dayTotals(meals);
   const dayName = lang === "en" ? M.DAY_NAMES[opts.dayIndex] : (globalThis as any)[lang === "br" ? "FITME_MEALS_BR" : "FITME_MEALS_PT"].days[opts.dayIndex].toLowerCase();
@@ -457,8 +538,8 @@ export function renderDailyEmail(opts: { siteUrl: string; unsubUrl: string; dayI
 <div style="font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:${c.muted};margin:0 0 4px;">${t.method}</div>
 <ol style="margin:0;padding-left:20px;font-size:14px;line-height:1.5;">${steps}</ol></div></td></tr>`;
   }).join("");
-  const cta = `<tr><td style="padding:18px 4px 0;font-size:14px;"><a href="${esc(site)}#meals" style="color:${c.accent};font-weight:600;">${t.fullWeek}</a></td></tr>`;
-  const footer = t.footer(kcal(opts.intake), esc(site), esc(opts.unsubUrl));
+  const cta = `<tr><td style="padding:18px 4px 0;font-size:14px;"><a href="${esc(weekUrl)}" style="color:${c.accent};font-weight:600;">${t.fullWeek}</a></td></tr>`;
+  const footer = t.footer(kcal(opts.intake), esc(homeUrl), esc(accountUrl), esc(opts.unsubUrl));
   const subject = t.subject(dayName, meals[1].rec.name);
   const text = [`${t.yourDayPlan(dayName)} (${opts.dateLabel})`, `${t.calories} ${kcal(tot.k)} / ${kcal(opts.intake)} · ${t.protein} ${Math.round(tot.p)} g`, ""]
     .concat(meals.map((m: any) => {
@@ -466,13 +547,16 @@ export function renderDailyEmail(opts: { siteUrl: string; unsubUrl: string; dayI
       const steps = m.rec.steps.map((s: string, i: number) => `  ${i + 1}. ${s}`).join("\n");
       return `${m.slot.label.toUpperCase()}: ${m.rec.name} (${kcal(m.n.k)}, ${Math.round(m.n.p)} g ${t.protein.toLowerCase()})\n${t.ingredients}:\n${ing}\n${t.method}:\n${steps}\n`;
     }))
-    .concat([`${t.textFull}: ${site}#meals`, `${t.textAccount}: ${site}account/`, `${t.textUnsub}: ${opts.unsubUrl}`]).join("\n");
+    .concat([`${t.textFull}: ${weekUrl}`, `${t.textAccount}: ${accountUrl}`, `${t.textUnsub}: ${opts.unsubUrl}`]).join("\n");
   return { subject, html: shell(opts.siteUrl, summary + cards + cta, footer, lang), text };
 }
 
-export function renderShoppingEmail(opts: { siteUrl: string; unsubUrl: string; dateLabel: string; intake: number; prot: number; imperial: boolean; lang?: Lang; diet?: "all" | "veg" | string[] }) {
+export function renderShoppingEmail(opts: { siteUrl: string; unsubUrl: string; clickToken?: string; dateLabel: string; intake: number; prot: number; imperial: boolean; lang?: Lang; diet?: "all" | "veg" | string[] }) {
   const c = COLORS, lang: Lang = asLang(opts.lang), t = T[lang];
   const site = sitePath(opts.siteUrl, lang);
+  const weekUrl = trackedLink(opts.siteUrl, opts.clickToken, "shop", `${site}#meals`);
+  const accountUrl = trackedLink(opts.siteUrl, opts.clickToken, "account", `${site}account/`);
+  const homeUrl = trackedLink(opts.siteUrl, opts.clickToken, "recalc", site);
   const list = M.shoppingList(opts.intake, opts.prot, lang, opts.imperial, opts.diet);
   const head = `<tr><td style="background:${c.card};border:1px solid ${c.line};border-radius:12px;padding:20px 22px;">
 <div style="font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:${c.muted};">${esc(opts.dateLabel)}</div>
@@ -484,11 +568,11 @@ export function renderShoppingEmail(opts: { siteUrl: string; unsubUrl: string; d
   const extras = `<tr><td style="height:14px;"></td></tr><tr><td style="background:${c.card};border:1px solid ${c.line};border-radius:12px;padding:16px 22px;">
 <div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:${c.accent};margin:0 0 6px;">${t.shopExtras}</div>
 <p style="margin:0;font-size:13.5px;line-height:1.55;color:${c.muted};">${esc(list.extras)}</p></td></tr>`;
-  const cta = `<tr><td style="padding:18px 4px 0;font-size:14px;"><a href="${esc(site)}#meals" style="color:${c.accent};font-weight:600;">${t.shopCta}</a></td></tr>`;
+  const cta = `<tr><td style="padding:18px 4px 0;font-size:14px;"><a href="${esc(weekUrl)}" style="color:${c.accent};font-weight:600;">${t.shopCta}</a></td></tr>`;
   const text = [t.shopTitle + ` (${opts.dateLabel})`, t.shopIntro(kcalL(opts.intake, t.locale)), ""]
     .concat(list.groups.map((g: any) => g.aisle.toUpperCase() + "\n" + g.items.map((it: any) => `  [ ] ${it.n}: ${it.q}`).join("\n") + "\n"))
-    .concat([t.shopExtras + ": " + list.extras, "", `${t.textFull}: ${site}#meals`, `${t.textAccount}: ${site}account/`, `${t.textUnsub}: ${opts.unsubUrl}`]).join("\n");
-  return { subject: t.shopSubject, html: shell(opts.siteUrl, head + sections + extras + cta, t.shopFooter(esc(site), esc(opts.unsubUrl)), lang), text };
+    .concat([t.shopExtras + ": " + list.extras, "", `${t.textFull}: ${weekUrl}`, `${t.textAccount}: ${accountUrl}`, `${t.textUnsub}: ${opts.unsubUrl}`]).join("\n");
+  return { subject: t.shopSubject, html: shell(opts.siteUrl, head + sections + extras + cta, t.shopFooter(esc(homeUrl), esc(accountUrl), esc(opts.unsubUrl)), lang), text };
 }
 
 export function htmlPage(siteUrl: string, title: string, body: string, status = 200, lang: Lang = "en") {
