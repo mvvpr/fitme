@@ -1297,10 +1297,10 @@ body.lang-fading .wrap > .step { opacity: 0; }
       var box = form.closest('.sub-box'); if (meta && box) meta.placement = box.getAttribute('data-box');
       var payload = { email: email, consent: true, website: q('.sub-web').value, tz: tz, intake: subState ? subState.intake : 0, prot: subState ? subState.prot : 0, units: state.units, lang: LANG, diet: state.diet, prots: prefs(), meta: meta, src: adSource(), typoOk: form.dataset.keep === email };
       q('.sub-btn').disabled = true; subMsg(MSG.sending);
-      fetch('/api/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+      fetch('/api/subscribe', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
         .then(function (res) { return res.json().catch(function () { return { ok: false, error: res.status === 429 ? 'rate' : 'unknown' }; }); })
         .then(function (data) {
-          if (data && data.ok) { subMsg(MSG.ok, 'ok'); form.reset(); if (window.FITME_TRACK && data.lead) FITME_TRACK.leadDone(meta); }
+          if (data && data.ok) { subMsg(data.applied ? MSG.applied : MSG.ok, 'ok'); form.reset(); if (window.FITME_TRACK && data.lead) FITME_TRACK.leadDone(meta); }
           else if (data && data.error === 'typo' && data.suggest) askFix(email, data.suggest);
           else subMsg(data && data.error === 'rate' ? MSG.rate : (MSG[data && data.error] || MSG.error), 'err');
         })

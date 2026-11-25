@@ -1,7 +1,7 @@
 // POST /api/subscribe — store a pending subscriber and send a double opt-in email.
 import type { Config, Context } from "@netlify/functions";
 import "../../public/email-check.js";
-import { subscribers, sha256, subKey, tokKey, unsKey, newToken, validTimeZone, mailConfig, sendMail, renderConfirmEmail, sendMetaEvents, requestUser, FBP_RE, FBC_RE, EVENT_ID_RE, asLang, cleanProts, cleanSrc, countryOf, type Subscriber } from "../lib/core.mts";
+import { subscribers, sha256, subKey, tokKey, unsKey, newToken, validTimeZone, mailConfig, sendMail, renderConfirmEmail, sendMetaEvents, requestUser, FBP_RE, FBC_RE, EVENT_ID_RE, asLang, cleanProts, cleanSrc, countryOf, currentUser, type Subscriber } from "../lib/core.mts";
 
 const CONSENT_TEXT = "I agree to receive a daily meal-plan email from FitMe. We store your email, time zone and calorie settings to send it, and you can unsubscribe at any time. (privacy policy version 2026-11-13)";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -50,6 +50,17 @@ export default async (req: Request, context: Context) => {
   const hash = await sha256(email);
   const existing = (await store.get(subKey(hash), { type: "json" })) as Subscriber | null;
   const now = new Date().toISOString();
+
+  // Logged in as this same address and already subscribed: the log-in link proved the email, so apply the new
+  // settings straight away instead of asking to confirm again.
+  if (existing?.status === "active") {
+    const me = await currentUser(req);
+    if (me && me.hash === hash) {
+      if (existing.confirmToken) await store.delete(tokKey(existing.confirmToken));
+      await store.setJSON(subKey(hash), { ...existing, ...settings, pending: null, confirmToken: null, planUpdatedAt: now });
+      return Response.json({ ok: true, applied: true });
+    }
+  }
 
   // Throttle repeat confirmation emails to the same address.
   if (existing?.lastConfirmMailAt && Date.now() - Date.parse(existing.lastConfirmMailAt) < 2 * 60 * 1000) {

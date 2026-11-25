@@ -43,6 +43,8 @@ export type Subscriber = {
   // Which ad link brought them (utm_* labels from the URL at first sign-up) and their country then. First-party only.
   src?: { source?: string; medium?: string; campaign?: string; content?: string; term?: string } | null;
   country?: string;
+  // When a logged-in user last changed their plan without a confirmation email (account page or recalculating).
+  planUpdatedAt?: string;
   // Optional account profile, filled in by the user on /account/.
   profile?: Profile | null;
 };
@@ -58,6 +60,22 @@ export type Profile = {
   interestAt?: string;
   updatedAt?: string;
 };
+
+// Plan settings edited on the account page. Same limits as sign-up. Returns { plan } or { error } naming the bad field.
+export function cleanPlan(v: any, cur: Subscriber): { plan?: Pick<Subscriber, "intake" | "prot" | "prots" | "units" | "lang" | "diet">; error?: string } {
+  if (!v || typeof v !== "object") return { error: "bad_request" };
+  const intake = Math.round(Number(v.intake)), prot = Math.round(Number(v.prot));
+  if (!(intake >= 1000 && intake <= 6000)) return { error: "intake" };
+  if (!(prot >= 40 && prot <= 400)) return { error: "prot" };
+  const prots = cleanProts(v.prots);
+  if (!prots) return { error: "prots" };
+  return { plan: {
+    intake, prot, prots,
+    units: v.units === "imperial" ? "imperial" : v.units === "metric" ? "metric" : cur.units,
+    lang: v.lang === "en" || v.lang === "pt" || v.lang === "br" ? v.lang : cur.lang,
+    diet: prots.some((x) => ["chicken", "beef", "pork", "fish"].includes(x)) ? "all" : "veg",
+  } };
+}
 
 export const INTEREST_TEXT = "Tick if you're interested and FitMe may email you about it. You can untick at any time.";
 
