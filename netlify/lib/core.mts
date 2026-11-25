@@ -177,7 +177,7 @@ export function mailConfig() {
   };
 }
 
-type Mail = { to: string; subject: string; html: string; text: string; unsubUrl?: string; tag: string };
+type Mail = { to: string; subject: string; html: string; text: string; unsubUrl?: string; tag: string; trackClicks?: boolean };
 
 export async function sendMail(cfg: NonNullable<ReturnType<typeof mailConfig>>, mail: Mail) {
   const body = new URLSearchParams();
@@ -187,11 +187,13 @@ export async function sendMail(cfg: NonNullable<ReturnType<typeof mailConfig>>, 
   body.set("html", mail.html);
   body.set("text", mail.text);
   body.set("o:tag", mail.tag);
-  // Open and click tracking (email.mg.fitmeplan.com). Clicks only in the HTML part, so plain-text links stay as written.
-  // https for tracking links is a domain setting in Mailgun (Domain settings → Tracking), not a per-message option.
+  // Open tracking stays on. Click tracking is OFF: Mailgun rewrites links through email.mg.fitmeplan.com, which serves
+  // plain http, so Chrome warns "This site doesn't support a secure connection" before confirm/log-in links open.
+  // Links with one-time tokens (confirm, log in) should never go through a tracker anyway. Once HTTPS tracking is on
+  // in Mailgun (Domain settings → Tracking), a mail can opt back in with trackClicks: true (meant for the daily emails).
   body.set("o:tracking", "yes");
   body.set("o:tracking-opens", "yes");
-  body.set("o:tracking-clicks", "htmlonly");
+  body.set("o:tracking-clicks", mail.trackClicks ? "htmlonly" : "no");
   if (mail.unsubUrl) {
     body.set("h:List-Unsubscribe", `<${mail.unsubUrl}>`);
     body.set("h:List-Unsubscribe-Post", "List-Unsubscribe=One-Click");
