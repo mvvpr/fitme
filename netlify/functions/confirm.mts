@@ -5,6 +5,8 @@ import { subscribers, subKey, tokKey, htmlPage, sitePath, T, asLang, sendMetaEve
 export default async (req: Request, context: Context) => {
   const siteUrl = context.site.url || new URL(req.url).origin;
   const token = new URL(req.url).searchParams.get("t") || "";
+  const v = new URL(req.url).searchParams.get("v");
+  const via = v === "r1" || v === "r2" ? v : "email";
   const store = subscribers();
   const hash = /^[a-f0-9]{48}$/.test(token) ? ((await store.get(tokKey(token))) as string | null) : null;
   const sub = hash ? ((await store.get(subKey(hash), { type: "json" })) as Subscriber | null) : null;
@@ -21,6 +23,7 @@ export default async (req: Request, context: Context) => {
     pending: null,
     confirmToken: null,
     confirmedAt: sub.confirmedAt || new Date().toISOString(),
+    ...(sub.confirmedAt ? {} : { confirmedVia: via as Subscriber["confirmedVia"] }),
     meta: null, // measurement ids are only kept until the confirmation is reported
   };
   await store.setJSON(subKey(hash!), updated);

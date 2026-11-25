@@ -71,6 +71,8 @@ export default async (req: Request, context: Context) => {
         confirmToken,
         unsubToken: existing?.unsubToken || newToken(),
         createdAt: existing?.createdAt || now,
+        // A repeat sign-up before confirming doesn't restart the reminders (2 at most per address).
+        ...(existing?.reminders ? { reminders: existing.reminders, lastReminderAt: existing.lastReminderAt } : {}),
         consentAt: now,
         consentText: CONSENT_TEXT,
         lastConfirmMailAt: now,
