@@ -64,4 +64,4 @@ Until `MAILGUN_API_KEY` and `MAILGUN_DOMAIN` are set, sign-up shows "opens soon"
 Logo files live in `brand/`: full logo in light and dark versions (SVG and PNG) and the app icon.
 
 > FitMe gives estimates, not medical advice.
-- Recipe pages end with a share bar (built by `scripts/build-recipes.mjs`, wired by `public/share.js`): the phone's share sheet where available, WhatsApp, Instagram (share sheet on phones, otherwise copies the link), Facebook, Pinterest, X, Telegram, email and copy link. Shared links carry `utm_source=<channel>&utm_medium=share&utm_campaign=recipe`; clicks are tracked as the `Share` event (with consent).
+- Recipe pages end with a share bar (built by `scripts/build-recipes.mjs`, wired by `public/share.js`): the phone's share sheet (phones only), WhatsApp, Instagram (on phones the share sheet with the recipe photo as a JPEG, so Instagram offers Stories/Feed/Direct; on computers it copies the link and offers to open Instagram), Facebook, Pinterest, X, Telegram, email and copy link. Shared links carry `utm_source=<channel>&utm_medium=share&utm_campaign=recipe`; clicks are tracked as the `Share` event (with consent).

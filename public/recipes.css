@@ -57,3 +57,5 @@ footer a { color: var(--muted); }
 .sh:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .sh-native { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 .sh-toast { margin: 10px 0 0; font-size: 14px; color: var(--accent); font-weight: 600; }
+.sh-toast a { color: var(--accent); margin-left: 4px; }
+.sh-url { display:block; width:100%; margin-top: 6px; font: inherit; font-size: 13px; font-weight: 400; padding: 8px 10px; border:1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); }
