@@ -67,6 +67,11 @@ input[type=number]:focus, select:focus { outline: 2px solid var(--accent); outli
 </header>
 <main class="card" id="loading"><p class="muted" data-t="loading">Loading…</p></main>
 <main id="acct" hidden>
+  <div class="card" id="welcome" hidden style="margin-bottom:14px;border-color:var(--accent);">
+    <h1 data-t="wH" style="margin-bottom:6px;"></h1>
+    <p style="margin:0 0 10px;" data-t="wLead"></p>
+    <ul style="margin:0;padding-left:20px;line-height:1.6;" data-t="wList"></ul>
+  </div>
   <div class="card">
     <h1 data-t="h">Your account</h1>
     <p class="muted" style="margin:0;"><span data-t="loggedAs">Logged in as</span> <strong id="email"></strong></p>
@@ -115,7 +120,9 @@ input[type=number]:focus, select:focus { outline: 2px solid var(--accent); outli
 <script>
 (function () {
   var T = {
-    en: { title: 'Your account', edit: 'Change proteins', editLead: 'Pick the proteins you want in your lunches and dinners. Changes apply straight away, and your next email uses them.', protG: 'Daily protein (g)',
+    en: { title: 'Your account', wH: "You're in!", wLead: 'Your email is confirmed and your first meal plan arrives tomorrow at 7:00. This is your FitMe account, where you can:',
+      wList: '<li>Change the proteins in your meals</li><li>Add your name and details</li><li>Tell us if you’d like a health coach or a personalised plan</li>',
+      edit: 'Change proteins', editLead: 'Pick the proteins you want in your lunches and dinners. Changes apply straight away, and your next email uses them.', protG: 'Daily protein (g)',
       calHint: 'To change your calories or protein, <a data-home href="/">recalculate on FitMe</a> and enter the same email. It updates straight away, no need to confirm again.',
       lowWarn: 'Below 1,200 kcal a day is very low. Check with a doctor before eating this little.', protsHint: 'Pick at least 2. Your lunches and dinners are built around these.',
       saveChanges: 'Save changes', cancel: 'Cancel', planSaved: 'Plan updated', eIntake: 'Daily calories must be between 1,000 and 6,000.', eProt: 'Daily protein must be between 40 and 400 g.', eProts: 'Please pick at least 2 proteins.',
@@ -130,7 +137,9 @@ input[type=number]:focus, select:focus { outline: 2px solid var(--accent); outli
       lang: 'Language', units: 'Units', tz: 'Time zone', since: 'Member since', metric: 'Metric (kg, g)', imperial: 'Imperial (lb, oz)', veg: 'Vegetarian', all: 'All proteins',
       langs: { en: 'English', pt: 'Português (Portugal)', br: 'Português (Brasil)' },
       P: { chicken: 'Chicken', beef: 'Beef', pork: 'Pork', fish: 'Fish', eggs: 'Eggs', tofu: 'Tofu', beans: 'Beans' }, loc: 'en-GB' },
-    pt: { title: 'A tua conta', edit: 'Mudar proteínas', editLead: 'Escolhe as proteínas que queres nos teus almoços e jantares. As alterações aplicam-se logo e o próximo email já as usa.', protG: 'Proteína diária (g)',
+    pt: { title: 'A tua conta', wH: 'Está feito!', wLead: 'O teu email está confirmado e o teu primeiro plano de refeições chega amanhã às 7:00. Esta é a tua conta FitMe, onde podes:',
+      wList: '<li>Mudar as proteínas das tuas refeições</li><li>Acrescentar o teu nome e dados</li><li>Dizer-nos se gostavas de um coach de saúde ou de um plano personalizado</li>',
+      edit: 'Mudar proteínas', editLead: 'Escolhe as proteínas que queres nos teus almoços e jantares. As alterações aplicam-se logo e o próximo email já as usa.', protG: 'Proteína diária (g)',
       calHint: 'Para mudares as calorias ou a proteína, <a data-home href="/pt/">recalcula no FitMe</a> e escreve o mesmo email. Atualiza logo, sem teres de confirmar outra vez.',
       lowWarn: 'Menos de 1200 kcal por dia é muito pouco. Fala com um médico antes de comeres tão pouco.', protsHint: 'Escolhe pelo menos 2. Os teus almoços e jantares são feitos à volta destas.',
       saveChanges: 'Guardar alterações', cancel: 'Cancelar', planSaved: 'Plano atualizado', eIntake: 'As calorias diárias têm de estar entre 1000 e 6000.', eProt: 'A proteína diária tem de estar entre 40 e 400 g.', eProts: 'Escolhe pelo menos 2 proteínas.',
@@ -145,7 +154,9 @@ input[type=number]:focus, select:focus { outline: 2px solid var(--accent); outli
       lang: 'Idioma', units: 'Unidades', tz: 'Fuso horário', since: 'Membro desde', metric: 'Métrico (kg, g)', imperial: 'Imperial (lb, oz)', veg: 'Vegetariano', all: 'Todas as proteínas',
       langs: { en: 'English', pt: 'Português (Portugal)', br: 'Português (Brasil)' },
       P: { chicken: 'Frango', beef: 'Vaca', pork: 'Porco', fish: 'Peixe', eggs: 'Ovos', tofu: 'Tofu', beans: 'Feijão' }, loc: 'pt-PT' },
-    br: { title: 'Sua conta', edit: 'Mudar proteínas', editLead: 'Escolha as proteínas que você quer nos almoços e jantares. As mudanças valem na hora e o próximo e-mail já usa elas.', protG: 'Proteína diária (g)',
+    br: { title: 'Sua conta', wH: 'Tudo certo!', wLead: 'Seu e-mail está confirmado e seu primeiro plano de refeições chega amanhã às 7h. Esta é sua conta FitMe, onde você pode:',
+      wList: '<li>Mudar as proteínas das suas refeições</li><li>Adicionar seu nome e dados</li><li>Contar se gostaria de um coach de saúde ou de um plano personalizado</li>',
+      edit: 'Mudar proteínas', editLead: 'Escolha as proteínas que você quer nos almoços e jantares. As mudanças valem na hora e o próximo e-mail já usa elas.', protG: 'Proteína diária (g)',
       calHint: 'Para mudar suas calorias ou proteína, <a data-home href="/br/">recalcule no FitMe</a> e digite o mesmo e-mail. Atualiza na hora, sem precisar confirmar de novo.',
       lowWarn: 'Menos de 1.200 kcal por dia é muito pouco. Fale com um médico antes de comer tão pouco.', protsHint: 'Escolha pelo menos 2. Seus almoços e jantares são montados em volta delas.',
       saveChanges: 'Salvar alterações', cancel: 'Cancelar', planSaved: 'Plano atualizado', eIntake: 'As calorias diárias precisam ficar entre 1.000 e 6.000.', eProt: 'A proteína diária precisa ficar entre 40 e 400 g.', eProts: 'Escolha pelo menos 2 proteínas.',
@@ -225,6 +236,10 @@ input[type=number]:focus, select:focus { outline: 2px solid var(--accent); outli
       document.getElementById('email').textContent = me.email;
       document.getElementById('pending').hidden = me.status !== 'pending';
       ME = me; renderPlan(me);
+      if (/[?&]welcome=1/.test(location.search)) {
+        document.getElementById('welcome').hidden = false;
+        try { history.replaceState(null, '', location.pathname); } catch (e) {}
+      }
       var pr = me.profile || {};
       document.getElementById('fn').value = pr.firstName || ''; document.getElementById('ln').value = pr.lastName || '';
       document.getElementById('ph').value = pr.phone || ''; document.getElementById('so').value = pr.social || '';
