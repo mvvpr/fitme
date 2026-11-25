@@ -16,11 +16,12 @@ A calorie-deficit weight loss calculator. Enter your details and a daily deficit
 - Metric and imperial units; light and dark themes
 
 - Daily meal-plan email at 07:00 and a weekly shopping-list email on Saturdays at 08:00, in each subscriber's time zone and language; double opt-in, one-click unsubscribe
+- Confirmation reminders for sign-ups that haven't confirmed: reminder 1 at 24h, reminder 2 (the last) at 72h and at least 48h after the first, in the sign-up's language, by the hourly scheduled `send-reminders` (at :30 UTC). They reuse the current confirm link, add `v=r1`/`v=r2` so `/api/confirm` records which email the click came from (`confirmedVia`), and `/api/stats` reports them under `reminders`. Set `REMINDERS_OFF=1` to pause them
 
 ## Stack
 
 - `public/`: the static site (`index.html`, shared recipe and portion logic in `meals.js`, Portuguese recipes in `meals.pt.js`, interface text in `i18n.js`, brand assets). No build step. `/pt/` is served by a rewrite in `netlify.toml`.
-- `netlify/functions/`: `subscribe`, `confirm`, `unsubscribe`, `track` and the hourly scheduled `send-daily`. Emails use the subscriber's protein picks (`prots`), falling back to `diet` for older sign-ups.
+- `netlify/functions/`: `subscribe`, `confirm`, `unsubscribe`, `track`, `stats` and the hourly scheduled `send-daily` and `send-reminders`. Emails use the subscriber's protein picks (`prots`), falling back to `diet` for older sign-ups.
 - Recipe pages (`/recipes/`, `/pt/receitas/`, `/br/receitas/`) are static HTML built by `node scripts/build-recipes.mjs` from `public/meals*.js` (numbers) and `scripts/recipes-content.mjs` (words per language, tips). Rebuild and commit after changing either. Slugs are permanent once live. The homepage links to them quietly from the start screen (`.site-links`).
 - `netlify/edge-functions/meta-locale.ts`: swaps the title, description and share (Open Graph) tags for `/pt/` and `/br/`, since crawlers don't run the page script. Share images: `public/img/og/fitme-{en,pt,br}.jpg` (1200×630).
 - Subscribers are stored in Netlify Blobs (store `fitme-subscribers`, EU region `eu-central-1`). Emails are sent through the Mailgun API.

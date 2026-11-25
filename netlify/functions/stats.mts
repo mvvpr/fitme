@@ -1,5 +1,5 @@
 // GET /api/stats?key=STATS_KEY[&days=30] — counts only, no emails:
-// sign-ups by country and ad campaign (pending vs confirmed), and cookie-banner outcomes per country.
+// sign-ups by country and ad campaign (pending vs confirmed), confirmation reminders sent and what they brought, and cookie-banner outcomes per country.
 import type { Config } from "@netlify/functions";
 import { subscribers, type Subscriber } from "../lib/core.mts";
 
@@ -13,6 +13,8 @@ export default async (req: Request) => {
 
   type Row = { country: string; source: string; campaign: string; adset: string; ad: string; signups: number; confirmed: number };
   const rows = new Map<string, Row>();
+  // Confirmation reminders: how many got each one, and which email the confirmed sign-ups clicked.
+  const reminders = { pending: 0, sentReminder1: 0, sentReminder2: 0, confirmedFromFirstEmail: 0, confirmedFromReminder1: 0, confirmedFromReminder2: 0 };
   const { blobs } = await store.list({ prefix: "sub/" });
   for (const b of blobs) {
     const s = (await store.get(b.key, { type: "json" })) as Subscriber | null;
@@ -25,6 +27,12 @@ export default async (req: Request) => {
     const row = rows.get(k) || { ...r, signups: 0, confirmed: 0 };
     row.signups++;
     if (s.status === "active") row.confirmed++;
+    if ((s.reminders || 0) >= 1) reminders.sentReminder1++;
+    if ((s.reminders || 0) >= 2) reminders.sentReminder2++;
+    if (s.status === "pending") reminders.pending++;
+    else if (s.confirmedVia === "r1") reminders.confirmedFromReminder1++;
+    else if (s.confirmedVia === "r2") reminders.confirmedFromReminder2++;
+    else if (s.confirmedVia === "email") reminders.confirmedFromFirstEmail++;
     rows.set(k, row);
   }
 
@@ -45,7 +53,7 @@ export default async (req: Request) => {
       ...signups.map((r) => [r.country, r.source, r.campaign, r.adset, r.ad, r.signups, r.confirmed].map((x) => `"${String(x).replace(/"/g, '""')}"`).join(","))].join("\n");
     return new Response(csv, { headers: { "Content-Type": "text/csv; charset=utf-8", "Cache-Control": "no-store" } });
   }
-  return Response.json({ days, since, signups, consent }, { headers: { "Cache-Control": "no-store" } });
+  return Response.json({ days, since, signups, reminders, consent }, { headers: { "Cache-Control": "no-store" } });
 };
 
 export const config: Config = { path: "/api/stats", method: "GET" };

@@ -31,6 +31,11 @@ export type Subscriber = {
   consentText: string;
   confirmedAt?: string;
   lastConfirmMailAt?: string;
+  // Confirmation reminders to sign-ups that haven't confirmed (send-reminders): how many went out and when the last one did.
+  reminders?: number;
+  lastReminderAt?: string;
+  // Which email the confirm click came from: "email" (the first one), "r1" or "r2" (reminders).
+  confirmedVia?: "email" | "r1" | "r2";
   lastSentDate?: string;
   lastShopDate?: string;
   // Set only when the visitor accepted Meta cookies at sign-up; removed once CompleteRegistration is sent.
@@ -284,6 +289,49 @@ export function renderConfirmEmail(siteUrl: string, confirmUrl: string, isUpdate
 </td></tr>`;
   const text = `${title}\n\n${lead}\n\n${t.textConfirm}: ${confirmUrl}\n\n${t.ignore}`;
   return { subject: title, html: shell(siteUrl, inner, t.confirmFooter, lang), text };
+}
+
+// ---------- Confirmation reminders ----------
+// Sent only to sign-ups that never confirmed: 1 at 24h, 2 (the last) at 72h. They only ask to confirm, with no recipes or promotion.
+export const REMINDER = {
+  en: {
+    1: { subject: "Your meal plan is one click away", title: "Your meal plan is one click away",
+      lead: "You signed up for FitMe but haven't confirmed your email yet. Tap below and your first high-protein meal plan arrives tomorrow morning at 7:00." },
+    2: { subject: "Last reminder: confirm to get your meal plan", title: "Last reminder",
+      lead: "This is the last reminder we'll send. Confirm your email to start getting your FitMe meal plan every morning at 7:00. If you've changed your mind, just ignore this email." },
+    btn: "Confirm my email",
+    footer: (unsub: string) => `You're receiving this because this address was entered on FitMe and hasn't been confirmed. <a href="${unsub}" style="color:#6b655e;">Don't send me reminders</a>.`,
+    textStop: "Don't send me reminders",
+  },
+  pt: {
+    1: { subject: "O teu plano de refeições está a um clique", title: "O teu plano de refeições está a um clique",
+      lead: "Inscreveste-te no FitMe mas ainda não confirmaste o teu email. Carrega abaixo e o teu primeiro plano de refeições rico em proteína chega amanhã de manhã, às 7:00." },
+    2: { subject: "Último lembrete: confirma para receberes o teu plano", title: "Último lembrete",
+      lead: "Este é o último lembrete que te enviamos. Confirma o teu email para começares a receber o teu plano de refeições FitMe todas as manhãs às 7:00. Se mudaste de ideias, basta ignorares este email." },
+    btn: "Confirmar o meu email",
+    footer: (unsub: string) => `Recebes este email porque este endereço foi introduzido no FitMe e ainda não foi confirmado. <a href="${unsub}" style="color:#6b655e;">Não quero receber lembretes</a>.`,
+    textStop: "Não quero receber lembretes",
+  },
+  br: {
+    1: { subject: "Falta só 1 clique pro seu plano de refeições", title: "Falta só 1 clique pro seu plano de refeições",
+      lead: "Você se inscreveu no FitMe, mas ainda não confirmou seu e-mail. Toque abaixo e seu primeiro plano de refeições rico em proteína chega amanhã cedo, às 7h." },
+    2: { subject: "Último lembrete: confirme pra receber seu plano", title: "Último lembrete",
+      lead: "Esse é o último lembrete que vamos te mandar. Confirme seu e-mail para começar a receber seu plano de refeições FitMe toda manhã às 7h. Se mudou de ideia, é só ignorar este e-mail." },
+    btn: "Confirmar meu e-mail",
+    footer: (unsub: string) => `Você está recebendo este e-mail porque este endereço foi informado no FitMe e ainda não foi confirmado. <a href="${unsub}" style="color:#6b655e;">Não quero receber lembretes</a>.`,
+    textStop: "Não quero receber lembretes",
+  },
+};
+
+export function renderReminderEmail(siteUrl: string, confirmUrl: string, unsubUrl: string, n: 1 | 2, lang: Lang = "en") {
+  const c = COLORS, r = REMINDER[lang], m = r[n];
+  const inner = `<tr><td style="background:${c.card};border:1px solid ${c.line};border-radius:12px;padding:28px 24px;">
+<h1 style="margin:0 0 10px;font-size:22px;line-height:1.25;">${m.title}</h1>
+<p style="margin:0 0 22px;font-size:15px;line-height:1.55;color:${c.muted};">${m.lead}</p>
+<a href="${esc(confirmUrl)}" style="display:inline-block;background:${c.accent};color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:12px 22px;border-radius:8px;">${r.btn}</a>
+</td></tr>`;
+  const text = `${m.title}\n\n${m.lead}\n\n${r.btn}: ${confirmUrl}\n\n${r.textStop}: ${unsubUrl}`;
+  return { subject: m.subject, html: shell(siteUrl, inner, r.footer(esc(unsubUrl)), lang), text };
 }
 
 export function renderDailyEmail(opts: { siteUrl: string; unsubUrl: string; dayIndex: number; dateLabel: string; intake: number; prot: number; imperial: boolean; lang?: Lang; diet?: "all" | "veg" | string[] }) {
