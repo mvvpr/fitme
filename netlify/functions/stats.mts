@@ -1,7 +1,8 @@
 // GET /api/stats?key=STATS_KEY[&days=30] — counts only, no emails:
-// sign-ups by country and ad campaign (pending vs confirmed), confirmation reminders sent and what they brought, and cookie-banner outcomes per country.
+// sign-ups by country and ad campaign (pending vs confirmed), confirmation reminders sent and what they brought, cookie-banner outcomes per country,
+// and email link clicks (first-party, via /api/go) across all current subscribers.
 import type { Config } from "@netlify/functions";
-import { subscribers, type Subscriber } from "../lib/core.mts";
+import { subscribers, actKey, clickTotals, type Subscriber, type Activity } from "../lib/core.mts";
 
 export default async (req: Request) => {
   const want = Netlify.env.get("STATS_KEY");
@@ -38,6 +39,23 @@ export default async (req: Request) => {
     rows.set(k, row);
   }
 
+  // Email link clicks from /api/go, for every current subscriber (not limited to sign-ups in the window). Click history covers the last 120 days.
+  const clicks = { activeSubscribers: 0, clickedLast120Days: 0, clickedLast30Days: 0, clickedLast7Days: 0, clicksLast30Days: 0, clicksLast7Days: 0, byLinkLast30Days: {} as Record<string, number> };
+  const d7 = new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 10), d30 = new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10);
+  for (const b of blobs) {
+    const s = (await store.get(b.key, { type: "json" })) as Subscriber | null;
+    if (!s || s.status !== "active") continue;
+    clicks.activeSubscribers++;
+    const a = (await store.get(actKey(b.key.slice(4)), { type: "json" })) as Activity | null;
+    const all = clickTotals(a), m = clickTotals(a, d30), w = clickTotals(a, d7);
+    if (all.clicks) clicks.clickedLast120Days++;
+    if (m.clicks) clicks.clickedLast30Days++;
+    if (w.clicks) clicks.clickedLast7Days++;
+    clicks.clicksLast30Days += m.clicks;
+    clicks.clicksLast7Days += w.clicks;
+    for (const [k, n] of Object.entries(m.byKind)) clicks.byLinkLast30Days[k] = (clicks.byLinkLast30Days[k] || 0) + n;
+  }
+
   const consent: Record<string, Record<string, number>> = {};
   for (let i = 0; i < days; i++) {
     const d = new Date(Date.now() - i * 864e5).toISOString().slice(0, 10);
@@ -55,7 +73,7 @@ export default async (req: Request) => {
       ...signups.map((r) => [r.country, r.source, r.campaign, r.adset, r.ad, r.signups, r.confirmed].map((x) => `"${String(x).replace(/"/g, '""')}"`).join(","))].join("\n");
     return new Response(csv, { headers: { "Content-Type": "text/csv; charset=utf-8", "Cache-Control": "no-store" } });
   }
-  return Response.json({ days, since, signups, reminders, profiles, consent }, { headers: { "Cache-Control": "no-store" } });
+  return Response.json({ days, since, signups, reminders, profiles, clicks, consent }, { headers: { "Cache-Control": "no-store" } });
 };
 
 export const config: Config = { path: "/api/stats", method: "GET" };
