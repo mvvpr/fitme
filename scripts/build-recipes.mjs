@@ -23,15 +23,21 @@ for (const f of ['meals.js', 'meals.pt.js', 'meals.br.js']) vm.runInContext(fs.r
 const M = ctx.FITME_MEALS;
 
 const L = {
-  en: { home: 'Home', recipes: 'Recipes', perPortion: 'per portion', kcal: 'kcal', protein: 'protein', carbs: 'carbs', fat: 'fat', time: 'Time',
+  en: {
+    share: 'Share this recipe', shareNative: 'Share…', copy: 'Copy link', copied: 'Link copied', igCopied: 'Link copied. Paste it in your Instagram story or message.', email: 'Email', shareText: (n, k, p) => `${n}: ${k} kcal, ${p} g protein. Free recipe on FitMe`,
+    home: 'Home', recipes: 'Recipes', perPortion: 'per portion', kcal: 'kcal', protein: 'protein', carbs: 'carbs', fat: 'fat', time: 'Time',
     ingredients: 'Ingredients (1 portion)', method: 'Method', tips: 'Tips', fits: 'Where it fits in your day', scale: 'Cooking for more people? Multiply everything. In your FitMe plan, the amounts are scaled to your own calories.',
     cta: 'Get my free plan', ctaLead: 'Want a full week of meals like this, sized to your goal? Get your free FitMe plan and see when you\'ll reach your goal weight.',
     more: 'More recipes', privacy: 'Privacy policy', g: 'g', serving: '1 portion', category: { breakfast: 'Breakfast', main: 'Main course' }, imgAlt: (n) => n },
-  pt: { home: 'Início', recipes: 'Receitas', perPortion: 'por dose', kcal: 'kcal', protein: 'proteína', carbs: 'hidratos', fat: 'gordura', time: 'Tempo',
+  pt: {
+    share: 'Partilha esta receita', shareNative: 'Partilhar…', copy: 'Copiar link', copied: 'Link copiado', igCopied: 'Link copiado. Cola-o na tua story ou mensagem do Instagram.', email: 'Email', shareText: (n, k, p) => `${n}: ${k} kcal, ${p} g de proteína. Receita grátis no FitMe`,
+    home: 'Início', recipes: 'Receitas', perPortion: 'por dose', kcal: 'kcal', protein: 'proteína', carbs: 'hidratos', fat: 'gordura', time: 'Tempo',
     ingredients: 'Ingredientes (1 dose)', method: 'Preparação', tips: 'Dicas', fits: 'Como encaixa no teu dia', scale: 'Vais cozinhar para mais pessoas? Multiplica tudo. No teu plano FitMe, as quantidades são ajustadas às tuas calorias.',
     cta: 'Quero o meu plano grátis', ctaLead: 'Queres uma semana inteira de refeições assim, ajustada ao teu objetivo? Faz o teu plano grátis no FitMe e vê quando chegas ao teu peso.',
     more: 'Mais receitas', privacy: 'Política de privacidade', g: 'g', serving: '1 dose', category: { breakfast: 'Pequeno-almoço', main: 'Prato principal' }, imgAlt: (n) => n },
-  br: { home: 'Início', recipes: 'Receitas', perPortion: 'por porção', kcal: 'kcal', protein: 'proteína', carbs: 'carboidratos', fat: 'gordura', time: 'Tempo',
+  br: {
+    share: 'Compartilhe esta receita', shareNative: 'Compartilhar…', copy: 'Copiar link', copied: 'Link copiado', igCopied: 'Link copiado. Cole no seu story ou mensagem do Instagram.', email: 'E-mail', shareText: (n, k, p) => `${n}: ${k} kcal, ${p} g de proteína. Receita grátis no FitMe`,
+    home: 'Início', recipes: 'Receitas', perPortion: 'por porção', kcal: 'kcal', protein: 'proteína', carbs: 'carboidratos', fat: 'gordura', time: 'Tempo',
     ingredients: 'Ingredientes (1 porção)', method: 'Modo de preparo', tips: 'Dicas', fits: 'Como encaixa no seu dia', scale: 'Vai fazer para mais pessoas ou para a semana? É só multiplicar. No seu plano FitMe, as quantidades já vêm ajustadas às suas calorias.',
     cta: 'Quero meu plano grátis', ctaLead: 'Quer uma semana inteira de refeições assim, ajustada ao seu objetivo? Monte seu plano grátis no FitMe e veja quando você chega ao seu peso.',
     more: 'Mais receitas', privacy: 'Política de privacidade', g: 'g', serving: '1 porção', category: { breakfast: 'Café da manhã', main: 'Prato principal' }, imgAlt: (n) => n },
@@ -116,6 +122,7 @@ ${body}
 <footer><a href="${HUB[lang].path}">${L[lang].recipes}</a> · <a href="${PRIVACY[lang]}">${L[lang].privacy}</a></footer>
 </div>
 <script src="/track.js"></script>
+<script src="/share.js" defer></script>
 <script>if (window.FITME_TRACK) FITME_TRACK.init({});</script>
 </body>
 </html>
@@ -129,6 +136,18 @@ function picture(img, alt, eager) {
 function card(r, lang) {
   const d = data(r.img, lang);
   return `<li><a href="${url(lang, r[lang].slug)}"><img src="/img/meals/${r.img}-720.webp" width="1200" height="750" loading="lazy" alt=""><span class="card-name">${esc(d.name)}</span><span class="card-meta">${d.kcal} ${L[lang].kcal} · ${d.p} ${L[lang].g} ${L[lang].protein} · ${esc(d.time)}</span></a></li>`;
+}
+
+// Share bar at the end of each recipe. Links carry utm_source=<channel>&utm_medium=share&utm_campaign=recipe.
+// Instagram has no web share link: on phones it uses the share sheet, elsewhere it copies the link. Wired up by /share.js.
+function shareBlock(r, lang, d) {
+  const t = L[lang], link = SITE + url(lang, r[lang].slug);
+  const btn = (ch, label, extra = '') => `<button type="button" class="sh sh-${ch}" data-ch="${ch}"${extra}>${label}</button>`;
+  return `<section class="share" aria-label="${esc(t.share)}" data-url="${esc(link)}" data-text="${esc(t.shareText(d.name, d.kcal, d.p))}" data-img="${SITE}/img/meals/${r.img}-1200.webp" data-copied="${esc(t.copied)}" data-ig="${esc(t.igCopied)}" data-recipe="${esc(r[lang].slug)}">
+<h2>${t.share}</h2>
+<div class="sh-row">${btn('native', t.shareNative, ' hidden')}${btn('whatsapp', 'WhatsApp')}${btn('instagram', 'Instagram')}${btn('facebook', 'Facebook')}${btn('pinterest', 'Pinterest')}${btn('x', 'X')}${btn('telegram', 'Telegram')}${btn('email', t.email)}${btn('copy', t.copy)}</div>
+<p class="sh-toast" role="status" aria-live="polite" hidden></p>
+</section>`;
 }
 
 function recipePage(r, lang) {
@@ -159,6 +178,7 @@ ${picture(r.img, d.name, true)}
 ${tips}
 <h2>${t.fits}</h2>
 <p>${esc(c.fits)}</p>
+${shareBlock(r, lang, d)}
 <div class="cta"><p>${esc(t.ctaLead)}</p><a class="btn" href="${HOME[lang]}">${t.cta}</a></div>
 </article>
 <section class="more"><h2>${t.more}</h2><ul class="cards">${more}</ul></section>
