@@ -185,7 +185,7 @@
         invalid_email: 'Please enter a valid email address.', consent_required: 'Please tick the box to agree to the daily email.',
         invalid_intake: 'Your daily intake looks off. Check your details above.', not_configured: 'Email sign-up opens soon. Please check back in a few days.',
         send_failed: 'We couldn’t send the confirmation email. Please try again in a moment.',
-        sending: 'Sending…', ok: 'Almost done: check your inbox and tap the link to confirm.', applied: "Done: you're logged in, so your plan is updated straight away. Your next email uses the new portions.", rate: 'Too many tries. Please wait a minute and try again.',
+        sending: 'Sending…', ok: 'Almost done: check your inbox and tap the link to confirm.', applied: "Done: you'd already confirmed this email, so your plan is updated straight away. Your next email uses the new portions.", rate: 'Too many tries. Please wait a minute and try again.',
         error: 'Something went wrong. Please try again.', preview: 'Sign-up works on the live FitMe site (fitmeplan.com). It isn’t available in this preview.'
       },
       subscribed: 'You’re subscribed. Your first meal plan arrives tomorrow at 7:00.',
@@ -231,7 +231,7 @@
         invalid_email: 'Introduz um endereço de email válido.', consent_required: 'Marca a caixa para aceitar o email diário.',
         invalid_intake: 'A tua ingestão diária parece estranha. Confirma os teus dados.', not_configured: 'A subscrição por email abre em breve. Volta dentro de alguns dias.',
         send_failed: 'Não conseguimos enviar o email de confirmação. Tenta novamente daqui a pouco.',
-        sending: 'A enviar…', ok: 'Quase pronto: abre o teu email e carrega no link para confirmar.', applied: 'Feito: como tens sessão iniciada, o teu plano foi atualizado logo. O próximo email já usa as novas porções.', rate: 'Demasiadas tentativas. Espera um minuto e tenta outra vez.',
+        sending: 'A enviar…', ok: 'Quase pronto: abre o teu email e carrega no link para confirmar.', applied: 'Feito: já tinhas confirmado este email, por isso o teu plano foi atualizado logo. O próximo email já usa as novas porções.', rate: 'Demasiadas tentativas. Espera um minuto e tenta outra vez.',
         error: 'Algo correu mal. Tenta novamente.', preview: 'A subscrição funciona no site do FitMe (fitmeplan.com). Não está disponível nesta pré-visualização.'
       },
       subscribed: 'Subscrição confirmada. O teu primeiro plano de refeições chega amanhã às 7:00.',
@@ -277,7 +277,7 @@
         invalid_email: 'Digite um endereço de e-mail válido.', consent_required: 'Marque a caixa para aceitar o e-mail diário.',
         invalid_intake: 'Sua ingestão diária parece estranha. Confira seus dados.', not_configured: 'A inscrição por e-mail abre em breve. Volte daqui a alguns dias.',
         send_failed: 'Não conseguimos enviar o e-mail de confirmação. Tente de novo daqui a pouco.',
-        sending: 'Enviando…', ok: 'Quase lá: abra seu e-mail e toque no link para confirmar.', applied: 'Pronto: como você está logado, seu plano foi atualizado na hora. O próximo e-mail já usa as novas porções.', rate: 'Muitas tentativas. Espere um minuto e tente de novo.',
+        sending: 'Enviando…', ok: 'Quase lá: abra seu e-mail e toque no link para confirmar.', applied: 'Pronto: você já tinha confirmado este e-mail, então seu plano foi atualizado na hora. O próximo e-mail já usa as novas porções.', rate: 'Muitas tentativas. Espere um minuto e tente de novo.',
         error: 'Algo deu errado. Tente de novo.', preview: 'A inscrição funciona no site do FitMe (fitmeplan.com). Não está disponível nesta prévia.'
       },
       subscribed: 'Inscrição confirmada. Seu primeiro plano de refeições chega amanhã às 7h.',

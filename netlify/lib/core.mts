@@ -61,20 +61,36 @@ export type Profile = {
   updatedAt?: string;
 };
 
-// Plan settings edited on the account page. Same limits as sign-up. Returns { plan } or { error } naming the bad field.
-export function cleanPlan(v: any, cur: Subscriber): { plan?: Pick<Subscriber, "intake" | "prot" | "prots" | "units" | "lang" | "diet">; error?: string } {
+// Proteins edited on the account page (calories and protein come from the calculator). Returns { plan } or { error }.
+export function cleanPlan(v: any): { plan?: Pick<Subscriber, "prots" | "diet">; error?: string } {
   if (!v || typeof v !== "object") return { error: "bad_request" };
-  const intake = Math.round(Number(v.intake)), prot = Math.round(Number(v.prot));
-  if (!(intake >= 1000 && intake <= 6000)) return { error: "intake" };
-  if (!(prot >= 40 && prot <= 400)) return { error: "prot" };
   const prots = cleanProts(v.prots);
   if (!prots) return { error: "prots" };
-  return { plan: {
-    intake, prot, prots,
-    units: v.units === "imperial" ? "imperial" : v.units === "metric" ? "metric" : cur.units,
-    lang: v.lang === "en" || v.lang === "pt" || v.lang === "br" ? v.lang : cur.lang,
-    diet: prots.some((x) => ["chicken", "beef", "pork", "fish"].includes(x)) ? "all" : "veg",
-  } };
+  return { plan: { prots, diet: prots.some((x) => ["chicken", "beef", "pork", "fish"].includes(x)) ? "all" : "veg" } };
+}
+
+const PLAN_NOTICE = {
+  en: { subject: "Your FitMe plan was updated", title: "Your meal plan was updated",
+    lead: (k: string, p: string) => `Your FitMe plan was just recalculated with this email: ${k} and ${p} protein a day. Your next email uses the new portions.`,
+    notYou: (u: string) => `Wasn't you? <a href="${u}" style="color:#2e6b4f;">Log in</a> to check your plan, or recalculate on FitMe to change it back.`, notYouText: "Wasn't you? Log in to check your plan" },
+  pt: { subject: "O teu plano FitMe foi atualizado", title: "O teu plano de refeições foi atualizado",
+    lead: (k: string, p: string) => `O teu plano FitMe acabou de ser recalculado com este email: ${k} e ${p} de proteína por dia. O próximo email já usa as novas porções.`,
+    notYou: (u: string) => `Não foste tu? <a href="${u}" style="color:#2e6b4f;">Entra na tua conta</a> para veres o teu plano, ou recalcula no FitMe para o voltares a mudar.`, notYouText: "Não foste tu? Entra na tua conta para veres o teu plano" },
+  br: { subject: "Seu plano FitMe foi atualizado", title: "Seu plano de refeições foi atualizado",
+    lead: (k: string, p: string) => `Seu plano FitMe acabou de ser recalculado com este e-mail: ${k} e ${p} de proteína por dia. O próximo e-mail já usa as novas porções.`,
+    notYou: (u: string) => `Não foi você? <a href="${u}" style="color:#2e6b4f;">Entre na sua conta</a> para ver seu plano, ou recalcule no FitMe para mudar de volta.`, notYouText: "Não foi você? Entre na sua conta para ver seu plano" },
+};
+
+export function renderPlanUpdatedEmail(siteUrl: string, st: { intake: number; prot: number; lang?: Lang }) {
+  const c = COLORS, lang = asLang(st.lang), t = PLAN_NOTICE[lang], loc = T[lang].locale;
+  const k = kcalL(st.intake, loc), p = `${st.prot.toLocaleString(loc)} g`;
+  const login = `${siteUrl}${lang === "en" ? "" : "/" + lang}/login/`;
+  const inner = `<tr><td style="background:${c.card};border:1px solid ${c.line};border-radius:12px;padding:28px 24px;">
+<h1 style="margin:0 0 10px;font-size:22px;line-height:1.25;">${t.title}</h1>
+<p style="margin:0 0 14px;font-size:15px;line-height:1.55;color:${c.muted};">${t.lead(k, p)}</p>
+<p style="margin:0;font-size:14px;line-height:1.55;color:${c.muted};">${t.notYou(esc(login))}</p>
+</td></tr>`;
+  return { subject: t.subject, html: shell(siteUrl, inner, T[lang].confirmFooter, lang), text: `${t.title}\n\n${t.lead(k, p)}\n\n${t.notYouText}: ${login}` };
 }
 
 export const INTEREST_TEXT = "Tick if you're interested and FitMe may email you about it. You can untick at any time.";

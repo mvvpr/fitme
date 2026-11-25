@@ -1,6 +1,6 @@
 // GET /api/me — the logged-in user's account details (401 if not logged in).
 // POST /api/me { action: "logout" } ends the session; { action: "profile", profile } saves the optional profile;
-// { action: "plan", plan } changes calories/protein/proteins/units/language right away (no confirmation email: logging in proved the address).
+// { action: "plan", plan: { prots } } changes the protein picks right away (calories and protein come from the calculator).
 import type { Config } from "@netlify/functions";
 import { subscribers, subKey, sessKey, currentUser, sessionCookie, readSid, cleanProfile, cleanPlan } from "../lib/core.mts";
 
@@ -20,7 +20,7 @@ export default async (req: Request) => {
     if (input?.action === "plan") {
       const me = await currentUser(req);
       if (!me) return Response.json({ ok: false, error: "not_logged_in" }, { status: 401, headers });
-      const r = cleanPlan(input.plan, me.sub);
+      const r = cleanPlan(input.plan);
       if (r.error) return Response.json({ ok: false, error: r.error }, { status: 400, headers });
       const updated = { ...me.sub, ...r.plan, pending: null, planUpdatedAt: new Date().toISOString() };
       await subscribers().setJSON(subKey(me.hash), updated);

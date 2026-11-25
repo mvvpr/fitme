@@ -98,19 +98,10 @@ input[type=number]:focus, select:focus { outline: 2px solid var(--accent); outli
     <table id="view" style="width:100%;border-collapse:collapse;font-size:15px;"><tbody id="rows"></tbody></table>
     <form id="ef" novalidate hidden>
       <p class="muted" style="font-size:14px;margin:0;" data-t="editLead"></p>
-      <div class="two">
-        <div><label for="kcal" data-t="cal"></label><input type="number" id="kcal" min="1000" max="6000" step="10" inputmode="numeric"></div>
-        <div><label for="prot" data-t="protG"></label><input type="number" id="prot" min="40" max="400" step="1" inputmode="numeric"></div>
-      </div>
-      <p class="warn" id="lowWarn" hidden data-t="lowWarn"></p>
       <p class="hint" data-t="calHint"></p>
       <label data-t="prots"></label>
       <div class="chips" id="chips"></div>
       <p class="hint" data-t="protsHint"></p>
-      <div class="two">
-        <div><label for="units" data-t="units"></label><select id="units"><option value="metric"></option><option value="imperial"></option></select></div>
-        <div><label for="lng" data-t="lang"></label><select id="lng"><option value="en">English</option><option value="pt">Português (Portugal)</option><option value="br">Português (Brasil)</option></select></div>
-      </div>
       <p class="err" id="eerr" role="alert" hidden></p>
       <p style="margin:18px 0 0;display:flex;gap:10px;flex-wrap:wrap;"><button class="btn primary" type="submit" id="esave" data-t="saveChanges"></button><button class="btn ghost" type="button" id="ecancel" data-t="cancel"></button></p>
     </form>
@@ -124,8 +115,8 @@ input[type=number]:focus, select:focus { outline: 2px solid var(--accent); outli
 <script>
 (function () {
   var T = {
-    en: { title: 'Your account', edit: 'Edit', editLead: 'Changes apply straight away, no confirmation email needed. Your next email uses the new portions.', protG: 'Daily protein (g)',
-      calHint: 'Want new numbers from your weight and goal? <a data-home href="/">Recalculate on FitMe</a> and sign up with the same email while logged in.',
+    en: { title: 'Your account', edit: 'Change proteins', editLead: 'Pick the proteins you want in your lunches and dinners. Changes apply straight away, and your next email uses them.', protG: 'Daily protein (g)',
+      calHint: 'To change your calories or protein, <a data-home href="/">recalculate on FitMe</a> and enter the same email. It updates straight away, no need to confirm again.',
       lowWarn: 'Below 1,200 kcal a day is very low. Check with a doctor before eating this little.', protsHint: 'Pick at least 2. Your lunches and dinners are built around these.',
       saveChanges: 'Save changes', cancel: 'Cancel', planSaved: 'Plan updated', eIntake: 'Daily calories must be between 1,000 and 6,000.', eProt: 'Daily protein must be between 40 and 400 g.', eProts: 'Please pick at least 2 proteins.',
       profH: 'Your profile', profLead: 'All optional. Fill in what you like.', optional: '(optional)', fn: 'First name', ln: 'Last name', ph: 'Mobile number', so: 'Social profile link',
@@ -139,8 +130,8 @@ input[type=number]:focus, select:focus { outline: 2px solid var(--accent); outli
       lang: 'Language', units: 'Units', tz: 'Time zone', since: 'Member since', metric: 'Metric (kg, g)', imperial: 'Imperial (lb, oz)', veg: 'Vegetarian', all: 'All proteins',
       langs: { en: 'English', pt: 'Português (Portugal)', br: 'Português (Brasil)' },
       P: { chicken: 'Chicken', beef: 'Beef', pork: 'Pork', fish: 'Fish', eggs: 'Eggs', tofu: 'Tofu', beans: 'Beans' }, loc: 'en-GB' },
-    pt: { title: 'A tua conta', edit: 'Editar', editLead: 'As alterações aplicam-se logo, sem email de confirmação. O próximo email já usa as novas porções.', protG: 'Proteína diária (g)',
-      calHint: 'Queres novos valores a partir do teu peso e objetivo? <a data-home href="/pt/">Recalcula no FitMe</a> e subscreve com o mesmo email com a sessão iniciada.',
+    pt: { title: 'A tua conta', edit: 'Mudar proteínas', editLead: 'Escolhe as proteínas que queres nos teus almoços e jantares. As alterações aplicam-se logo e o próximo email já as usa.', protG: 'Proteína diária (g)',
+      calHint: 'Para mudares as calorias ou a proteína, <a data-home href="/pt/">recalcula no FitMe</a> e escreve o mesmo email. Atualiza logo, sem teres de confirmar outra vez.',
       lowWarn: 'Menos de 1200 kcal por dia é muito pouco. Fala com um médico antes de comeres tão pouco.', protsHint: 'Escolhe pelo menos 2. Os teus almoços e jantares são feitos à volta destas.',
       saveChanges: 'Guardar alterações', cancel: 'Cancelar', planSaved: 'Plano atualizado', eIntake: 'As calorias diárias têm de estar entre 1000 e 6000.', eProt: 'A proteína diária tem de estar entre 40 e 400 g.', eProts: 'Escolhe pelo menos 2 proteínas.',
       profH: 'O teu perfil', profLead: 'Tudo opcional. Preenche o que quiseres.', optional: '(opcional)', fn: 'Nome', ln: 'Apelido', ph: 'Telemóvel', so: 'Link do teu perfil social',
@@ -154,8 +145,8 @@ input[type=number]:focus, select:focus { outline: 2px solid var(--accent); outli
       lang: 'Idioma', units: 'Unidades', tz: 'Fuso horário', since: 'Membro desde', metric: 'Métrico (kg, g)', imperial: 'Imperial (lb, oz)', veg: 'Vegetariano', all: 'Todas as proteínas',
       langs: { en: 'English', pt: 'Português (Portugal)', br: 'Português (Brasil)' },
       P: { chicken: 'Frango', beef: 'Vaca', pork: 'Porco', fish: 'Peixe', eggs: 'Ovos', tofu: 'Tofu', beans: 'Feijão' }, loc: 'pt-PT' },
-    br: { title: 'Sua conta', edit: 'Editar', editLead: 'As mudanças valem na hora, sem e-mail de confirmação. O próximo e-mail já usa as novas porções.', protG: 'Proteína diária (g)',
-      calHint: 'Quer novos números a partir do seu peso e objetivo? <a data-home href="/br/">Recalcule no FitMe</a> e faça a inscrição com o mesmo e-mail estando logado.',
+    br: { title: 'Sua conta', edit: 'Mudar proteínas', editLead: 'Escolha as proteínas que você quer nos almoços e jantares. As mudanças valem na hora e o próximo e-mail já usa elas.', protG: 'Proteína diária (g)',
+      calHint: 'Para mudar suas calorias ou proteína, <a data-home href="/br/">recalcule no FitMe</a> e digite o mesmo e-mail. Atualiza na hora, sem precisar confirmar de novo.',
       lowWarn: 'Menos de 1.200 kcal por dia é muito pouco. Fale com um médico antes de comer tão pouco.', protsHint: 'Escolha pelo menos 2. Seus almoços e jantares são montados em volta delas.',
       saveChanges: 'Salvar alterações', cancel: 'Cancelar', planSaved: 'Plano atualizado', eIntake: 'As calorias diárias precisam ficar entre 1.000 e 6.000.', eProt: 'A proteína diária precisa ficar entre 40 e 400 g.', eProts: 'Escolha pelo menos 2 proteínas.',
       profH: 'Seu perfil', profLead: 'Tudo opcional. Preencha o que quiser.', optional: '(opcional)', fn: 'Nome', ln: 'Sobrenome', ph: 'Celular', so: 'Link do seu perfil social',
@@ -201,36 +192,29 @@ input[type=number]:focus, select:focus { outline: 2px solid var(--accent); outli
     row(L.since, new Date(me.since).toLocaleDateString(L.loc, { day: 'numeric', month: 'long', year: 'numeric' }));
   }
   var ef = document.getElementById('ef'), view = document.getElementById('view'), editBtn = document.getElementById('edit'), eerr = document.getElementById('eerr'), esave = document.getElementById('esave');
-  var kcal = document.getElementById('kcal'), protIn = document.getElementById('prot'), unitsSel = document.getElementById('units'), lngSel = document.getElementById('lng'), chips = document.getElementById('chips');
-  unitsSel.options[0].textContent = L.metric; unitsSel.options[1].textContent = L.imperial;
+  var chips = document.getElementById('chips');
   PROTS.forEach(function (k) { var l = document.createElement('label'); l.className = 'chip'; l.innerHTML = '<input type="checkbox" value="' + k + '"> '; l.appendChild(document.createTextNode(L.P[k])); chips.appendChild(l); });
   function eErr(m) { eerr.textContent = m; eerr.hidden = !m; }
-  function lowCheck() { document.getElementById('lowWarn').hidden = !(Number(kcal.value) && Number(kcal.value) < 1200); }
-  kcal.addEventListener('input', lowCheck);
   function openEdit(on) {
     ef.hidden = !on; view.hidden = on; editBtn.hidden = on; document.getElementById('planSaved').hidden = true; eErr('');
     if (!on || !ME) return;
     var p = ME.plan, picks = p.prots && p.prots.length ? p.prots : (p.diet === 'veg' ? ['eggs', 'tofu', 'beans'] : PROTS);
-    kcal.value = Math.round(p.intake / 10) * 10; protIn.value = p.prot; unitsSel.value = p.units; lngSel.value = p.lang; lowCheck();
     chips.querySelectorAll('input').forEach(function (c) { c.checked = picks.indexOf(c.value) >= 0; });
-    kcal.focus();
+    var first = chips.querySelector('input'); if (first) first.focus();
   }
   editBtn.addEventListener('click', function () { openEdit(true); });
   document.getElementById('ecancel').addEventListener('click', function () { openEdit(false); });
   ef.addEventListener('submit', function (e) {
     e.preventDefault(); eErr('');
     var picks = [].slice.call(chips.querySelectorAll('input:checked')).map(function (c) { return c.value; });
-    var ki = Math.round(Number(kcal.value)), pi = Math.round(Number(protIn.value));
-    if (!(ki >= 1000 && ki <= 6000)) { eErr(L.eIntake); kcal.focus(); return; }
-    if (!(pi >= 40 && pi <= 400)) { eErr(L.eProt); protIn.focus(); return; }
     if (picks.length < 2) { eErr(L.eProts); return; }
     esave.disabled = true;
-    fetch('/api/me', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'plan', plan: { intake: ki, prot: pi, prots: picks, units: unitsSel.value, lang: lngSel.value } }) })
+    fetch('/api/me', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'plan', plan: { prots: picks } }) })
       .then(function (r) { if (r.status === 401) { location.replace(login); throw 0; } return r.json(); })
       .then(function (j) {
         esave.disabled = false;
         if (j && j.ok) { ME.plan = j.plan; renderPlan(ME); openEdit(false); document.getElementById('planSaved').hidden = false; return; }
-        eErr({ intake: L.eIntake, prot: L.eProt, prots: L.eProts }[j && j.error] || L.eFail);
+        eErr(j && j.error === 'prots' ? L.eProts : L.eFail);
       })
       .catch(function (x) { if (x === 0) return; esave.disabled = false; eErr(L.eFail); });
   });
