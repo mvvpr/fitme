@@ -410,3 +410,78 @@ export function htmlPage(siteUrl: string, title: string, body: string, status = 
 <div style="background:${c.card};border:1px solid ${c.line};border-radius:12px;padding:24px;margin-top:16px;"><h1 style="margin:0 0 10px;font-size:21px;">${esc(title)}</h1>${body}</div></main></body></html>`,
     { status, headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store", "x-robots-tag": "noindex" } });
 }
+
+// ---------- Accounts: log in by email link ----------
+// No passwords. POST /api/login emails a one-time link (15 min); opening it shows a button that POSTs to /api/auth
+// (so email link scanners can't use it up), which starts a 30-day session kept in an HttpOnly cookie.
+// Blobs: login/<token> = { hash, exp }, sess/<sid> = { hash, exp }. Only addresses already on FitMe can log in.
+export const LOGIN_TTL_MS = 15 * 60 * 1000;
+export const SESSION_TTL_MS = 30 * 864e5;
+export const SESSION_COOKIE = "fm_s";
+export const loginKey = (token: string) => `login/${token}`;
+export const sessKey = (sid: string) => `sess/${sid}`;
+export const TOKEN_RE = /^[a-f0-9]{48}$/;
+
+export function sessionCookie(sid: string | null) {
+  const v = sid ? `${sid}; Max-Age=${SESSION_TTL_MS / 1000}` : `; Max-Age=0`;
+  return `${SESSION_COOKIE}=${v}; Path=/; HttpOnly; Secure; SameSite=Lax`;
+}
+
+export function readSid(req: Request): string | null {
+  const m = (req.headers.get("cookie") || "").match(new RegExp(`(?:^|;\\s*)${SESSION_COOKIE}=([a-f0-9]{48})`));
+  return m ? m[1] : null;
+}
+
+// The logged-in subscriber, or null (no cookie, expired session, or the address was unsubscribed/deleted).
+export async function currentUser(req: Request) {
+  const sid = readSid(req);
+  if (!sid) return null;
+  const store = subscribers();
+  const sess = (await store.get(sessKey(sid), { type: "json" })) as { hash: string; exp: number } | null;
+  if (!sess || sess.exp < Date.now()) { if (sess) await store.delete(sessKey(sid)); return null; }
+  const sub = (await store.get(subKey(sess.hash), { type: "json" })) as Subscriber | null;
+  if (!sub) { await store.delete(sessKey(sid)); return null; }
+  return { sid, hash: sess.hash, sub };
+}
+
+export const AUTH = {
+  en: {
+    mailSubject: "Your FitMe log-in link", mailTitle: "Log in to FitMe",
+    mailLead: "Tap the button below to log in to your FitMe account. The link works once and expires in 15 minutes.",
+    mailBtn: "Log in", mailIgnore: "If you didn't ask to log in, ignore this email. Nobody can log in without this link.",
+    mailFooter: "You're receiving this because someone asked to log in to FitMe with this address.",
+    pageTitle: "Log in to FitMe", pageBody: "Tap the button to finish logging in on this device.", pageBtn: "Log in",
+    expiredTitle: "This log-in link has expired", expiredBody: (u: string) => `Links work once and for 15 minutes. <a href="${u}" style="color:#2e6b4f;">Get a new link</a>.`,
+  },
+  pt: {
+    mailSubject: "O teu link de acesso ao FitMe", mailTitle: "Entrar no FitMe",
+    mailLead: "Carrega no botão abaixo para entrares na tua conta FitMe. O link só funciona uma vez e expira em 15 minutos.",
+    mailBtn: "Entrar", mailIgnore: "Se não pediste para entrar, ignora este email. Ninguém consegue entrar sem este link.",
+    mailFooter: "Recebes este email porque alguém pediu para entrar no FitMe com este endereço.",
+    pageTitle: "Entrar no FitMe", pageBody: "Carrega no botão para terminares a entrada neste dispositivo.", pageBtn: "Entrar",
+    expiredTitle: "Este link de acesso expirou", expiredBody: (u: string) => `Os links funcionam uma vez e durante 15 minutos. <a href="${u}" style="color:#2e6b4f;">Pede um novo link</a>.`,
+  },
+  br: {
+    mailSubject: "Seu link de acesso ao FitMe", mailTitle: "Entrar no FitMe",
+    mailLead: "Toque no botão abaixo para entrar na sua conta FitMe. O link funciona uma vez só e expira em 15 minutos.",
+    mailBtn: "Entrar", mailIgnore: "Se você não pediu para entrar, ignore este e-mail. Ninguém consegue entrar sem este link.",
+    mailFooter: "Você está recebendo este e-mail porque alguém pediu para entrar no FitMe com este endereço.",
+    pageTitle: "Entrar no FitMe", pageBody: "Toque no botão para terminar de entrar neste dispositivo.", pageBtn: "Entrar",
+    expiredTitle: "Este link de acesso expirou", expiredBody: (u: string) => `Os links funcionam uma vez só e por 15 minutos. <a href="${u}" style="color:#2e6b4f;">Peça um novo link</a>.`,
+  },
+};
+
+export const loginPath = (siteUrl: string, lang: Lang) => `${siteUrl}${lang === "en" ? "" : "/" + lang}/login/`;
+export const accountPath = (siteUrl: string, lang: Lang) => `${siteUrl}${lang === "en" ? "" : "/" + lang}/account/`;
+
+export function renderLoginEmail(siteUrl: string, url: string, lang: Lang = "en") {
+  const c = COLORS, a = AUTH[lang];
+  const inner = `<tr><td style="background:${c.card};border:1px solid ${c.line};border-radius:12px;padding:28px 24px;">
+<h1 style="margin:0 0 10px;font-size:22px;line-height:1.25;">${a.mailTitle}</h1>
+<p style="margin:0 0 22px;font-size:15px;line-height:1.55;color:${c.muted};">${a.mailLead}</p>
+<a href="${esc(url)}" style="display:inline-block;background:${c.accent};color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:12px 22px;border-radius:8px;">${a.mailBtn}</a>
+<p style="margin:22px 0 0;font-size:13px;line-height:1.5;color:${c.muted};">${a.mailIgnore}</p>
+</td></tr>`;
+  const text = `${a.mailTitle}\n\n${a.mailLead}\n\n${a.mailBtn}: ${url}\n\n${a.mailIgnore}`;
+  return { subject: a.mailSubject, html: shell(siteUrl, inner, a.mailFooter, lang), text };
+}

@@ -68,6 +68,7 @@ export default async (req: Request, context: Context) => {
     // (the words stay English here; the page script translates them, and keeps them right when the visitor switches language).
     .replace('href="/recipes/" data-href-en', `href="/${lang}/receitas/" data-href-en`)
     .replace('href="/privacy.html" data-href-en', `href="/${lang}/privacy.html" data-href-en`)
+    .replace('href="/login/" data-href-en', `href="/${lang}/login/" data-href-en`)
     .replace(/<html lang="en">/, `<html lang="${lang === "br" ? "pt-BR" : "pt-PT"}">`);
   const headers = new Headers(res.headers);
   headers.delete("content-length");

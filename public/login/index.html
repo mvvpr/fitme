@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Log in · FitMe</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root { --bg:#f0eee9; --surface:#fbfaf7; --ink:#1e1c1a; --muted:#6b655e; --line:#ddd8cf; --accent:#2e6b4f; --accent-ink:#fff;
+  --font-display:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif; --font-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif; color-scheme: light; }
+@media (prefers-color-scheme: dark) { :root { --bg:#141311; --surface:#1d1b18; --ink:#f0eee9; --muted:#a39c92; --line:#2f2c27; --accent:#7fb894; --accent-ink:#10211a; color-scheme: dark; } }
+* { box-sizing: border-box; }
+body { margin:0; background:var(--bg); color:var(--ink); font-family:var(--font-body); font-size:15.5px; line-height:1.6; }
+.wrap { max-width: 520px; margin: 0 auto; padding: 20px 18px 56px; }
+header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom: 22px; }
+.brand { display:flex; align-items:center; gap:10px; text-decoration:none; color:var(--ink); font-family:var(--font-display); font-weight:700; font-size:24px; letter-spacing:-0.02em; }
+.brand img { width:34px; height:34px; border-radius:9px; }
+.brand span { color: var(--accent); }
+.lang-switch { display:inline-flex; border:1px solid var(--line); border-radius:999px; padding:2px; background:var(--surface); }
+.lang-switch a { font-size:12.5px; font-weight:600; color:var(--muted); text-decoration:none; padding:4px 10px; border-radius:999px; }
+.lang-switch a[aria-current="true"] { background:var(--accent); color:var(--accent-ink); }
+a { color: var(--accent); }
+.card { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding: 24px; }
+h1 { font-family:var(--font-display); font-size: 28px; line-height:1.15; letter-spacing:-0.02em; margin: 0 0 8px; }
+h2 { font-family:var(--font-display); font-size: 18px; margin: 0 0 10px; }
+.muted { color: var(--muted); }
+a { color: var(--accent); }
+label { display:block; font-weight:600; font-size:14px; margin: 18px 0 6px; }
+input[type=email] { width:100%; font: inherit; padding: 11px 12px; border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--ink); }
+input[type=email]:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.btn { font: inherit; font-weight: 600; font-size: 15px; border-radius: 8px; padding: 12px 22px; cursor: pointer; border: 1px solid transparent; }
+.btn.primary { background: var(--accent); color: var(--accent-ink); }
+.btn.ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+.btn[disabled] { opacity: .6; cursor: default; }
+.err { color: #b3261e; font-size: 14px; margin: 10px 0 0; }
+.hp { position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden; }
+[hidden] { display:none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <a class="brand" id="home" href="/"><img src="/brand/fitme-icon-512.png" alt=""><b style="font-weight:inherit">Fit<span>Me</span></b></a>
+  <div class="lang-switch" role="group" aria-label="Language / Idioma"><a href="/login/" data-lang="en" hreflang="en">EN</a><a href="/pt/login/" data-lang="pt" hreflang="pt-PT">PT</a><a href="/br/login/" data-lang="br" hreflang="pt-BR">BR</a></div>
+</header>
+<main class="card">
+  <section id="ask">
+    <h1 data-t="h">Log in</h1>
+    <p class="muted" data-t="lead">Enter the email you used for your FitMe meal plan and we'll send you a link to log in. No password needed.</p>
+    <form id="f" novalidate>
+      <label for="email" data-t="label">Email</label>
+      <input type="email" id="email" name="email" autocomplete="email" inputmode="email" required>
+      <div class="hp" aria-hidden="true"><input type="text" name="website" tabindex="-1" autocomplete="off"></div>
+      <p class="err" id="err" role="alert" hidden></p>
+      <p style="margin:18px 0 0;"><button class="btn primary" type="submit" id="go" data-t="btn">Send me a link</button></p>
+    </form>
+    <p class="muted" style="font-size:14px;margin:22px 0 0;" data-t="noacct">No FitMe plan yet? <a data-home href="/">Get yours free</a>.</p>
+  </section>
+  <section id="sent" hidden>
+    <h1 data-t="sentH">Check your inbox</h1>
+    <p class="muted" data-t="sentLead">If that email has a FitMe plan, a log-in link is on its way. It works once and expires in 15 minutes.</p>
+    <p class="muted" style="font-size:14px;" data-t="sentHelp">Nothing after a few minutes? Check your spam folder, or make sure you typed the email you signed up with.</p>
+    <p style="margin:18px 0 0;"><button class="btn ghost" type="button" id="again" data-t="again">Use a different email</button></p>
+  </section>
+</main>
+</div>
+<script>
+(function () {
+  var T = {
+    en: { title: 'Log in', h: 'Log in', lead: "Enter the email you used for your FitMe meal plan and we'll send you a link to log in. No password needed.", label: 'Email', btn: 'Send me a link', sending: 'Sending…',
+      noacct: 'No FitMe plan yet? <a data-home href="/">Get yours free</a>.', sentH: 'Check your inbox', sentLead: 'If that email has a FitMe plan, a log-in link is on its way. It works once and expires in 15 minutes.',
+      sentHelp: 'Nothing after a few minutes? Check your spam folder, or make sure you typed the email you signed up with.', again: 'Use a different email',
+      invalid: 'Please enter a valid email address.', failed: "Sorry, we couldn't send the email. Please try again in a minute.", busy: 'Too many tries. Please wait a minute and try again.' },
+    pt: { title: 'Entrar', h: 'Entrar', lead: 'Escreve o email que usaste no teu plano de refeições FitMe e enviamos-te um link para entrares. Não precisas de palavra-passe.', label: 'Email', btn: 'Enviar link', sending: 'A enviar…',
+      noacct: 'Ainda não tens um plano FitMe? <a data-home href="/pt/">Cria o teu, é grátis</a>.', sentH: 'Vê a tua caixa de entrada', sentLead: 'Se esse email tiver um plano FitMe, o link de acesso está a caminho. Só funciona uma vez e expira em 15 minutos.',
+      sentHelp: 'Não chegou nada após alguns minutos? Vê a pasta de spam ou confirma que escreveste o email com que te inscreveste.', again: 'Usar outro email',
+      invalid: 'Escreve um endereço de email válido.', failed: 'Não conseguimos enviar o email. Tenta outra vez daqui a um minuto.', busy: 'Demasiadas tentativas. Espera um minuto e tenta outra vez.' },
+    br: { title: 'Entrar', h: 'Entrar', lead: 'Digite o e-mail que você usou no seu plano de refeições FitMe e enviamos um link para você entrar. Não precisa de senha.', label: 'E-mail', btn: 'Enviar link', sending: 'Enviando…',
+      noacct: 'Ainda não tem um plano FitMe? <a data-home href="/br/">Crie o seu grátis</a>.', sentH: 'Confira sua caixa de entrada', sentLead: 'Se esse e-mail tiver um plano FitMe, o link de acesso está a caminho. Ele funciona uma vez só e expira em 15 minutos.',
+      sentHelp: 'Não chegou nada depois de alguns minutos? Confira a pasta de spam ou veja se você digitou o e-mail da sua inscrição.', again: 'Usar outro e-mail',
+      invalid: 'Digite um endereço de e-mail válido.', failed: 'Não conseguimos enviar o e-mail. Tente de novo daqui a um minuto.', busy: 'Muitas tentativas. Espere um minuto e tente de novo.' }
+  };
+  var path = /^\/br(\/|$)/.test(location.pathname) ? 'br' : /^\/pt(\/|$)/.test(location.pathname) ? 'pt' : 'en';
+  var L = T[path];
+  document.documentElement.lang = path === 'br' ? 'pt-BR' : path === 'pt' ? 'pt-PT' : 'en';
+  document.title = L.title + ' · FitMe';
+  var home = path === 'en' ? '/' : '/' + path + '/';
+  document.getElementById('home').href = home;
+  document.querySelectorAll('.lang-switch a').forEach(function (a) { a.setAttribute('aria-current', String(a.dataset.lang === path)); });
+  document.querySelectorAll('[data-t]').forEach(function (el) { el.innerHTML = L[el.dataset.t]; });
+  document.querySelectorAll('[data-home]').forEach(function (el) { el.href = home; });
+  var acct = (path === 'en' ? '' : '/' + path) + '/account/', login = (path === 'en' ? '' : '/' + path) + '/login/';
+  // Already logged in: go straight to the account page.
+  fetch('/api/me', { credentials: 'same-origin' }).then(function (r) { if (r.ok) location.replace(acct); }).catch(function () {});
+
+  var f = document.getElementById('f'), email = document.getElementById('email'), err = document.getElementById('err'), go = document.getElementById('go');
+  function showErr(m) { err.textContent = m; err.hidden = !m; }
+  f.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var v = email.value.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)) { showErr(L.invalid); email.focus(); return; }
+    showErr(''); go.disabled = true; go.textContent = L.sending;
+    fetch('/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: v, lang: path, website: f.website.value }) })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { status: r.status, j: j }; }); })
+      .then(function (res) {
+        go.disabled = false; go.textContent = L.btn;
+        if (res.j && res.j.ok) { document.getElementById('ask').hidden = true; document.getElementById('sent').hidden = false; return; }
+        showErr(res.status === 429 ? L.busy : res.j && res.j.error === 'invalid_email' ? L.invalid : L.failed);
+      })
+      .catch(function () { go.disabled = false; go.textContent = L.btn; showErr(L.failed); });
+  });
+  document.getElementById('again').addEventListener('click', function () {
+    document.getElementById('sent').hidden = true; document.getElementById('ask').hidden = false; email.value = ''; email.focus();
+  });
+})();
+</script>
+</body>
+</html>

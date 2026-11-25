@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Your account · FitMe</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root { --bg:#f0eee9; --surface:#fbfaf7; --ink:#1e1c1a; --muted:#6b655e; --line:#ddd8cf; --accent:#2e6b4f; --accent-ink:#fff;
+  --font-display:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif; --font-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif; color-scheme: light; }
+@media (prefers-color-scheme: dark) { :root { --bg:#141311; --surface:#1d1b18; --ink:#f0eee9; --muted:#a39c92; --line:#2f2c27; --accent:#7fb894; --accent-ink:#10211a; color-scheme: dark; } }
+* { box-sizing: border-box; }
+body { margin:0; background:var(--bg); color:var(--ink); font-family:var(--font-body); font-size:15.5px; line-height:1.6; }
+.wrap { max-width: 520px; margin: 0 auto; padding: 20px 18px 56px; }
+header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom: 22px; }
+.brand { display:flex; align-items:center; gap:10px; text-decoration:none; color:var(--ink); font-family:var(--font-display); font-weight:700; font-size:24px; letter-spacing:-0.02em; }
+.brand img { width:34px; height:34px; border-radius:9px; }
+.brand span { color: var(--accent); }
+.lang-switch { display:inline-flex; border:1px solid var(--line); border-radius:999px; padding:2px; background:var(--surface); }
+.lang-switch a { font-size:12.5px; font-weight:600; color:var(--muted); text-decoration:none; padding:4px 10px; border-radius:999px; }
+.lang-switch a[aria-current="true"] { background:var(--accent); color:var(--accent-ink); }
+a { color: var(--accent); }
+.card { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding: 24px; }
+h1 { font-family:var(--font-display); font-size: 28px; line-height:1.15; letter-spacing:-0.02em; margin: 0 0 8px; }
+h2 { font-family:var(--font-display); font-size: 18px; margin: 0 0 10px; }
+.muted { color: var(--muted); }
+a { color: var(--accent); }
+label { display:block; font-weight:600; font-size:14px; margin: 18px 0 6px; }
+input[type=email] { width:100%; font: inherit; padding: 11px 12px; border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--ink); }
+input[type=email]:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.btn { font: inherit; font-weight: 600; font-size: 15px; border-radius: 8px; padding: 12px 22px; cursor: pointer; border: 1px solid transparent; }
+.btn.primary { background: var(--accent); color: var(--accent-ink); }
+.btn.ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+.btn[disabled] { opacity: .6; cursor: default; }
+.err { color: #b3261e; font-size: 14px; margin: 10px 0 0; }
+.hp { position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden; }
+[hidden] { display:none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <a class="brand" id="home" href="/"><img src="/brand/fitme-icon-512.png" alt=""><b style="font-weight:inherit">Fit<span>Me</span></b></a>
+  <div class="lang-switch" role="group" aria-label="Language / Idioma"><a href="/account/" data-lang="en" hreflang="en">EN</a><a href="/pt/account/" data-lang="pt" hreflang="pt-PT">PT</a><a href="/br/account/" data-lang="br" hreflang="pt-BR">BR</a></div>
+</header>
+<main class="card" id="loading"><p class="muted" data-t="loading">Loading…</p></main>
+<main id="acct" hidden>
+  <div class="card">
+    <h1 data-t="h">Your account</h1>
+    <p class="muted" style="margin:0;"><span data-t="loggedAs">Logged in as</span> <strong id="email"></strong></p>
+    <p id="pending" class="muted" style="margin:14px 0 0;padding:10px 12px;border:1px solid var(--line);border-radius:8px;" hidden data-t="pendingNote"></p>
+  </div>
+  <div class="card" style="margin-top:14px;">
+    <h2 data-t="planH">Your daily meal plan</h2>
+    <table style="width:100%;border-collapse:collapse;font-size:15px;"><tbody id="rows"></tbody></table>
+    <p class="muted" style="font-size:14px;margin:14px 0 0;" data-t="changeNote"></p>
+  </div>
+  <p style="margin:18px 0 0;display:flex;gap:10px;flex-wrap:wrap;">
+    <a class="btn primary" data-home href="/" style="text-decoration:none;" data-t="toPlan">Go to FitMe</a>
+    <button class="btn ghost" type="button" id="out" data-t="logout">Log out</button>
+  </p>
+</main>
+</div>
+<script>
+(function () {
+  var T = {
+    en: { title: 'Your account', loading: 'Loading…', h: 'Your account', loggedAs: 'Logged in as', planH: 'Your daily meal plan', toPlan: 'Go to FitMe', logout: 'Log out',
+      pendingNote: "You haven't confirmed your email yet, so the daily meal plan isn't being sent. Look for the confirmation email from FitMe in your inbox.",
+      changeNote: 'To change your calories or proteins for now, recalculate on <a data-home href="/">FitMe</a> and sign up again with the same email.',
+      status: 'Daily email', active: 'Active, every morning at 7:00', pendingS: 'Waiting for confirmation', cal: 'Daily calories', prot: 'Daily protein', prots: 'Proteins',
+      lang: 'Language', units: 'Units', tz: 'Time zone', since: 'Member since', metric: 'Metric (kg, g)', imperial: 'Imperial (lb, oz)', veg: 'Vegetarian', all: 'All proteins',
+      langs: { en: 'English', pt: 'Português (Portugal)', br: 'Português (Brasil)' },
+      P: { chicken: 'Chicken', beef: 'Beef', pork: 'Pork', fish: 'Fish', eggs: 'Eggs', tofu: 'Tofu', beans: 'Beans' }, loc: 'en-GB' },
+    pt: { title: 'A tua conta', loading: 'A carregar…', h: 'A tua conta', loggedAs: 'Entraste como', planH: 'O teu plano de refeições diário', toPlan: 'Ir para o FitMe', logout: 'Sair',
+      pendingNote: 'Ainda não confirmaste o teu email, por isso o plano de refeições diário não está a ser enviado. Procura o email de confirmação do FitMe na tua caixa de entrada.',
+      changeNote: 'Por agora, para mudares as calorias ou as proteínas, recalcula no <a data-home href="/pt/">FitMe</a> e volta a subscrever com o mesmo email.',
+      status: 'Email diário', active: 'Ativo, todas as manhãs às 7:00', pendingS: 'À espera de confirmação', cal: 'Calorias diárias', prot: 'Proteína diária', prots: 'Proteínas',
+      lang: 'Idioma', units: 'Unidades', tz: 'Fuso horário', since: 'Membro desde', metric: 'Métrico (kg, g)', imperial: 'Imperial (lb, oz)', veg: 'Vegetariano', all: 'Todas as proteínas',
+      langs: { en: 'English', pt: 'Português (Portugal)', br: 'Português (Brasil)' },
+      P: { chicken: 'Frango', beef: 'Vaca', pork: 'Porco', fish: 'Peixe', eggs: 'Ovos', tofu: 'Tofu', beans: 'Feijão' }, loc: 'pt-PT' },
+    br: { title: 'Sua conta', loading: 'Carregando…', h: 'Sua conta', loggedAs: 'Você entrou como', planH: 'Seu plano de refeições diário', toPlan: 'Ir para o FitMe', logout: 'Sair',
+      pendingNote: 'Você ainda não confirmou seu e-mail, então o plano de refeições diário não está sendo enviado. Procure o e-mail de confirmação do FitMe na sua caixa de entrada.',
+      changeNote: 'Por enquanto, para mudar suas calorias ou proteínas, recalcule no <a data-home href="/br/">FitMe</a> e faça a inscrição de novo com o mesmo e-mail.',
+      status: 'E-mail diário', active: 'Ativo, toda manhã às 7h', pendingS: 'Aguardando confirmação', cal: 'Calorias diárias', prot: 'Proteína diária', prots: 'Proteínas',
+      lang: 'Idioma', units: 'Unidades', tz: 'Fuso horário', since: 'Membro desde', metric: 'Métrico (kg, g)', imperial: 'Imperial (lb, oz)', veg: 'Vegetariano', all: 'Todas as proteínas',
+      langs: { en: 'English', pt: 'Português (Portugal)', br: 'Português (Brasil)' },
+      P: { chicken: 'Frango', beef: 'Carne bovina', pork: 'Porco', fish: 'Peixe', eggs: 'Ovos', tofu: 'Tofu', beans: 'Feijão' }, loc: 'pt-BR' }
+  };
+  var path = /^\/br(\/|$)/.test(location.pathname) ? 'br' : /^\/pt(\/|$)/.test(location.pathname) ? 'pt' : 'en';
+  var L = T[path];
+  document.documentElement.lang = path === 'br' ? 'pt-BR' : path === 'pt' ? 'pt-PT' : 'en';
+  document.title = L.title + ' · FitMe';
+  var home = path === 'en' ? '/' : '/' + path + '/';
+  document.getElementById('home').href = home;
+  document.querySelectorAll('.lang-switch a').forEach(function (a) { a.setAttribute('aria-current', String(a.dataset.lang === path)); });
+  document.querySelectorAll('[data-t]').forEach(function (el) { el.innerHTML = L[el.dataset.t]; });
+  document.querySelectorAll('[data-home]').forEach(function (el) { el.href = home; });
+  var acct = (path === 'en' ? '' : '/' + path) + '/account/', login = (path === 'en' ? '' : '/' + path) + '/login/';
+  function row(k, v) {
+    var tr = document.createElement('tr'), th = document.createElement('th'), td = document.createElement('td');
+    th.textContent = k; td.textContent = v;
+    th.style.cssText = 'text-align:left;font-weight:500;color:var(--muted);padding:9px 12px 9px 0;border-bottom:1px solid var(--line);vertical-align:top;width:42%;';
+    td.style.cssText = 'padding:9px 0;border-bottom:1px solid var(--line);';
+    document.getElementById('rows').appendChild(tr); tr.appendChild(th); tr.appendChild(td);
+  }
+  fetch('/api/me', { credentials: 'same-origin' })
+    .then(function (r) { if (r.status === 401) { location.replace(login); throw 0; } return r.json(); })
+    .then(function (me) {
+      if (!me || !me.ok) { location.replace(login); return; }
+      var p = me.plan, n = function (x) { return Number(x).toLocaleString(L.loc); };
+      document.getElementById('email').textContent = me.email;
+      document.getElementById('pending').hidden = me.status !== 'pending';
+      row(L.status, me.status === 'active' ? L.active : L.pendingS);
+      row(L.cal, n(Math.round(p.intake / 10) * 10) + ' kcal');
+      row(L.prot, n(p.prot) + ' g');
+      row(L.prots, p.prots && p.prots.length ? p.prots.map(function (x) { return L.P[x] || x; }).join(', ') : (p.diet === 'veg' ? L.veg : L.all));
+      row(L.lang, L.langs[p.lang] || p.lang);
+      row(L.units, p.units === 'imperial' ? L.imperial : L.metric);
+      row(L.tz, String(p.tz).replace(/_/g, ' '));
+      row(L.since, new Date(me.since).toLocaleDateString(L.loc, { day: 'numeric', month: 'long', year: 'numeric' }));
+      document.getElementById('loading').hidden = true; document.getElementById('acct').hidden = false;
+    })
+    .catch(function () {});
+  document.getElementById('out').addEventListener('click', function () {
+    fetch('/api/me', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'logout' }) })
+      .finally(function () { location.replace(home); });
+  });
+})();
+</script>
+</body>
+</html>
