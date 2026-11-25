@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Shopping list · FitMe</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#2e6b4f">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/brand/fitme-icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root { --bg:#f0eee9; --surface:#fbfaf7; --ink:#1e1c1a; --muted:#6b655e; --line:#ddd8cf; --accent:#2e6b4f; --accent-ink:#fff; --matcha:#8fb339;
+  --font-display:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif; --font-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif; color-scheme: light; }
+@media (prefers-color-scheme: dark) { :root { --bg:#141311; --surface:#1d1b18; --ink:#f0eee9; --muted:#a39c92; --line:#2f2c27; --accent:#7fb894; --accent-ink:#10211a; color-scheme: dark; } }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body { margin:0; background:var(--bg); color:var(--ink); font-family:var(--font-body); font-size:16px; line-height:1.5; }
+.wrap { max-width: 560px; margin: 0 auto; padding: 16px 14px 80px; }
+header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom: 14px; }
+.brand { display:flex; align-items:center; gap:10px; text-decoration:none; color:var(--ink); font-family:var(--font-display); font-weight:700; font-size:22px; letter-spacing:-0.02em; }
+.brand img { width:30px; height:30px; border-radius:8px; }
+.brand span { color: var(--accent); }
+.back { font-size:14px; font-weight:600; color:var(--accent); text-decoration:none; }
+a { color: var(--accent); }
+.card { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding: 18px; }
+h1 { font-family:var(--font-display); font-size: 26px; line-height:1.15; letter-spacing:-0.02em; margin: 0 0 2px; }
+.muted { color: var(--muted); }
+.top { position: sticky; top: 0; z-index: 5; background: var(--bg); padding: 10px 0 10px; margin: 0 0 4px; }
+.bar { height: 8px; border-radius: 99px; background: var(--line); overflow: hidden; margin: 10px 0 6px; }
+.bar i { display:block; height:100%; width:0; background: var(--accent); border-radius: 99px; transition: width .25s ease; }
+.prog { display:flex; justify-content:space-between; align-items:center; gap:10px; font-size:14px; }
+.prog b { font-weight:600; }
+.tools { display:flex; flex-wrap:wrap; gap:8px; margin-top: 10px; }
+.pill { font: inherit; font-size: 13.5px; font-weight: 600; border:1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 7px 13px; cursor:pointer; }
+.pill[aria-pressed="true"] { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
+.group { margin-top: 14px; }
+.group h2 { font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--accent); margin: 0 0 6px 4px; display:flex; justify-content:space-between; }
+.group h2 small { color: var(--muted); font-weight:600; letter-spacing:0; text-transform:none; font-size:12.5px; }
+ul.items { list-style:none; margin:0; padding:0; background: var(--surface); border:1px solid var(--line); border-radius: 12px; overflow:hidden; }
+ul.items li { border-top: 1px solid var(--line); display:flex; align-items:stretch; }
+ul.items li:first-child { border-top: 0; }
+.item { flex:1; display:flex; align-items:center; gap: 12px; width:100%; min-height: 54px; padding: 10px 14px; background:none; border:0; font:inherit; color:inherit; text-align:left; cursor:pointer; }
+.box { flex:none; width: 24px; height: 24px; border-radius: 7px; border: 2px solid var(--line); display:grid; place-items:center; transition: background .15s, border-color .15s; }
+.box svg { width: 15px; height: 15px; opacity: 0; transition: opacity .15s; }
+.nm { flex:1; font-size: 16px; }
+.qt { flex:none; font-family: Menlo, Consolas, monospace; font-size: 13.5px; color: var(--muted); white-space: nowrap; }
+.item[aria-checked="true"] .box { background: var(--accent); border-color: var(--accent); }
+.item[aria-checked="true"] .box svg { opacity: 1; }
+.item[aria-checked="true"] .nm, .item[aria-checked="true"] .qt { text-decoration: line-through; color: var(--muted); opacity: .75; }
+.hide-ticked li.done { display:none; }
+.del { flex:none; width: 48px; background:none; border:0; border-left:1px solid var(--line); color: var(--muted); font-size: 20px; cursor:pointer; }
+.add { display:flex; gap:8px; margin-top: 8px; }
+.add input { flex:1; font: inherit; padding: 11px 12px; border:1px solid var(--line); border-radius:8px; background:var(--surface); color:var(--ink); min-width:0; }
+.add input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.btn { font: inherit; font-weight: 600; font-size: 15px; border-radius: 8px; padding: 11px 18px; cursor: pointer; border: 1px solid transparent; background: var(--accent); color: var(--accent-ink); text-decoration:none; display:inline-block; }
+.hint { font-size: 13.5px; color: var(--muted); margin: 8px 4px 0; }
+.status { font-size: 13px; color: var(--muted); min-height: 18px; margin: 4px 2px 0; }
+.status.off { color: #9a5b00; }
+.done-card { text-align:center; margin-top: 16px; border-color: var(--accent); }
+.empty { font-size: 14px; color: var(--muted); padding: 14px; }
+[hidden] { display:none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <a class="brand" id="home" href="/"><img src="/brand/fitme-icon-512.png" alt=""><b style="font-weight:inherit">Fit<span>Me</span></b></a>
+  <a class="back" id="acct" href="/account/" hidden></a>
+</header>
+<main class="card" id="loading"><p class="muted" style="margin:0" data-t="loading"></p></main>
+<main class="card" id="noaccess" hidden>
+  <h1 data-t="noH"></h1>
+  <p class="muted" data-t="noBody"></p>
+  <a class="btn" id="noLogin" href="/login/" data-t="logIn"></a>
+</main>
+<main id="list" hidden>
+  <div class="top">
+    <h1 data-t="h"></h1>
+    <div class="muted" style="font-size:14px;" id="sub"></div>
+    <div class="bar" aria-hidden="true"><i id="barFill"></i></div>
+    <div class="prog"><span id="count"></span></div>
+    <div class="tools">
+      <button type="button" class="pill" id="hideBtn" aria-pressed="false" data-t="hide"></button>
+      <button type="button" class="pill" id="wakeBtn" aria-pressed="false" hidden data-t="wake"></button>
+      <button type="button" class="pill" id="resetBtn" data-t="reset"></button>
+    </div>
+    <div class="status" id="status" role="status" aria-live="polite"></div>
+  </div>
+  <div id="groups"></div>
+  <section class="group" id="ownGroup">
+    <h2><span data-t="ownH"></span><small id="ownCount"></small></h2>
+    <ul class="items" id="ownList"></ul>
+    <form class="add" id="addForm" hidden autocomplete="off">
+      <input id="addInput" maxlength="60" enterkeyhint="done">
+      <button class="btn" type="submit" data-t="add"></button>
+    </form>
+    <p class="hint" id="addHint" hidden></p>
+  </section>
+  <div class="card done-card" id="allDone" hidden><h1 style="font-size:22px;" data-t="doneH"></h1><p class="muted" style="margin:6px 0 0" data-t="doneBody"></p></div>
+</main>
+</div>
+<script>
+(function () {
+  var T = {
+    en: { title: 'Shopping list', loading: 'Loading your list…', h: 'Your shopping list', week: function (d) { return 'Week from ' + d; },
+      kcal: function (k) { return 'Sized to ' + k + ' a day'; }, count: function (a, b) { return '<b>' + a + '</b> of ' + b + ' ticked'; },
+      hide: 'Hide ticked', wake: 'Keep screen on', reset: 'Start over', resetQ: 'Untick everything on this week’s list?',
+      extrasH: 'Herbs, spices & extras', extrasNote: 'check your cupboard', ownH: 'Your items', add: 'Add', addPh: 'Add an item, e.g. coffee',
+      ownEmpty: 'Nothing added yet.', loginToAdd: '<a href="{login}">Log in</a> to add your own items.', remove: 'Remove',
+      offline: 'You’re offline. Your ticks are saved on this phone and will sync when you’re back online.', syncing: 'Saving…', synced: 'Saved',
+      noH: 'Log in to see your list', noBody: 'Your shopping list is in your FitMe account. Log in with your email and we’ll send you a link.', logIn: 'Log in',
+      toAccount: '← Your account', doneH: 'All done!', doneBody: 'Everything on the list is ticked. Enjoy your week of meals.', loc: 'en-GB', htmlLang: 'en' },
+    pt: { title: 'Lista de compras', loading: 'A carregar a tua lista…', h: 'A tua lista de compras', week: function (d) { return 'Semana a partir de ' + d; },
+      kcal: function (k) { return 'Ajustada a ' + k + ' por dia'; }, count: function (a, b) { return '<b>' + a + '</b> de ' + b + ' riscados'; },
+      hide: 'Esconder riscados', wake: 'Manter ecrã ligado', reset: 'Recomeçar', resetQ: 'Desmarcar tudo na lista desta semana?',
+      extrasH: 'Ervas, especiarias e extras', extrasNote: 'confirma na despensa', ownH: 'Os teus produtos', add: 'Juntar', addPh: 'Junta um produto, p. ex. café',
+      ownEmpty: 'Ainda não juntaste nada.', loginToAdd: '<a href="{login}">Entra na tua conta</a> para juntares os teus próprios produtos.', remove: 'Remover',
+      offline: 'Estás sem ligação. O que riscas fica guardado neste telemóvel e sincroniza quando voltares a ter rede.', syncing: 'A guardar…', synced: 'Guardado',
+      noH: 'Entra para veres a tua lista', noBody: 'A tua lista de compras está na tua conta FitMe. Entra com o teu email e enviamos-te um link.', logIn: 'Entrar',
+      toAccount: '← A tua conta', doneH: 'Está tudo!', doneBody: 'Riscaste tudo da lista. Boa semana de refeições.', loc: 'pt-PT', htmlLang: 'pt-PT' },
+    br: { title: 'Lista de compras', loading: 'Carregando sua lista…', h: 'Sua lista de compras', week: function (d) { return 'Semana a partir de ' + d; },
+      kcal: function (k) { return 'Na medida de ' + k + ' por dia'; }, count: function (a, b) { return '<b>' + a + '</b> de ' + b + ' marcados'; },
+      hide: 'Esconder marcados', wake: 'Manter tela ligada', reset: 'Recomeçar', resetQ: 'Desmarcar tudo na lista desta semana?',
+      extrasH: 'Ervas, temperos e extras', extrasNote: 'confira na despensa', ownH: 'Seus itens', add: 'Adicionar', addPh: 'Adicione um item, ex.: café',
+      ownEmpty: 'Nada adicionado ainda.', loginToAdd: '<a href="{login}">Entre na sua conta</a> para adicionar seus próprios itens.', remove: 'Remover',
+      offline: 'Você está sem internet. O que você marca fica salvo neste celular e sincroniza quando a conexão voltar.', syncing: 'Salvando…', synced: 'Salvo',
+      noH: 'Entre para ver sua lista', noBody: 'Sua lista de compras fica na sua conta FitMe. Entre com seu e-mail e a gente te manda um link.', logIn: 'Entrar',
+      toAccount: '← Sua conta', doneH: 'Tudo pronto!', doneBody: 'Você marcou tudo da lista. Boa semana de refeições.', loc: 'pt-BR', htmlLang: 'pt-BR' }
+  };
+  var lang = /^\/br(\/|$)/.test(location.pathname) ? 'br' : /^\/pt(\/|$)/.test(location.pathname) ? 'pt' : 'en';
+  var L = T[lang], pre = lang === 'en' ? '' : '/' + lang, $ = function (id) { return document.getElementById(id); };
+  document.documentElement.lang = L.htmlLang; document.title = L.title + ' · FitMe';
+  $('home').href = pre + '/';
+  document.querySelectorAll('[data-t]').forEach(function (el) { el.textContent = L[el.dataset.t]; });
+  $('noLogin').href = pre + '/login/';
+  $('addInput').placeholder = L.addPh;
+
+  // ---- Local storage (wrapped: some browsers throw in private mode) ----
+  function get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
+  function put(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  // The list link from the Saturday email (?k=…) opens this list without logging in. Keep it on this device and tidy the address bar.
+  var params = new URLSearchParams(location.search), key = params.get('k');
+  if (key && /^[a-f0-9]{48}$/.test(key)) { put('fm-list-k', key); params.delete('k'); history.replaceState(null, '', location.pathname + (params.toString() ? '?' + params : '') + location.hash); }
+  key = get('fm-list-k');
+
+  var S = get('fm-list-cache'), Q = get('fm-list-q') || [], hideTicked = !!get('fm-list-hide');
+  function ticked(id) { return S.ticked.indexOf(id) >= 0; }
+  function applyOp(o) {
+    if (o.op === 'tick') { S.ticked = S.ticked.filter(function (x) { return x !== o.id; }); if (o.on) S.ticked.push(o.id); }
+    else if (o.op === 'reset') S.ticked = [];
+    else if (o.op === 'add' && S.canAdd) S.own.push({ id: o.id, n: o.n });
+    else if (o.op === 'remove' && S.canAdd) { S.own = S.own.filter(function (x) { return x.id !== o.id; }); S.ticked = S.ticked.filter(function (x) { return x !== o.id; }); }
+  }
+  function queue(o) { applyOp(o); Q.push(o); put('fm-list-q', Q); put('fm-list-cache', S); render(); flush(); }
+
+  // ---- Rendering ----
+  var CHECK = '<svg viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3.2 3L13 4.5"/></svg>';
+  function esc(t) { return String(t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function li(it, own) {
+    var on = ticked(it.id);
+    return '<li class="' + (on ? 'done' : '') + '"><button type="button" class="item" role="checkbox" aria-checked="' + on + '" data-id="' + esc(it.id) + '">' +
+      '<span class="box">' + CHECK + '</span><span class="nm">' + esc(it.n) + '</span>' + (it.q ? '<span class="qt">' + esc(it.q) + '</span>' : '') + '</button>' +
+      (own && S.canAdd ? '<button type="button" class="del" aria-label="' + esc(L.remove + ': ' + it.n) + '" data-del="' + esc(it.id) + '">×</button>' : '') + '</li>';
+  }
+  // Ticked items move to the bottom of their aisle; the order is otherwise the list's own.
+  function ordered(items) { return items.filter(function (i) { return !ticked(i.id); }).concat(items.filter(function (i) { return ticked(i.id); })); }
+  function group(title, note, items) {
+    var n = items.filter(function (i) { return ticked(i.id); }).length;
+    return '<section class="group"><h2><span>' + esc(title) + (note ? ' <small>· ' + esc(note) + '</small>' : '') + '</span><small>' + n + '/' + items.length + '</small></h2><ul class="items">' +
+      ordered(items).map(function (i) { return li(i, false); }).join('') + '</ul></section>';
+  }
+  function render() {
+    if (!S) return;
+    $('loading').hidden = true; $('noaccess').hidden = true; $('list').hidden = false;
+    var all = [];
+    S.groups.forEach(function (g) { all = all.concat(g.items); });
+    all = all.concat(S.extras, S.own);
+    var done = all.filter(function (i) { return ticked(i.id); }).length;
+    var d = new Date(S.week + 'T12:00:00Z');
+    $('sub').textContent = L.week(new Intl.DateTimeFormat(L.loc, { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }).format(d)) + ' · ' +
+      L.kcal((Math.round(S.intake / 10) * 10).toLocaleString(L.loc) + ' kcal');
+    $('count').innerHTML = L.count(done, all.length);
+    $('barFill').style.width = (all.length ? Math.round(done / all.length * 100) : 0) + '%';
+    $('groups').innerHTML = S.groups.map(function (g) { return group(g.aisle, '', g.items); }).join('') + (S.extras.length ? group(L.extrasH, L.extrasNote, S.extras) : '');
+    $('ownList').innerHTML = S.own.length ? ordered(S.own).map(function (i) { return li(i, true); }).join('') : '<li class="empty">' + esc(L.ownEmpty) + '</li>';
+    $('ownCount').textContent = S.own.length ? S.own.filter(function (i) { return ticked(i.id); }).length + '/' + S.own.length : '';
+    $('addForm').hidden = !S.canAdd;
+    $('addHint').hidden = S.canAdd;
+    if (!S.canAdd) $('addHint').innerHTML = L.loginToAdd.replace('{login}', esc(pre + '/login/'));
+    $('acct').hidden = !S.canAdd; $('acct').href = pre + '/account/'; $('acct').textContent = L.toAccount;
+    $('list').classList.toggle('hide-ticked', hideTicked);
+    $('hideBtn').setAttribute('aria-pressed', String(hideTicked));
+    $('allDone').hidden = !(all.length && done === all.length);
+  }
+
+  // ---- Server sync: ops are queued on the phone first, so ticking works without signal ----
+  var busy = false;
+  function status(t, off) { var el = $('status'); el.textContent = t || ''; el.className = 'status' + (off ? ' off' : ''); }
+  function req(method, body) {
+    var h = { 'Content-Type': 'application/json' }; if (key) h['x-list-key'] = key;
+    return fetch('/api/list?l=' + lang, { method: method, credentials: 'same-origin', headers: h, body: body ? JSON.stringify(body) : undefined })
+      .then(function (r) { if (r.status === 401) throw 'noaccess'; return r.json(); });
+  }
+  function fromServer(data, sentCount) {
+    // Keep any ops made while this request was in flight on top of the server's answer.
+    var rest = Q.slice(sentCount || 0); Q = rest; put('fm-list-q', Q);
+    S = data; rest.forEach(applyOp); put('fm-list-cache', S); render();
+  }
+  function flush() {
+    if (busy) return;
+    if (!navigator.onLine) { if (Q.length) status(L.offline, true); return; }
+    if (!Q.length) return;
+    busy = true; status(L.syncing);
+    var sent = Q.length;
+    req('POST', { ops: Q.slice(0, sent) }).then(function (data) { busy = false; if (data && data.ok) { fromServer(data, sent); status(Q.length ? L.syncing : L.synced); setTimeout(function () { if (!Q.length) status(''); }, 1500); if (Q.length) flush(); } else status(''); })
+      .catch(function (e) { busy = false; if (e === 'noaccess') return noAccess(); status(L.offline, true); });
+  }
+  function noAccess() { put('fm-list-k', null); put('fm-list-cache', null); put('fm-list-q', null); S = null; $('loading').hidden = true; $('list').hidden = true; $('noaccess').hidden = false; }
+  function load() {
+    if (Q.length) return flush(); // the POST answers with the full list
+    req('GET').then(function (data) { if (data && data.ok) fromServer(data, 0); else noAccess(); })
+      .catch(function (e) { if (e === 'noaccess') noAccess(); else if (!S) status(L.offline, true); else status(L.offline, true); });
+  }
+  window.addEventListener('online', function () { status(''); Q.length ? flush() : load(); });
+  window.addEventListener('offline', function () { status(L.offline, true); });
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') { Q.length ? flush() : load(); if (wakeOn) wake(true); } });
+  setInterval(function () { if (Q.length) flush(); }, 15000);
+
+  // ---- Interactions ----
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('.item');
+    if (b && S) { var id = b.dataset.id; if (navigator.vibrate) try { navigator.vibrate(8); } catch (x) {} queue({ op: 'tick', id: id, on: !ticked(id) }); return; }
+    var d = e.target.closest('[data-del]');
+    if (d && S) queue({ op: 'remove', id: d.dataset.del });
+  });
+  $('hideBtn').addEventListener('click', function () { hideTicked = !hideTicked; put('fm-list-hide', hideTicked); render(); });
+  $('resetBtn').addEventListener('click', function () { if (S && S.ticked.length && confirm(L.resetQ)) queue({ op: 'reset' }); });
+  $('addForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var n = $('addInput').value.trim().replace(/\s+/g, ' ').replace(/[<>]/g, '').slice(0, 60);
+    if (!n || !S) return;
+    var id = 'o:' + Math.random().toString(36).slice(2, 10).padEnd(8, '0');
+    queue({ op: 'add', id: id, n: n }); $('addInput').value = ''; $('addInput').focus();
+  });
+  // Keep the screen on while shopping (Screen Wake Lock API, where the browser has it).
+  var wakeOn = false, lock = null;
+  function wake(on) {
+    if (!on) { wakeOn = false; if (lock) lock.release().catch(function () {}); lock = null; $('wakeBtn').setAttribute('aria-pressed', 'false'); return; }
+    navigator.wakeLock.request('screen').then(function (l) { lock = l; wakeOn = true; $('wakeBtn').setAttribute('aria-pressed', 'true'); }).catch(function () { wakeOn = false; $('wakeBtn').setAttribute('aria-pressed', 'false'); });
+  }
+  if ('wakeLock' in navigator) { $('wakeBtn').hidden = false; $('wakeBtn').addEventListener('click', function () { wake(!wakeOn); }); }
+
+  if (S && S.groups) render();
+  load();
+})();
+</script>
+</body>
+</html>

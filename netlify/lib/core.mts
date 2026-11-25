@@ -40,6 +40,8 @@ export type Subscriber = {
   lastShopDate?: string;
   // Random code in the tracked links of the daily and Saturday emails (/api/go?c=…); maps back via clk/<token>.
   clickToken?: string;
+  // Random code in the Saturday email's "Open my list" link: opens only this person's shopping list (lst/<token>), no log-in.
+  listToken?: string;
   // Set only when the visitor accepted Meta cookies at sign-up; removed once CompleteRegistration is sent.
   meta?: { fbp?: string; fbc?: string; url?: string } | null;
   // Which ad link brought them (utm_* labels from the URL at first sign-up) and their country then. First-party only.
@@ -162,7 +164,7 @@ export const actKey = (hash: string) => `act/${hash}`;
 // Links in the daily and Saturday emails go through /api/go on our own domain (HTTPS), which records the click on the
 // subscriber's activity record (act/<hash>) and redirects to the page. Mailgun's own click tracking stays off.
 // Never wrap one-time links (confirm, log in) or the unsubscribe link.
-export const CLICK_KINDS = ["week", "shop", "account", "recalc"] as const;
+export const CLICK_KINDS = ["week", "shop", "account", "recalc", "list"] as const;
 export type ClickKind = (typeof CLICK_KINDS)[number];
 export const ACT_KEEP_DAYS = 120;
 // Kept apart from the subscriber record so a click never races with send-daily writing that record.
@@ -191,6 +193,56 @@ export function trackedLink(siteUrl: string, clickToken: string | undefined, kin
   if (u.origin !== base.origin) return url;
   const to = u.pathname + u.search + u.hash;
   return `${base.origin}/api/go?c=${clickToken}&k=${kind}&to=${encodeURIComponent(to)}`;
+}
+
+// ---------- Shopping list (/account/list/) ----------
+// The week's list is built from the plan (M.shoppingList). Ticks are kept per shopping week (Saturday to Friday, in the
+// subscriber's time zone) in ltk/<hash>/<saturday>, for LIST_KEEP_DAYS; items the user adds themselves in lown/<hash>.
+// Opening the list works with the log-in session, or with the list token from the Saturday email (list only: ticking,
+// not adding or removing items, which need a log-in).
+export const lstKey = (token: string) => `lst/${token}`;
+export const ownKey = (hash: string) => `lown/${hash}`;
+export const tickPrefix = (hash: string) => `ltk/${hash}/`;
+export const tickKey = (hash: string, week: string) => `ltk/${hash}/${week}`;
+export const LIST_KEEP_DAYS = 14;
+export const OWN_MAX = 40, TICK_MAX = 300;
+export type OwnItem = { id: string; n: string };
+export const OWN_ID_RE = /^o:[a-z0-9]{6,16}$/;
+
+// The Saturday that starts this shopping week, in the given time zone (YYYY-MM-DD).
+export function listWeek(tz: string, now = new Date()): string {
+  const p = Object.fromEntries(new Intl.DateTimeFormat("en-GB", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit", weekday: "short" })
+    .formatToParts(now).map((x) => [x.type, x.value]));
+  const back = ({ Sat: 0, Sun: 1, Mon: 2, Tue: 3, Wed: 4, Thu: 5, Fri: 6 } as Record<string, number>)[p.weekday] ?? 0;
+  return new Date(Date.UTC(+p.year, +p.month - 1, +p.day - back)).toISOString().slice(0, 10);
+}
+
+export const listPagePath = (lang: Lang) => `${lang === "en" ? "" : "/" + lang}/account/list/`;
+
+// Everything the list page shows, in the page's language.
+export function listContent(sub: Subscriber, lang: Lang) {
+  const list = M.shoppingList(sub.intake, sub.prot, lang, sub.units === "imperial", planDiet(sub));
+  return {
+    groups: list.groups.map((g: any) => ({ aisle: g.aisle, items: g.items.map((it: any) => ({ id: String(it.id), n: it.n, q: it.q })) })),
+    extras: (list.extrasList as string[]).map((n) => ({ id: "x:" + n.toLowerCase().replace(/[^\p{L}\p{N} '-]+/gu, "-").slice(0, 60), n })),
+  };
+}
+
+export async function ensureListToken(store: ReturnType<typeof subscribers>, key: string, sub: Subscriber): Promise<Subscriber> {
+  if (sub.listToken) return sub;
+  const token = newToken();
+  await store.set(lstKey(token), key.replace(/^sub\//, ""));
+  const updated = { ...sub, listToken: token };
+  await store.setJSON(key, updated);
+  return updated;
+}
+
+// Deletes all shopping-list data for a subscriber (on unsubscribe).
+export async function deleteListData(store: ReturnType<typeof subscribers>, hash: string, sub: Subscriber | null) {
+  if (sub?.listToken) await store.delete(lstKey(sub.listToken));
+  await store.delete(ownKey(hash));
+  const { blobs } = await store.list({ prefix: tickPrefix(hash) });
+  for (const b of blobs) await store.delete(b.key);
 }
 
 // Gives a subscriber a click token (and its clk/ lookup) the first time they're sent a tracked email.
@@ -374,8 +426,10 @@ export const T = {
     expiredTitle: "This link has expired", expiredBody: (u: string) => `It may have been used already or replaced by a newer email. You can <a href="${u}" style="color:#2e6b4f;">sign up again on FitMe</a>.`,
     notSubTitle: "You're not subscribed", notSubBody: "This address isn't on the FitMe daily email list anymore.",
     stopTitle: "Stop the daily meal plan?", stopBody: "You'll stop getting FitMe emails and we'll delete your email address and settings.", stopBtn: "Unsubscribe",
-    shopSubject: "Your shopping list for the week", shopTitle: "Your shopping list for the week",
-    shopIntro: (k: string) => `Everything for the week's 28 meals, with portions sized to your daily intake of ${k}. Amounts are rounded up so you won't run short.`,
+    shopSubject: "Your shopping list for the week is ready", shopTitle: "Your shopping list for the week is ready",
+    shopIntro: (n: number, k: string) => `${n} items for the week's 28 meals, sized to your daily intake of ${k}.`,
+    shopTip: "Open it in the supermarket and tap items off as you go. Your ticks save as you shop, on any device.", shopBtn: "Open my list",
+    shopFallback: "Can't open it? Here's this week's list", shopFallbackText: "This week's list",
     shopExtras: "Herbs, spices & extras (check your cupboard)", shopCta: "See this week's recipes on FitMe →",
     shopFooter: (home: string, account: string, unsub: string) => `You get this list every Saturday as part of your FitMe meal plan. Change your proteins or details in <a href="${account}" style="color:#6b655e;">your account</a>. To change your calories, recalculate on <a href="${home}" style="color:#6b655e;">FitMe</a> with the same email. <a href="${unsub}" style="color:#6b655e;">Unsubscribe</a>.`,
     doneTitle: "You're unsubscribed", doneBody: (u: string) => `Your email and settings have been deleted. You can <a href="${u}" style="color:#2e6b4f;">sign up again</a> any time.`,
@@ -395,8 +449,10 @@ export const T = {
     expiredTitle: "Este link expirou", expiredBody: (u: string) => `Pode já ter sido usado ou substituído por um email mais recente. Podes <a href="${u}" style="color:#2e6b4f;">voltar a subscrever no FitMe</a>.`,
     notSubTitle: "Não tens subscrição ativa", notSubBody: "Este endereço já não está na lista do email diário do FitMe.",
     stopTitle: "Parar o plano de refeições diário?", stopBody: "Deixas de receber emails do FitMe e apagamos o teu endereço de email e as tuas definições.", stopBtn: "Cancelar subscrição",
-    shopSubject: "A tua lista de compras da semana", shopTitle: "A tua lista de compras da semana",
-    shopIntro: (k: string) => `Tudo o que precisas para as 28 refeições da semana, com porções ajustadas à tua ingestão diária de ${k}. As quantidades estão arredondadas para cima, para não te faltar nada.`,
+    shopSubject: "A tua lista de compras da semana está pronta", shopTitle: "A tua lista de compras da semana está pronta",
+    shopIntro: (n: number, k: string) => `${n} produtos para as 28 refeições da semana, ajustados à tua ingestão diária de ${k}.`,
+    shopTip: "Abre-a no supermercado e vai riscando os produtos. O que riscas fica guardado, em qualquer dispositivo.", shopBtn: "Abrir a minha lista",
+    shopFallback: "Não consegues abrir? Aqui está a lista desta semana", shopFallbackText: "A lista desta semana",
     shopExtras: "Ervas, especiarias e extras (confirma na despensa)", shopCta: "Vê as receitas desta semana no FitMe →",
     shopFooter: (home: string, account: string, unsub: string) => `Recebes esta lista todos os sábados como parte do teu plano de refeições FitMe. Muda as proteínas ou os teus dados na <a href="${account}" style="color:#6b655e;">tua conta</a>. Para mudar as calorias, recalcula no <a href="${home}" style="color:#6b655e;">FitMe</a> com o mesmo email. <a href="${unsub}" style="color:#6b655e;">Cancelar subscrição</a>.`,
     doneTitle: "Subscrição cancelada", doneBody: (u: string) => `O teu email e as tuas definições foram apagados. Podes <a href="${u}" style="color:#2e6b4f;">voltar a subscrever</a> quando quiseres.`,
@@ -416,8 +472,10 @@ export const T = {
     expiredTitle: "Este link expirou", expiredBody: (u: string) => `Ele pode já ter sido usado ou substituído por um e-mail mais recente. Você pode <a href="${u}" style="color:#2e6b4f;">se inscrever de novo no FitMe</a>.`,
     notSubTitle: "Você não está inscrito", notSubBody: "Este endereço não está mais na lista do e-mail diário do FitMe.",
     stopTitle: "Parar o plano de refeições diário?", stopBody: "Você deixa de receber os e-mails do FitMe e apagamos seu endereço de e-mail e suas configurações.", stopBtn: "Cancelar inscrição",
-    shopSubject: "Sua lista de compras da semana", shopTitle: "Sua lista de compras da semana",
-    shopIntro: (k: string) => `Tudo o que você precisa para as 28 refeições da semana, com porções na medida da sua ingestão diária de ${k}. As quantidades estão arredondadas para cima, para não faltar nada.`,
+    shopSubject: "Sua lista de compras da semana está pronta", shopTitle: "Sua lista de compras da semana está pronta",
+    shopIntro: (n: number, k: string) => `${n} itens para as 28 refeições da semana, na medida da sua ingestão diária de ${k}.`,
+    shopTip: "Abra no mercado e vá marcando os itens. O que você marca fica salvo, em qualquer aparelho.", shopBtn: "Abrir minha lista",
+    shopFallback: "Não consegue abrir? Aqui está a lista desta semana", shopFallbackText: "A lista desta semana",
     shopExtras: "Ervas, temperos e extras (confira na despensa)", shopCta: "Veja as receitas desta semana no FitMe →",
     shopFooter: (home: string, account: string, unsub: string) => `Você recebe esta lista todo sábado como parte do seu plano de refeições FitMe. Mude as proteínas ou seus dados na <a href="${account}" style="color:#6b655e;">sua conta</a>. Para mudar as calorias, recalcule no <a href="${home}" style="color:#6b655e;">FitMe</a> com o mesmo e-mail. <a href="${unsub}" style="color:#6b655e;">Cancelar inscrição</a>.`,
     doneTitle: "Inscrição cancelada", doneBody: (u: string) => `Seu e-mail e suas configurações foram apagados. Você pode <a href="${u}" style="color:#2e6b4f;">se inscrever de novo</a> quando quiser.`,
@@ -551,28 +609,37 @@ export function renderDailyEmail(opts: { siteUrl: string; unsubUrl: string; clic
   return { subject, html: shell(opts.siteUrl, summary + cards + cta, footer, lang), text };
 }
 
-export function renderShoppingEmail(opts: { siteUrl: string; unsubUrl: string; clickToken?: string; dateLabel: string; intake: number; prot: number; imperial: boolean; lang?: Lang; diet?: "all" | "veg" | string[] }) {
+// Saturday email: a reminder that the week's list is ready, with a button to the list page (/account/list/).
+// fallback: also print the list itself under the button (meant for the first weeks after the switch).
+export function renderShoppingEmail(opts: { siteUrl: string; unsubUrl: string; clickToken?: string; listToken?: string; fallback?: boolean; dateLabel: string; intake: number; prot: number; imperial: boolean; lang?: Lang; diet?: "all" | "veg" | string[] }) {
   const c = COLORS, lang: Lang = asLang(opts.lang), t = T[lang];
   const site = sitePath(opts.siteUrl, lang);
+  const listPage = `${opts.siteUrl}${listPagePath(lang)}${opts.listToken ? "?k=" + opts.listToken : ""}`;
+  const listUrl = trackedLink(opts.siteUrl, opts.clickToken, "list", listPage);
   const weekUrl = trackedLink(opts.siteUrl, opts.clickToken, "shop", `${site}#meals`);
   const accountUrl = trackedLink(opts.siteUrl, opts.clickToken, "account", `${site}account/`);
   const homeUrl = trackedLink(opts.siteUrl, opts.clickToken, "recalc", site);
   const list = M.shoppingList(opts.intake, opts.prot, lang, opts.imperial, opts.diet);
-  const head = `<tr><td style="background:${c.card};border:1px solid ${c.line};border-radius:12px;padding:20px 22px;">
+  const count = list.groups.reduce((n: number, g: any) => n + g.items.length, 0);
+  const intro = t.shopIntro(count, kcalL(opts.intake, t.locale));
+  const head = `<tr><td style="background:${c.card};border:1px solid ${c.line};border-radius:12px;padding:22px 22px 24px;">
 <div style="font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:${c.muted};">${esc(opts.dateLabel)}</div>
 <h1 style="margin:4px 0 8px;font-size:24px;line-height:1.2;">${t.shopTitle}</h1>
-<p style="margin:0;font-size:14px;line-height:1.55;color:${c.muted};">${esc(t.shopIntro(kcalL(opts.intake, t.locale)))}</p></td></tr>`;
-  const sections = list.groups.map((g: any) => `<tr><td style="height:14px;"></td></tr><tr><td style="background:${c.card};border:1px solid ${c.line};border-radius:12px;padding:16px 22px;">
-<div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:${c.accent};margin:0 0 6px;">${esc(g.aisle)}</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0">${g.items.map((it: any) => `<tr><td style="padding:6px 0;border-bottom:1px solid ${c.line};font-size:14px;">&#9744;&nbsp; ${esc(it.n)}</td><td align="right" style="padding:6px 0 6px 12px;border-bottom:1px solid ${c.line};font-family:Menlo,Consolas,monospace;font-size:13px;color:${c.muted};white-space:nowrap;">${esc(it.q)}</td></tr>`).join("")}</table></td></tr>`).join("");
-  const extras = `<tr><td style="height:14px;"></td></tr><tr><td style="background:${c.card};border:1px solid ${c.line};border-radius:12px;padding:16px 22px;">
-<div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:${c.accent};margin:0 0 6px;">${t.shopExtras}</div>
+<p style="margin:0 0 6px;font-size:15px;line-height:1.55;">${esc(intro)}</p>
+<p style="margin:0 0 18px;font-size:14px;line-height:1.55;color:${c.muted};">${esc(t.shopTip)}</p>
+<a href="${esc(listUrl)}" style="display:inline-block;background:${c.accent};color:#ffffff;text-decoration:none;font-weight:600;font-size:16px;padding:13px 26px;border-radius:8px;">${t.shopBtn}</a></td></tr>`;
+  const fallback = !opts.fallback ? "" : `<tr><td style="padding:22px 4px 2px;font-size:13px;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;color:${c.muted};">${t.shopFallback}</td></tr>` +
+    list.groups.map((g: any) => `<tr><td style="height:10px;"></td></tr><tr><td style="background:${c.card};border:1px solid ${c.line};border-radius:12px;padding:14px 20px;">
+<div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:${c.accent};margin:0 0 4px;">${esc(g.aisle)}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0">${g.items.map((it: any) => `<tr><td style="padding:5px 0;border-bottom:1px solid ${c.line};font-size:14px;">&#9744;&nbsp; ${esc(it.n)}</td><td align="right" style="padding:5px 0 5px 12px;border-bottom:1px solid ${c.line};font-family:Menlo,Consolas,monospace;font-size:13px;color:${c.muted};white-space:nowrap;">${esc(it.q)}</td></tr>`).join("")}</table></td></tr>`).join("") +
+    `<tr><td style="height:10px;"></td></tr><tr><td style="background:${c.card};border:1px solid ${c.line};border-radius:12px;padding:14px 20px;">
+<div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:${c.accent};margin:0 0 4px;">${t.shopExtras}</div>
 <p style="margin:0;font-size:13.5px;line-height:1.55;color:${c.muted};">${esc(list.extras)}</p></td></tr>`;
   const cta = `<tr><td style="padding:18px 4px 0;font-size:14px;"><a href="${esc(weekUrl)}" style="color:${c.accent};font-weight:600;">${t.shopCta}</a></td></tr>`;
-  const text = [t.shopTitle + ` (${opts.dateLabel})`, t.shopIntro(kcalL(opts.intake, t.locale)), ""]
-    .concat(list.groups.map((g: any) => g.aisle.toUpperCase() + "\n" + g.items.map((it: any) => `  [ ] ${it.n}: ${it.q}`).join("\n") + "\n"))
-    .concat([t.shopExtras + ": " + list.extras, "", `${t.textFull}: ${weekUrl}`, `${t.textAccount}: ${accountUrl}`, `${t.textUnsub}: ${opts.unsubUrl}`]).join("\n");
-  return { subject: t.shopSubject, html: shell(opts.siteUrl, head + sections + extras + cta, t.shopFooter(esc(homeUrl), esc(accountUrl), esc(opts.unsubUrl)), lang), text };
+  const text = [t.shopTitle + ` (${opts.dateLabel})`, intro, t.shopTip, "", `${t.shopBtn}: ${listUrl}`, ""]
+    .concat(opts.fallback ? [t.shopFallbackText.toUpperCase(), ""].concat(list.groups.map((g: any) => g.aisle.toUpperCase() + "\n" + g.items.map((it: any) => `  [ ] ${it.n}: ${it.q}`).join("\n") + "\n"), [t.shopExtras + ": " + list.extras, ""]) : [])
+    .concat([`${t.textFull}: ${weekUrl}`, `${t.textAccount}: ${accountUrl}`, `${t.textUnsub}: ${opts.unsubUrl}`]).join("\n");
+  return { subject: t.shopSubject, html: shell(opts.siteUrl, head + fallback + cta, t.shopFooter(esc(homeUrl), esc(accountUrl), esc(opts.unsubUrl)), lang), text };
 }
 
 export function htmlPage(siteUrl: string, title: string, body: string, status = 200, lang: Lang = "en") {

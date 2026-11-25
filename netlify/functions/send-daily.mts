@@ -2,11 +2,13 @@
 // when it is 07:xx in their own time zone (once per local day), and on Saturdays at 08:xx
 // their shopping list for the week (once per Saturday).
 import type { Config, Context } from "@netlify/functions";
-import { subscribers, subKey, tokKey, unsKey, actKey, ensureClickToken, pruneActivity, type Activity, mailConfig, sendMail, renderDailyEmail, renderShoppingEmail, asLang, planDiet, type Subscriber } from "../lib/core.mts";
+import { subscribers, subKey, tokKey, unsKey, actKey, ensureClickToken, ensureListToken, pruneActivity, type Activity, mailConfig, sendMail, renderDailyEmail, renderShoppingEmail, asLang, planDiet, type Subscriber } from "../lib/core.mts";
 
 const SEND_HOUR = 7;
 const SHOP_HOUR = 8;
 const SHOP_DAY = 5; // Saturday (Mon = 0)
+// The Saturday email also prints the list under the "Open my list" button until this date (first two Saturdays after the switch).
+const LIST_FALLBACK_UNTIL = "2026-12-06";
 const CONCURRENCY = 8;
 const PENDING_TTL_MS = 30 * 864e5; // unconfirmed sign-ups are deleted after 30 days (privacy policy)
 const TIME_BUDGET_MS = 24_000; // scheduled functions stop at 30s
@@ -60,7 +62,8 @@ export default async (req: Request, context: Context) => {
           sent++;
           await pruneClicks(store, key);
         } else if (local.hour === SHOP_HOUR && local.dayIndex === SHOP_DAY && sub.lastShopDate !== local.date) {
-          await sendMail(cfg!, { to: sub.email, ...renderShoppingEmail(tracked), unsubUrl, tag: "weekly-shopping", firstName: sub.profile?.firstName, lang: base.lang });
+          sub = await ensureListToken(store, key, sub); // the "Open my list" link opens their list without logging in
+          await sendMail(cfg!, { to: sub.email, ...renderShoppingEmail({ ...tracked, listToken: sub.listToken, fallback: local.date < LIST_FALLBACK_UNTIL }), unsubUrl, tag: "weekly-shopping", firstName: sub.profile?.firstName, lang: base.lang });
           await store.setJSON(key, { ...sub, lastShopDate: local.date });
           shops++;
         }
