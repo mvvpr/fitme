@@ -54,7 +54,7 @@ export type Profile = {
   lastName?: string;
   phone?: string;   // mobile, international format (+ and digits)
   social?: string;  // link to a social profile (http/https)
-  coach?: boolean;  // interested in guidance from a health coach
+  coach?: boolean;  // interested in guidance from a Fitness Coach
   plan?: boolean;   // interested in a personalised plan
   interestText?: string; // wording shown when an interest was ticked
   interestAt?: string;
