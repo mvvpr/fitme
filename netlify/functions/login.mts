@@ -26,7 +26,7 @@ export default async (req: Request, context: Context) => {
   const siteUrl = context.site.url || new URL(req.url).origin;
   const url = `${siteUrl}/api/auth?t=${token}${lang !== "en" ? "&l=" + lang : ""}`;
   try {
-    await sendMail(cfg, { to: sub.email, ...renderLoginEmail(siteUrl, url, lang), tag: "login" });
+    await sendMail(cfg, { to: sub.email, ...renderLoginEmail(siteUrl, url, lang), tag: "login", firstName: sub.profile?.firstName, lang });
   } catch (err) {
     console.error("login email failed", err);
     return Response.json({ ok: false, error: "send_failed" }, { status: 502 });

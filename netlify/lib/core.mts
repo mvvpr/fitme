@@ -177,15 +177,26 @@ export function mailConfig() {
   };
 }
 
-type Mail = { to: string; subject: string; html: string; text: string; unsubUrl?: string; tag: string; trackClicks?: boolean };
+// firstName: from the account profile; when set, the email opens with "Hi <name>," in the subscriber's language.
+type Mail = { to: string; subject: string; html: string; text: string; unsubUrl?: string; tag: string; trackClicks?: boolean; firstName?: string; lang?: Lang };
+
+const GREET = { en: "Hi", pt: "Olá", br: "Oi" };
+function addGreeting(mail: Mail) {
+  const name = (mail.firstName || "").trim();
+  if (!name) return { html: mail.html.replace("<!--greet-->", ""), text: mail.text };
+  const hi = `${GREET[asLang(mail.lang)]} ${name},`;
+  const row = `<tr><td style="padding:0 4px 12px;font-size:17px;font-weight:600;color:${COLORS.ink};">${esc(hi)}</td></tr>`;
+  return { html: mail.html.replace("<!--greet-->", row), text: `${hi}\n\n${mail.text}` };
+}
 
 export async function sendMail(cfg: NonNullable<ReturnType<typeof mailConfig>>, mail: Mail) {
   const body = new URLSearchParams();
   body.set("from", cfg.from);
   body.set("to", mail.to);
   body.set("subject", mail.subject);
-  body.set("html", mail.html);
-  body.set("text", mail.text);
+  const g = addGreeting(mail);
+  body.set("html", g.html);
+  body.set("text", g.text);
   body.set("o:tag", mail.tag);
   // Open tracking stays on. Click tracking is OFF: Mailgun rewrites links through email.mg.fitmeplan.com, which serves
   // plain http, so Chrome warns "This site doesn't support a secure connection" before confirm/log-in links open.
@@ -350,7 +361,7 @@ function shell(siteUrl: string, inner: string, footer: string, lang: Lang = "en"
 <tr><td style="padding:0 4px 16px;"><a href="${esc(sitePath(siteUrl, lang))}" style="text-decoration:none;color:${c.ink};">
 <img src="${esc(siteUrl)}/brand/fitme-icon-512.png" width="36" height="36" alt="" style="vertical-align:middle;border-radius:9px;border:0;">
 <span style="font-size:24px;font-weight:700;letter-spacing:-0.5px;vertical-align:middle;margin-left:8px;">Fit<span style="color:${c.accent};">Me</span></span></a></td></tr>
-${inner}
+<!--greet-->${inner}
 <tr><td style="padding:18px 4px 0;font-size:12px;line-height:1.5;color:${c.muted};">${footer}</td></tr>
 </table></td></tr></table></body></html>`;
 }

@@ -54,7 +54,7 @@ export default async (req: Request, context: Context) => {
       const at = new Date().toISOString();
       await store.setJSON(key, { ...sub, confirmToken: token, reminders: n, lastReminderAt: at });
       try {
-        await sendMail(cfg!, { to: sub.email, ...renderReminderEmail(siteUrl, confirmUrl, unsubUrl, n, lang), unsubUrl, tag: `reminder-${n}` });
+        await sendMail(cfg!, { to: sub.email, ...renderReminderEmail(siteUrl, confirmUrl, unsubUrl, n, lang), unsubUrl, tag: `reminder-${n}`, firstName: sub.profile?.firstName, lang });
         if (n === 1) r1++; else r2++;
       } catch (err) {
         failed++;

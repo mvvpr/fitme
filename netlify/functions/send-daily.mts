@@ -51,11 +51,11 @@ export default async (req: Request, context: Context) => {
       const base = { siteUrl, unsubUrl, dateLabel: local.label, intake: sub.intake, prot: sub.prot, imperial: sub.units === "imperial", lang, diet: planDiet(sub) };
       try {
         if (local.hour === SEND_HOUR && sub.lastSentDate !== local.date) {
-          await sendMail(cfg!, { to: sub.email, ...renderDailyEmail({ ...base, dayIndex: local.dayIndex }), unsubUrl, tag: "daily-plan" });
+          await sendMail(cfg!, { to: sub.email, ...renderDailyEmail({ ...base, dayIndex: local.dayIndex }), unsubUrl, tag: "daily-plan", firstName: sub.profile?.firstName, lang: base.lang });
           await store.setJSON(key, { ...sub, lastSentDate: local.date });
           sent++;
         } else if (local.hour === SHOP_HOUR && local.dayIndex === SHOP_DAY && sub.lastShopDate !== local.date) {
-          await sendMail(cfg!, { to: sub.email, ...renderShoppingEmail(base), unsubUrl, tag: "weekly-shopping" });
+          await sendMail(cfg!, { to: sub.email, ...renderShoppingEmail(base), unsubUrl, tag: "weekly-shopping", firstName: sub.profile?.firstName, lang: base.lang });
           await store.setJSON(key, { ...sub, lastShopDate: local.date });
           shops++;
         } else skipped++;

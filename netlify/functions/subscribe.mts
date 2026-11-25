@@ -62,7 +62,7 @@ export default async (req: Request, context: Context) => {
     const me = await currentUser(req);
     if (!(me && me.hash === hash)) {
       const siteUrl = context.site.url || new URL(req.url).origin;
-      const notice = sendMail(cfg, { to: existing.email, ...renderPlanUpdatedEmail(siteUrl, settings), tag: "plan-updated" }).catch((err) => console.error("plan notice failed", err));
+      const notice = sendMail(cfg, { to: existing.email, ...renderPlanUpdatedEmail(siteUrl, settings), tag: "plan-updated", firstName: existing.profile?.firstName, lang: settings.lang }).catch((err) => console.error("plan notice failed", err));
       if (typeof (context as any).waitUntil === "function") (context as any).waitUntil(notice); else await notice;
     }
     return Response.json({ ok: true, applied: true });
@@ -103,7 +103,7 @@ export default async (req: Request, context: Context) => {
   const confirmUrl = `${siteUrl}/api/confirm?t=${confirmToken}${settings.lang && settings.lang !== "en" ? "&l=" + settings.lang : ""}`;
   const mail = renderConfirmEmail(siteUrl, confirmUrl, false, settings.lang);
   try {
-    await sendMail(cfg, { to: email, ...mail, tag: "confirm" });
+    await sendMail(cfg, { to: email, ...mail, tag: "confirm", firstName: existing?.profile?.firstName, lang: settings.lang });
   } catch (err) {
     console.error("confirm email failed", err);
     return Response.json({ ok: false, error: "send_failed" }, { status: 502 });
