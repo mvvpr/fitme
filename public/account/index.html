@@ -38,6 +38,15 @@ input[type=email]:focus { outline: 2px solid var(--accent); outline-offset: 1px;
 .btn[disabled] { opacity: .6; cursor: default; }
 .err { color: #b3261e; font-size: 14px; margin: 10px 0 0; }
 .hp { position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden; }
+input[type=text], input[type=tel], input[type=url] { width:100%; font: inherit; padding: 11px 12px; border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--ink); }
+input[type=text]:focus, input[type=tel]:focus, input[type=url]:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.two { display:grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+@media (max-width: 420px) { .two { grid-template-columns: 1fr; } }
+.opt { font-weight: 400; color: var(--muted); font-size: 13px; }
+.hint { font-size: 13px; color: var(--muted); margin: 6px 0 0; }
+.check { display:flex; gap:10px; align-items:flex-start; font-weight:500; font-size:15px; margin: 12px 0 0; cursor:pointer; }
+.check input { width:18px; height:18px; margin: 2px 0 0; accent-color: var(--accent); flex: none; }
+.ok { color: var(--accent); font-size: 14px; font-weight: 600; margin: 0; }
 [hidden] { display:none !important; }
 </style>
 </head>
@@ -54,6 +63,26 @@ input[type=email]:focus { outline: 2px solid var(--accent); outline-offset: 1px;
     <p class="muted" style="margin:0;"><span data-t="loggedAs">Logged in as</span> <strong id="email"></strong></p>
     <p id="pending" class="muted" style="margin:14px 0 0;padding:10px 12px;border:1px solid var(--line);border-radius:8px;" hidden data-t="pendingNote"></p>
   </div>
+  <form class="card" id="pf" style="margin-top:14px;" novalidate>
+    <h2 data-t="profH">Your profile</h2>
+    <p class="muted" style="font-size:14px;margin:0;" data-t="profLead"></p>
+    <div class="two">
+      <div><label for="fn"><span data-t="fn">First name</span> <span class="opt" data-t="optional"></span></label><input type="text" id="fn" autocomplete="given-name" maxlength="60"></div>
+      <div><label for="ln"><span data-t="ln">Last name</span> <span class="opt" data-t="optional"></span></label><input type="text" id="ln" autocomplete="family-name" maxlength="60"></div>
+    </div>
+    <label for="ph"><span data-t="ph">Mobile number</span> <span class="opt" data-t="optional"></span></label>
+    <input type="tel" id="ph" autocomplete="tel" inputmode="tel" maxlength="30" placeholder="+351 912 345 678">
+    <p class="hint" data-t="phHint"></p>
+    <label for="so"><span data-t="so">Social profile link</span> <span class="opt" data-t="optional"></span></label>
+    <input type="url" id="so" inputmode="url" maxlength="200" placeholder="instagram.com/yourname">
+    <p class="hint" data-t="soHint"></p>
+    <h2 style="margin:24px 0 2px;font-size:16px;" data-t="intH">Would you be interested in…</h2>
+    <label class="check"><input type="checkbox" id="ic"><span data-t="ic"></span></label>
+    <label class="check"><input type="checkbox" id="ip"><span data-t="ip"></span></label>
+    <p class="hint" data-t="intHint"></p>
+    <p class="err" id="perr" role="alert" hidden></p>
+    <p style="margin:18px 0 0;display:flex;align-items:center;gap:14px;"><button class="btn primary" type="submit" id="save" data-t="save">Save</button><span class="ok" id="saved" hidden data-t="saved"></span></p>
+  </form>
   <div class="card" style="margin-top:14px;">
     <h2 data-t="planH">Your daily meal plan</h2>
     <table style="width:100%;border-collapse:collapse;font-size:15px;"><tbody id="rows"></tbody></table>
@@ -68,21 +97,36 @@ input[type=email]:focus { outline: 2px solid var(--accent); outline-offset: 1px;
 <script>
 (function () {
   var T = {
-    en: { title: 'Your account', loading: 'Loading…', h: 'Your account', loggedAs: 'Logged in as', planH: 'Your daily meal plan', toPlan: 'Go to FitMe', logout: 'Log out',
+    en: { title: 'Your account', profH: 'Your profile', profLead: 'All optional. Fill in what you like.', optional: '(optional)', fn: 'First name', ln: 'Last name', ph: 'Mobile number', so: 'Social profile link',
+      phHint: 'With country code, e.g. +44 7700 900123. We won\'t call or message you.', soHint: 'Instagram, TikTok, Facebook or another profile.',
+      intH: 'Would you be interested in…', ic: 'Guidance from a health coach', ip: 'A personalised plan made for you',
+      intHint: "Tick if you're interested and FitMe may email you about it. You can untick at any time.", save: 'Save', saving: 'Saving…', saved: 'Saved',
+      eName: 'Please remove the < and > characters from your name.', ePhone: 'Please enter a mobile number with country code, e.g. +44 7700 900123.', eSocial: 'Please enter a valid link, e.g. instagram.com/yourname.', eFail: "Sorry, we couldn't save. Please try again.",
+      loading: 'Loading…', h: 'Your account', loggedAs: 'Logged in as', planH: 'Your daily meal plan', toPlan: 'Go to FitMe', logout: 'Log out',
       pendingNote: "You haven't confirmed your email yet, so the daily meal plan isn't being sent. Look for the confirmation email from FitMe in your inbox.",
       changeNote: 'To change your calories or proteins for now, recalculate on <a data-home href="/">FitMe</a> and sign up again with the same email.',
       status: 'Daily email', active: 'Active, every morning at 7:00', pendingS: 'Waiting for confirmation', cal: 'Daily calories', prot: 'Daily protein', prots: 'Proteins',
       lang: 'Language', units: 'Units', tz: 'Time zone', since: 'Member since', metric: 'Metric (kg, g)', imperial: 'Imperial (lb, oz)', veg: 'Vegetarian', all: 'All proteins',
       langs: { en: 'English', pt: 'Português (Portugal)', br: 'Português (Brasil)' },
       P: { chicken: 'Chicken', beef: 'Beef', pork: 'Pork', fish: 'Fish', eggs: 'Eggs', tofu: 'Tofu', beans: 'Beans' }, loc: 'en-GB' },
-    pt: { title: 'A tua conta', loading: 'A carregar…', h: 'A tua conta', loggedAs: 'Entraste como', planH: 'O teu plano de refeições diário', toPlan: 'Ir para o FitMe', logout: 'Sair',
+    pt: { title: 'A tua conta', profH: 'O teu perfil', profLead: 'Tudo opcional. Preenche o que quiseres.', optional: '(opcional)', fn: 'Nome', ln: 'Apelido', ph: 'Telemóvel', so: 'Link do teu perfil social',
+      phHint: 'Com o indicativo do país, por ex. +351 912 345 678. Não te vamos ligar nem enviar mensagens.', soHint: 'Instagram, TikTok, Facebook ou outro perfil.',
+      intH: 'Terias interesse em…', ic: 'Acompanhamento de um coach de saúde', ip: 'Um plano personalizado feito para ti',
+      intHint: 'Assinala se tiveres interesse e o FitMe pode enviar-te um email sobre isso. Podes desmarcar quando quiseres.', save: 'Guardar', saving: 'A guardar…', saved: 'Guardado',
+      eName: 'Remove os caracteres < e > do teu nome.', ePhone: 'Escreve um número de telemóvel com o indicativo, por ex. +351 912 345 678.', eSocial: 'Escreve um link válido, por ex. instagram.com/oteunome.', eFail: 'Não conseguimos guardar. Tenta outra vez.',
+      loading: 'A carregar…', h: 'A tua conta', loggedAs: 'Entraste como', planH: 'O teu plano de refeições diário', toPlan: 'Ir para o FitMe', logout: 'Sair',
       pendingNote: 'Ainda não confirmaste o teu email, por isso o plano de refeições diário não está a ser enviado. Procura o email de confirmação do FitMe na tua caixa de entrada.',
       changeNote: 'Por agora, para mudares as calorias ou as proteínas, recalcula no <a data-home href="/pt/">FitMe</a> e volta a subscrever com o mesmo email.',
       status: 'Email diário', active: 'Ativo, todas as manhãs às 7:00', pendingS: 'À espera de confirmação', cal: 'Calorias diárias', prot: 'Proteína diária', prots: 'Proteínas',
       lang: 'Idioma', units: 'Unidades', tz: 'Fuso horário', since: 'Membro desde', metric: 'Métrico (kg, g)', imperial: 'Imperial (lb, oz)', veg: 'Vegetariano', all: 'Todas as proteínas',
       langs: { en: 'English', pt: 'Português (Portugal)', br: 'Português (Brasil)' },
       P: { chicken: 'Frango', beef: 'Vaca', pork: 'Porco', fish: 'Peixe', eggs: 'Ovos', tofu: 'Tofu', beans: 'Feijão' }, loc: 'pt-PT' },
-    br: { title: 'Sua conta', loading: 'Carregando…', h: 'Sua conta', loggedAs: 'Você entrou como', planH: 'Seu plano de refeições diário', toPlan: 'Ir para o FitMe', logout: 'Sair',
+    br: { title: 'Sua conta', profH: 'Seu perfil', profLead: 'Tudo opcional. Preencha o que quiser.', optional: '(opcional)', fn: 'Nome', ln: 'Sobrenome', ph: 'Celular', so: 'Link do seu perfil social',
+      phHint: 'Com o código do país, ex.: +55 11 91234-5678. Não vamos te ligar nem mandar mensagens.', soHint: 'Instagram, TikTok, Facebook ou outro perfil.',
+      intH: 'Você teria interesse em…', ic: 'Acompanhamento de um coach de saúde', ip: 'Um plano personalizado feito para você',
+      intHint: 'Marque se tiver interesse e o FitMe pode te mandar um e-mail sobre isso. Você pode desmarcar quando quiser.', save: 'Salvar', saving: 'Salvando…', saved: 'Salvo',
+      eName: 'Tire os caracteres < e > do seu nome.', ePhone: 'Digite um celular com o código do país, ex.: +55 11 91234-5678.', eSocial: 'Digite um link válido, ex.: instagram.com/seunome.', eFail: 'Não conseguimos salvar. Tente de novo.',
+      loading: 'Carregando…', h: 'Sua conta', loggedAs: 'Você entrou como', planH: 'Seu plano de refeições diário', toPlan: 'Ir para o FitMe', logout: 'Sair',
       pendingNote: 'Você ainda não confirmou seu e-mail, então o plano de refeições diário não está sendo enviado. Procure o e-mail de confirmação do FitMe na sua caixa de entrada.',
       changeNote: 'Por enquanto, para mudar suas calorias ou proteínas, recalcule no <a data-home href="/br/">FitMe</a> e faça a inscrição de novo com o mesmo e-mail.',
       status: 'E-mail diário', active: 'Ativo, toda manhã às 7h', pendingS: 'Aguardando confirmação', cal: 'Calorias diárias', prot: 'Proteína diária', prots: 'Proteínas',
@@ -122,9 +166,31 @@ input[type=email]:focus { outline: 2px solid var(--accent); outline-offset: 1px;
       row(L.units, p.units === 'imperial' ? L.imperial : L.metric);
       row(L.tz, String(p.tz).replace(/_/g, ' '));
       row(L.since, new Date(me.since).toLocaleDateString(L.loc, { day: 'numeric', month: 'long', year: 'numeric' }));
+      var pr = me.profile || {};
+      document.getElementById('fn').value = pr.firstName || ''; document.getElementById('ln').value = pr.lastName || '';
+      document.getElementById('ph').value = pr.phone || ''; document.getElementById('so').value = pr.social || '';
+      document.getElementById('ic').checked = !!pr.coach; document.getElementById('ip').checked = !!pr.plan;
       document.getElementById('loading').hidden = true; document.getElementById('acct').hidden = false;
     })
     .catch(function () {});
+  document.getElementById('ph').placeholder = path === 'br' ? '+55 11 91234-5678' : path === 'pt' ? '+351 912 345 678' : '+44 7700 900123';
+  var pf = document.getElementById('pf'), perr = document.getElementById('perr'), save = document.getElementById('save'), saved = document.getElementById('saved');
+  function pErr(m) { perr.textContent = m; perr.hidden = !m; }
+  pf.addEventListener('input', function () { saved.hidden = true; });
+  pf.addEventListener('submit', function (e) {
+    e.preventDefault(); pErr(''); saved.hidden = true; save.disabled = true; save.textContent = L.saving;
+    var body = { action: 'profile', profile: { firstName: fn.value, lastName: ln.value, phone: ph.value, social: so.value, coach: ic.checked, plan: ip.checked } };
+    fetch('/api/me', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      .then(function (r) { if (r.status === 401) { location.replace(login); throw 0; } return r.json(); })
+      .then(function (j) {
+        save.disabled = false; save.textContent = L.save;
+        if (j && j.ok) { var q = j.profile; fn.value = q.firstName; ln.value = q.lastName; ph.value = q.phone; so.value = q.social; saved.hidden = false; return; }
+        var m = { name: L.eName, phone: L.ePhone, social: L.eSocial }[j && j.error] || L.eFail;
+        pErr(m); var el = { name: fn, phone: ph, social: so }[j && j.error]; if (el) el.focus();
+      })
+      .catch(function (x) { if (x === 0) return; save.disabled = false; save.textContent = L.save; pErr(L.eFail); });
+  });
+  var fn = document.getElementById('fn'), ln = document.getElementById('ln'), ph = document.getElementById('ph'), so = document.getElementById('so'), ic = document.getElementById('ic'), ip = document.getElementById('ip');
   document.getElementById('out').addEventListener('click', function () {
     fetch('/api/me', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'logout' }) })
       .finally(function () { location.replace(home); });

@@ -43,7 +43,49 @@ export type Subscriber = {
   // Which ad link brought them (utm_* labels from the URL at first sign-up) and their country then. First-party only.
   src?: { source?: string; medium?: string; campaign?: string; content?: string; term?: string } | null;
   country?: string;
+  // Optional account profile, filled in by the user on /account/.
+  profile?: Profile | null;
 };
+
+export type Profile = {
+  firstName?: string;
+  lastName?: string;
+  phone?: string;   // mobile, international format (+ and digits)
+  social?: string;  // link to a social profile (http/https)
+  coach?: boolean;  // interested in guidance from a health coach
+  plan?: boolean;   // interested in a personalised plan
+  interestText?: string; // wording shown when an interest was ticked
+  interestAt?: string;
+  updatedAt?: string;
+};
+
+export const INTEREST_TEXT = "Tick if you're interested and FitMe may email you about it. You can untick at any time.";
+
+// Clean the profile sent from the account page. Returns { profile } or { error } naming the bad field.
+export function cleanProfile(v: any, prev: Profile | null | undefined): { profile?: Profile; error?: string } {
+  if (!v || typeof v !== "object") return { error: "bad_request" };
+  const str = (x: unknown, max: number) => (typeof x === "string" ? x.trim().replace(/\s+/g, " ").slice(0, max) : "");
+  const firstName = str(v.firstName, 60), lastName = str(v.lastName, 60);
+  if (/[<>]/.test(firstName + lastName)) return { error: "name" };
+  let phone = str(v.phone, 30).replace(/[\s().-]/g, "");
+  if (phone.startsWith("00")) phone = "+" + phone.slice(2);
+  if (phone && !/^\+[1-9]\d{7,14}$/.test(phone)) return { error: "phone" };
+  let social = str(v.social, 200);
+  if (social && !/^https?:\/\//i.test(social)) social = "https://" + social;
+  if (social) { try { const u = new URL(social); if (!/^https?:$/.test(u.protocol) || !u.hostname.includes(".")) throw 0; social = u.toString(); } catch { return { error: "social" }; } }
+  const coach = v.coach === true, plan = v.plan === true;
+  const now = new Date().toISOString();
+  const interestChanged = coach !== !!prev?.coach || plan !== !!prev?.plan;
+  const p: Profile = { updatedAt: now };
+  if (firstName) p.firstName = firstName;
+  if (lastName) p.lastName = lastName;
+  if (phone) p.phone = phone;
+  if (social) p.social = social;
+  if (coach) p.coach = true;
+  if (plan) p.plan = true;
+  if (coach || plan) { p.interestText = interestChanged ? INTEREST_TEXT : prev?.interestText || INTEREST_TEXT; p.interestAt = interestChanged ? now : prev?.interestAt || now; }
+  return { profile: p };
+}
 
 // utm_* labels from the sign-up form: short plain strings only.
 export function cleanSrc(v: unknown): Subscriber["src"] {
