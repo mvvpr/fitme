@@ -1,7 +1,7 @@
 // POST /api/subscribe — store a pending subscriber and send a double opt-in email.
 import type { Config, Context } from "@netlify/functions";
 import "../../public/email-check.js";
-import { subscribers, sha256, subKey, tokKey, unsKey, newToken, validTimeZone, mailConfig, sendMail, renderConfirmEmail, sendMetaEvents, requestUser, FBP_RE, FBC_RE, EVENT_ID_RE, asLang, cleanProts, cleanSrc, countryOf, type Subscriber } from "../lib/core.mts";
+import { subscribers, sha256, subKey, tokKey, unsKey, newToken, validTimeZone, mailConfig, sendMail, renderConfirmEmail, sendMetaEvents, requestUser, FBP_RE, FBC_RE, EVENT_ID_RE, asLang, cleanProts, cleanSrc, countryOf, currentUser, renderPlanUpdatedEmail, type Subscriber } from "../lib/core.mts";
 
 const CONSENT_TEXT = "I agree to receive a daily meal-plan email from FitMe. We store your email, time zone and calorie settings to send it, and you can unsubscribe at any time. (privacy policy version 2026-11-13)";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -15,7 +15,6 @@ export default async (req: Request, context: Context) => {
   const suggestion = input?.typoOk === true ? null : (globalThis as any).FITME_EMAIL_CHECK?.suggest(email);
   if (suggestion) return Response.json({ ok: false, error: "typo", suggest: suggestion }, { status: 400 });
   if (!EMAIL_RE.test(email) || email.length > 254) return Response.json({ ok: false, error: "invalid_email" }, { status: 400 });
-  if (input?.consent !== true) return Response.json({ ok: false, error: "consent_required" }, { status: 400 });
   if (typeof input?.website === "string" && input.website) return Response.json({ ok: true }); // honeypot
 
   const intake = Math.round(Number(input?.intake));
@@ -51,6 +50,24 @@ export default async (req: Request, context: Context) => {
   const existing = (await store.get(subKey(hash), { type: "json" })) as Subscriber | null;
   const now = new Date().toISOString();
 
+  // Agreeing is needed once: a new address (or one that never confirmed) must tick the box.
+  if (input?.consent !== true && existing?.status !== "active") return Response.json({ ok: false, error: "consent_required" }, { status: 400 });
+
+  // Already confirmed once: apply the recalculated plan straight away, no new confirmation or consent needed.
+  // If the request isn't from that person's own logged-in session, email them a short notice so a change they
+  // didn't make doesn't go unnoticed.
+  if (existing?.status === "active") {
+    if (existing.confirmToken) await store.delete(tokKey(existing.confirmToken));
+    await store.setJSON(subKey(hash), { ...existing, ...settings, pending: null, confirmToken: null, planUpdatedAt: now });
+    const me = await currentUser(req);
+    if (!(me && me.hash === hash)) {
+      const siteUrl = context.site.url || new URL(req.url).origin;
+      const notice = sendMail(cfg, { to: existing.email, ...renderPlanUpdatedEmail(siteUrl, settings), tag: "plan-updated" }).catch((err) => console.error("plan notice failed", err));
+      if (typeof (context as any).waitUntil === "function") (context as any).waitUntil(notice); else await notice;
+    }
+    return Response.json({ ok: true, applied: true });
+  }
+
   // Throttle repeat confirmation emails to the same address.
   if (existing?.lastConfirmMailAt && Date.now() - Date.parse(existing.lastConfirmMailAt) < 2 * 60 * 1000) {
     return Response.json({ ok: true });
@@ -58,12 +75,9 @@ export default async (req: Request, context: Context) => {
 
   if (existing?.confirmToken) await store.delete(tokKey(existing.confirmToken));
   const confirmToken = newToken();
-  const isUpdate = existing?.status === "active";
 
   const metaKeep = meta ? { fbp: meta.fbp, fbc: meta.fbc, url: meta.url } : null;
-  const record: Subscriber = existing && isUpdate
-    ? { ...existing, pending: settings, confirmToken, lastConfirmMailAt: now }
-    : {
+  const record: Subscriber = {
         email,
         status: "pending",
         ...settings,
@@ -87,7 +101,7 @@ export default async (req: Request, context: Context) => {
 
   const siteUrl = context.site.url || new URL(req.url).origin;
   const confirmUrl = `${siteUrl}/api/confirm?t=${confirmToken}${settings.lang && settings.lang !== "en" ? "&l=" + settings.lang : ""}`;
-  const mail = renderConfirmEmail(siteUrl, confirmUrl, isUpdate, settings.lang);
+  const mail = renderConfirmEmail(siteUrl, confirmUrl, false, settings.lang);
   try {
     await sendMail(cfg, { to: email, ...mail, tag: "confirm" });
   } catch (err) {

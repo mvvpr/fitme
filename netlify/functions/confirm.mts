@@ -1,6 +1,7 @@
 // GET /api/confirm?t=TOKEN — activate a subscription (or apply an update) from the opt-in email.
+// Clicking the link proves the address, so it also logs the person in and opens their account page with a welcome.
 import type { Config, Context } from "@netlify/functions";
-import { subscribers, subKey, tokKey, htmlPage, sitePath, T, asLang, sendMetaEvents, requestUser, type Subscriber } from "../lib/core.mts";
+import { subscribers, subKey, tokKey, htmlPage, sitePath, T, asLang, sendMetaEvents, requestUser, newToken, sessKey, sessionCookie, SESSION_TTL_MS, accountPath, type Subscriber } from "../lib/core.mts";
 
 export default async (req: Request, context: Context) => {
   const siteUrl = context.site.url || new URL(req.url).origin;
@@ -41,7 +42,9 @@ export default async (req: Request, context: Context) => {
     if (typeof (context as any).waitUntil === "function") (context as any).waitUntil(send); else await send;
   }
 
-  return new Response(null, { status: 303, headers: { Location: `${sitePath(siteUrl, updated.lang)}#subscribed`, "cache-control": "no-store" } });
+  const sid = newToken();
+  await store.setJSON(sessKey(sid), { hash: hash!, exp: Date.now() + SESSION_TTL_MS });
+  return new Response(null, { status: 303, headers: { Location: `${accountPath(siteUrl, asLang(updated.lang))}?welcome=1`, "Set-Cookie": sessionCookie(sid), "cache-control": "no-store" } });
 };
 
 export const config: Config = { path: "/api/confirm", method: "GET" };

@@ -14,6 +14,7 @@ export default async (req: Request) => {
   type Row = { country: string; source: string; campaign: string; adset: string; ad: string; signups: number; confirmed: number };
   const rows = new Map<string, Row>();
   // Confirmation reminders: how many got each one, and which email the confirmed sign-ups clicked.
+  const profiles = { filledIn: 0, withPhone: 0, interestedInCoach: 0, interestedInPersonalPlan: 0 };
   const reminders = { pending: 0, sentReminder1: 0, sentReminder2: 0, confirmedFromFirstEmail: 0, confirmedFromReminder1: 0, confirmedFromReminder2: 0 };
   const { blobs } = await store.list({ prefix: "sub/" });
   for (const b of blobs) {
@@ -27,6 +28,7 @@ export default async (req: Request) => {
     const row = rows.get(k) || { ...r, signups: 0, confirmed: 0 };
     row.signups++;
     if (s.status === "active") row.confirmed++;
+    if (s.profile) { profiles.filledIn++; if (s.profile.phone) profiles.withPhone++; if (s.profile.coach) profiles.interestedInCoach++; if (s.profile.plan) profiles.interestedInPersonalPlan++; }
     if ((s.reminders || 0) >= 1) reminders.sentReminder1++;
     if ((s.reminders || 0) >= 2) reminders.sentReminder2++;
     if (s.status === "pending") reminders.pending++;
@@ -53,7 +55,7 @@ export default async (req: Request) => {
       ...signups.map((r) => [r.country, r.source, r.campaign, r.adset, r.ad, r.signups, r.confirmed].map((x) => `"${String(x).replace(/"/g, '""')}"`).join(","))].join("\n");
     return new Response(csv, { headers: { "Content-Type": "text/csv; charset=utf-8", "Cache-Control": "no-store" } });
   }
-  return Response.json({ days, since, signups, reminders, consent }, { headers: { "Cache-Control": "no-store" } });
+  return Response.json({ days, since, signups, reminders, profiles, consent }, { headers: { "Cache-Control": "no-store" } });
 };
 
 export const config: Config = { path: "/api/stats", method: "GET" };

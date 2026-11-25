@@ -567,7 +567,7 @@ body.lang-fading .wrap > .step { opacity: 0; }
     <button type="button" class="btn primary big-btn" data-go="about">Get my free plan</button>
     <p class="hint">About 1 minute · Free · No sign-up needed</p>
     <!--site-links (hrefs set per language by markLangSwitch and by netlify/edge-functions/meta-locale.ts)-->
-    <p class="site-links"><a href="/recipes/" data-href-en="/recipes/" data-href-pt="/pt/receitas/" data-href-br="/br/receitas/">High protein recipes</a><span aria-hidden="true"> · </span><a href="/privacy.html" data-href-en="/privacy.html" data-href-pt="/pt/privacy.html" data-href-br="/br/privacy.html">Privacy</a></p>
+    <p class="site-links"><a href="/recipes/" data-href-en="/recipes/" data-href-pt="/pt/receitas/" data-href-br="/br/receitas/">High protein recipes</a><span aria-hidden="true"> · </span><a href="/privacy.html" data-href-en="/privacy.html" data-href-pt="/pt/privacy.html" data-href-br="/br/privacy.html">Privacy</a><span aria-hidden="true"> · </span><a href="/login/" data-href-en="/login/" data-href-pt="/pt/login/" data-href-br="/br/login/">Log in</a></p>
   </section>
 
   <!-- Step 1: About you -->
@@ -1260,6 +1260,15 @@ body.lang-fading .wrap > .step { opacity: 0; }
     ['source', 'medium', 'campaign', 'content', 'term'].forEach(function (k) { var v = u.get('utm_' + k); if (v) { out[k] = v.slice(0, 100); any = true; } });
     return any ? out : null;
   }
+  // Logged in and already confirmed: fill in their email and hide the consent box (they agreed once already).
+  fetch('/api/me', { credentials: 'same-origin' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (me) {
+    if (!me || !me.ok || me.status !== 'active') return;
+    document.querySelectorAll('.sub-form').forEach(function (form) {
+      form.dataset.known = '1';
+      var e = form.querySelector('.sub-email'); if (e && !e.value) e.value = me.email;
+      var c = form.querySelector('.sub-consent'); if (c) c.closest('label').hidden = true;
+    });
+  }).catch(function () {});
   document.querySelectorAll('.sub-form').forEach(function (form) {
     var q = function (c) { return form.querySelector(c); };
     function subMsg(text, kind) { var el = q('.sub-msg'); el.textContent = text; el.className = 'sub-msg' + (kind ? ' ' + kind : ''); }
@@ -1289,18 +1298,18 @@ body.lang-fading .wrap > .step { opacity: 0; }
       var sug = typoFor(email);
       if (sug) { askFix(email, sug); return; }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { subMsg(MSG.invalid_email, 'err'); q('.sub-email').focus(); return; }
-      if (!q('.sub-consent').checked) { subMsg(MSG.consent_required, 'err'); return; }
+      // The consent box is only needed the first time: the server asks for it (consent_required) if this address hasn't confirmed before.
       var tz = 'Europe/Lisbon';
       try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || tz; } catch (err) {}
       if (window.FITME_TRACK && q('.sub-ads') && q('.sub-ads').checked) FITME_TRACK.grantFromForm();
       var meta = window.FITME_TRACK ? FITME_TRACK.leadContext() : null;
       var box = form.closest('.sub-box'); if (meta && box) meta.placement = box.getAttribute('data-box');
-      var payload = { email: email, consent: true, website: q('.sub-web').value, tz: tz, intake: subState ? subState.intake : 0, prot: subState ? subState.prot : 0, units: state.units, lang: LANG, diet: state.diet, prots: prefs(), meta: meta, src: adSource(), typoOk: form.dataset.keep === email };
+      var payload = { email: email, consent: q('.sub-consent').checked, website: q('.sub-web').value, tz: tz, intake: subState ? subState.intake : 0, prot: subState ? subState.prot : 0, units: state.units, lang: LANG, diet: state.diet, prots: prefs(), meta: meta, src: adSource(), typoOk: form.dataset.keep === email };
       q('.sub-btn').disabled = true; subMsg(MSG.sending);
-      fetch('/api/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+      fetch('/api/subscribe', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
         .then(function (res) { return res.json().catch(function () { return { ok: false, error: res.status === 429 ? 'rate' : 'unknown' }; }); })
         .then(function (data) {
-          if (data && data.ok) { subMsg(MSG.ok, 'ok'); form.reset(); if (window.FITME_TRACK && data.lead) FITME_TRACK.leadDone(meta); }
+          if (data && data.ok) { subMsg(data.applied ? MSG.applied : MSG.ok, 'ok'); form.reset(); if (window.FITME_TRACK && data.lead) FITME_TRACK.leadDone(meta); }
           else if (data && data.error === 'typo' && data.suggest) askFix(email, data.suggest);
           else subMsg(data && data.error === 'rate' ? MSG.rate : (MSG[data && data.error] || MSG.error), 'err');
         })

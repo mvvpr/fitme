@@ -43,7 +43,83 @@ export type Subscriber = {
   // Which ad link brought them (utm_* labels from the URL at first sign-up) and their country then. First-party only.
   src?: { source?: string; medium?: string; campaign?: string; content?: string; term?: string } | null;
   country?: string;
+  // When a logged-in user last changed their plan without a confirmation email (account page or recalculating).
+  planUpdatedAt?: string;
+  // Optional account profile, filled in by the user on /account/.
+  profile?: Profile | null;
 };
+
+export type Profile = {
+  firstName?: string;
+  lastName?: string;
+  phone?: string;   // mobile, international format (+ and digits)
+  social?: string;  // link to a social profile (http/https)
+  coach?: boolean;  // interested in guidance from a health coach
+  plan?: boolean;   // interested in a personalised plan
+  interestText?: string; // wording shown when an interest was ticked
+  interestAt?: string;
+  updatedAt?: string;
+};
+
+// Proteins edited on the account page (calories and protein come from the calculator). Returns { plan } or { error }.
+export function cleanPlan(v: any): { plan?: Pick<Subscriber, "prots" | "diet">; error?: string } {
+  if (!v || typeof v !== "object") return { error: "bad_request" };
+  const prots = cleanProts(v.prots);
+  if (!prots) return { error: "prots" };
+  return { plan: { prots, diet: prots.some((x) => ["chicken", "beef", "pork", "fish"].includes(x)) ? "all" : "veg" } };
+}
+
+const PLAN_NOTICE = {
+  en: { subject: "Your FitMe plan was updated", title: "Your meal plan was updated",
+    lead: (k: string, p: string) => `Your FitMe plan was just recalculated with this email: ${k} and ${p} protein a day. Your next email uses the new portions.`,
+    notYou: (u: string) => `Wasn't you? <a href="${u}" style="color:#2e6b4f;">Log in</a> to check your plan, or recalculate on FitMe to change it back.`, notYouText: "Wasn't you? Log in to check your plan" },
+  pt: { subject: "O teu plano FitMe foi atualizado", title: "O teu plano de refeições foi atualizado",
+    lead: (k: string, p: string) => `O teu plano FitMe acabou de ser recalculado com este email: ${k} e ${p} de proteína por dia. O próximo email já usa as novas porções.`,
+    notYou: (u: string) => `Não foste tu? <a href="${u}" style="color:#2e6b4f;">Entra na tua conta</a> para veres o teu plano, ou recalcula no FitMe para o voltares a mudar.`, notYouText: "Não foste tu? Entra na tua conta para veres o teu plano" },
+  br: { subject: "Seu plano FitMe foi atualizado", title: "Seu plano de refeições foi atualizado",
+    lead: (k: string, p: string) => `Seu plano FitMe acabou de ser recalculado com este e-mail: ${k} e ${p} de proteína por dia. O próximo e-mail já usa as novas porções.`,
+    notYou: (u: string) => `Não foi você? <a href="${u}" style="color:#2e6b4f;">Entre na sua conta</a> para ver seu plano, ou recalcule no FitMe para mudar de volta.`, notYouText: "Não foi você? Entre na sua conta para ver seu plano" },
+};
+
+export function renderPlanUpdatedEmail(siteUrl: string, st: { intake: number; prot: number; lang?: Lang }) {
+  const c = COLORS, lang = asLang(st.lang), t = PLAN_NOTICE[lang], loc = T[lang].locale;
+  const k = kcalL(st.intake, loc), p = `${st.prot.toLocaleString(loc)} g`;
+  const login = `${siteUrl}${lang === "en" ? "" : "/" + lang}/login/`;
+  const inner = `<tr><td style="background:${c.card};border:1px solid ${c.line};border-radius:12px;padding:28px 24px;">
+<h1 style="margin:0 0 10px;font-size:22px;line-height:1.25;">${t.title}</h1>
+<p style="margin:0 0 14px;font-size:15px;line-height:1.55;color:${c.muted};">${t.lead(k, p)}</p>
+<p style="margin:0;font-size:14px;line-height:1.55;color:${c.muted};">${t.notYou(esc(login))}</p>
+</td></tr>`;
+  return { subject: t.subject, html: shell(siteUrl, inner, T[lang].confirmFooter, lang), text: `${t.title}\n\n${t.lead(k, p)}\n\n${t.notYouText}: ${login}` };
+}
+
+export const INTEREST_TEXT = "Tick if you're interested and FitMe may email you about it. You can untick at any time.";
+
+// Clean the profile sent from the account page. Returns { profile } or { error } naming the bad field.
+export function cleanProfile(v: any, prev: Profile | null | undefined): { profile?: Profile; error?: string } {
+  if (!v || typeof v !== "object") return { error: "bad_request" };
+  const str = (x: unknown, max: number) => (typeof x === "string" ? x.trim().replace(/\s+/g, " ").slice(0, max) : "");
+  const firstName = str(v.firstName, 60), lastName = str(v.lastName, 60);
+  if (/[<>]/.test(firstName + lastName)) return { error: "name" };
+  let phone = str(v.phone, 30).replace(/[\s().-]/g, "");
+  if (phone.startsWith("00")) phone = "+" + phone.slice(2);
+  if (phone && !/^\+[1-9]\d{7,14}$/.test(phone)) return { error: "phone" };
+  let social = str(v.social, 200);
+  if (social && !/^https?:\/\//i.test(social)) social = "https://" + social;
+  if (social) { try { const u = new URL(social); if (!/^https?:$/.test(u.protocol) || !u.hostname.includes(".")) throw 0; social = u.toString(); } catch { return { error: "social" }; } }
+  const coach = v.coach === true, plan = v.plan === true;
+  const now = new Date().toISOString();
+  const interestChanged = coach !== !!prev?.coach || plan !== !!prev?.plan;
+  const p: Profile = { updatedAt: now };
+  if (firstName) p.firstName = firstName;
+  if (lastName) p.lastName = lastName;
+  if (phone) p.phone = phone;
+  if (social) p.social = social;
+  if (coach) p.coach = true;
+  if (plan) p.plan = true;
+  if (coach || plan) { p.interestText = interestChanged ? INTEREST_TEXT : prev?.interestText || INTEREST_TEXT; p.interestAt = interestChanged ? now : prev?.interestAt || now; }
+  return { profile: p };
+}
 
 // utm_* labels from the sign-up form: short plain strings only.
 export function cleanSrc(v: unknown): Subscriber["src"] {
@@ -201,16 +277,16 @@ export const T = {
     ignore: "If you didn't sign up, ignore this email and nothing will happen.", confirmFooter: "You're receiving this because this address was entered on FitMe.",
     yourDayPlan: (d: string) => `Your ${d} meal plan`, calories: "Calories", protein: "Protein", carbs: "Carbs", fat: "Fat", macro: ["P", "C", "F"],
     ingredients: "Ingredients", method: "Method", fullWeek: "See the full week and shopping list on FitMe →",
-    footer: (k: string, site: string, unsub: string) => `Portions are sized for your daily intake of ${k}. Nutrition is estimated from standard ingredient values, so check labels if you have allergies. This is not medical advice.<br>To change your calories, recalculate on <a href="${site}" style="color:#6b655e;">FitMe</a> and sign up again with the same email. <a href="${unsub}" style="color:#6b655e;">Unsubscribe</a>.`,
+    footer: (k: string, site: string, unsub: string) => `Portions are sized for your daily intake of ${k}. Nutrition is estimated from standard ingredient values, so check labels if you have allergies. This is not medical advice.<br>Change your proteins or details in <a href="${site}account/" style="color:#6b655e;">your account</a>. To change your calories, recalculate on <a href="${site}" style="color:#6b655e;">FitMe</a> with the same email. <a href="${unsub}" style="color:#6b655e;">Unsubscribe</a>.`,
     subject: (d: string, lunch: string) => `Your ${d} meal plan: ${lunch} & more`,
-    textFull: "Full week", textUnsub: "Unsubscribe", textConfirm: "Confirm",
+    textFull: "Full week", textAccount: "Your account", textUnsub: "Unsubscribe", textConfirm: "Confirm",
     expiredTitle: "This link has expired", expiredBody: (u: string) => `It may have been used already or replaced by a newer email. You can <a href="${u}" style="color:#2e6b4f;">sign up again on FitMe</a>.`,
     notSubTitle: "You're not subscribed", notSubBody: "This address isn't on the FitMe daily email list anymore.",
     stopTitle: "Stop the daily meal plan?", stopBody: "You'll stop getting FitMe emails and we'll delete your email address and settings.", stopBtn: "Unsubscribe",
     shopSubject: "Your shopping list for the week", shopTitle: "Your shopping list for the week",
     shopIntro: (k: string) => `Everything for the week's 28 meals, with portions sized to your daily intake of ${k}. Amounts are rounded up so you won't run short.`,
     shopExtras: "Herbs, spices & extras (check your cupboard)", shopCta: "See this week's recipes on FitMe →",
-    shopFooter: (site: string, unsub: string) => `You get this list every Saturday as part of your FitMe meal plan. To change your calories, recalculate on <a href="${site}" style="color:#6b655e;">FitMe</a> and sign up again with the same email. <a href="${unsub}" style="color:#6b655e;">Unsubscribe</a>.`,
+    shopFooter: (site: string, unsub: string) => `You get this list every Saturday as part of your FitMe meal plan. Change your proteins or details in <a href="${site}account/" style="color:#6b655e;">your account</a>. To change your calories, recalculate on <a href="${site}" style="color:#6b655e;">FitMe</a> with the same email. <a href="${unsub}" style="color:#6b655e;">Unsubscribe</a>.`,
     doneTitle: "You're unsubscribed", doneBody: (u: string) => `Your email and settings have been deleted. You can <a href="${u}" style="color:#2e6b4f;">sign up again</a> any time.`,
   },
   pt: {
@@ -222,16 +298,16 @@ export const T = {
     ignore: "Se não fizeste esta subscrição, ignora este email e nada acontecerá.", confirmFooter: "Recebes este email porque este endereço foi introduzido no FitMe.",
     yourDayPlan: (d: string) => `O teu plano de ${d}`, calories: "Calorias", protein: "Proteína", carbs: "Hidratos", fat: "Gordura", macro: ["P", "H", "G"],
     ingredients: "Ingredientes", method: "Preparação", fullWeek: "Vê a semana completa e a lista de compras no FitMe →",
-    footer: (k: string, site: string, unsub: string) => `As porções estão ajustadas à tua ingestão diária de ${k}. Os valores nutricionais são estimados a partir de valores-padrão dos ingredientes, por isso confirma os rótulos se tiveres alergias. Não é aconselhamento médico.<br>Para mudar as tuas calorias, recalcula no <a href="${site}" style="color:#6b655e;">FitMe</a> e volta a subscrever com o mesmo email. <a href="${unsub}" style="color:#6b655e;">Cancelar subscrição</a>.`,
+    footer: (k: string, site: string, unsub: string) => `As porções estão ajustadas à tua ingestão diária de ${k}. Os valores nutricionais são estimados a partir de valores-padrão dos ingredientes, por isso confirma os rótulos se tiveres alergias. Não é aconselhamento médico.<br>Muda as proteínas ou os teus dados na <a href="${site}account/" style="color:#6b655e;">tua conta</a>. Para mudar as calorias, recalcula no <a href="${site}" style="color:#6b655e;">FitMe</a> com o mesmo email. <a href="${unsub}" style="color:#6b655e;">Cancelar subscrição</a>.`,
     subject: (d: string, lunch: string) => `O teu plano de ${d}: ${lunch} ao almoço`,
-    textFull: "Semana completa", textUnsub: "Cancelar subscrição", textConfirm: "Confirmar",
+    textFull: "Semana completa", textAccount: "A tua conta", textUnsub: "Cancelar subscrição", textConfirm: "Confirmar",
     expiredTitle: "Este link expirou", expiredBody: (u: string) => `Pode já ter sido usado ou substituído por um email mais recente. Podes <a href="${u}" style="color:#2e6b4f;">voltar a subscrever no FitMe</a>.`,
     notSubTitle: "Não tens subscrição ativa", notSubBody: "Este endereço já não está na lista do email diário do FitMe.",
     stopTitle: "Parar o plano de refeições diário?", stopBody: "Deixas de receber emails do FitMe e apagamos o teu endereço de email e as tuas definições.", stopBtn: "Cancelar subscrição",
     shopSubject: "A tua lista de compras da semana", shopTitle: "A tua lista de compras da semana",
     shopIntro: (k: string) => `Tudo o que precisas para as 28 refeições da semana, com porções ajustadas à tua ingestão diária de ${k}. As quantidades estão arredondadas para cima, para não te faltar nada.`,
     shopExtras: "Ervas, especiarias e extras (confirma na despensa)", shopCta: "Vê as receitas desta semana no FitMe →",
-    shopFooter: (site: string, unsub: string) => `Recebes esta lista todos os sábados como parte do teu plano de refeições FitMe. Para mudar as tuas calorias, recalcula no <a href="${site}" style="color:#6b655e;">FitMe</a> e volta a subscrever com o mesmo email. <a href="${unsub}" style="color:#6b655e;">Cancelar subscrição</a>.`,
+    shopFooter: (site: string, unsub: string) => `Recebes esta lista todos os sábados como parte do teu plano de refeições FitMe. Muda as proteínas ou os teus dados na <a href="${site}account/" style="color:#6b655e;">tua conta</a>. Para mudar as calorias, recalcula no <a href="${site}" style="color:#6b655e;">FitMe</a> com o mesmo email. <a href="${unsub}" style="color:#6b655e;">Cancelar subscrição</a>.`,
     doneTitle: "Subscrição cancelada", doneBody: (u: string) => `O teu email e as tuas definições foram apagados. Podes <a href="${u}" style="color:#2e6b4f;">voltar a subscrever</a> quando quiseres.`,
   },
   br: {
@@ -243,16 +319,16 @@ export const T = {
     ignore: "Se você não fez essa inscrição, ignore este e-mail e nada vai acontecer.", confirmFooter: "Você está recebendo este e-mail porque este endereço foi informado no FitMe.",
     yourDayPlan: (d: string) => `Seu plano de ${d}`, calories: "Calorias", protein: "Proteína", carbs: "Carboidratos", fat: "Gordura", macro: ["P", "C", "G"],
     ingredients: "Ingredientes", method: "Modo de preparo", fullWeek: "Veja a semana completa e a lista de compras no FitMe →",
-    footer: (k: string, site: string, unsub: string) => `As porções estão na medida da sua ingestão diária de ${k}. Os valores nutricionais são estimados a partir de valores-padrão dos ingredientes, então confira os rótulos se tiver alergias. Não é orientação médica.<br>Para mudar suas calorias, recalcule no <a href="${site}" style="color:#6b655e;">FitMe</a> e faça a inscrição de novo com o mesmo e-mail. <a href="${unsub}" style="color:#6b655e;">Cancelar inscrição</a>.`,
+    footer: (k: string, site: string, unsub: string) => `As porções estão na medida da sua ingestão diária de ${k}. Os valores nutricionais são estimados a partir de valores-padrão dos ingredientes, então confira os rótulos se tiver alergias. Não é orientação médica.<br>Mude as proteínas ou seus dados na <a href="${site}account/" style="color:#6b655e;">sua conta</a>. Para mudar as calorias, recalcule no <a href="${site}" style="color:#6b655e;">FitMe</a> com o mesmo e-mail. <a href="${unsub}" style="color:#6b655e;">Cancelar inscrição</a>.`,
     subject: (d: string, lunch: string) => `Seu plano de ${d}: ${lunch} no almoço`,
-    textFull: "Semana completa", textUnsub: "Cancelar inscrição", textConfirm: "Confirmar",
+    textFull: "Semana completa", textAccount: "Sua conta", textUnsub: "Cancelar inscrição", textConfirm: "Confirmar",
     expiredTitle: "Este link expirou", expiredBody: (u: string) => `Ele pode já ter sido usado ou substituído por um e-mail mais recente. Você pode <a href="${u}" style="color:#2e6b4f;">se inscrever de novo no FitMe</a>.`,
     notSubTitle: "Você não está inscrito", notSubBody: "Este endereço não está mais na lista do e-mail diário do FitMe.",
     stopTitle: "Parar o plano de refeições diário?", stopBody: "Você deixa de receber os e-mails do FitMe e apagamos seu endereço de e-mail e suas configurações.", stopBtn: "Cancelar inscrição",
     shopSubject: "Sua lista de compras da semana", shopTitle: "Sua lista de compras da semana",
     shopIntro: (k: string) => `Tudo o que você precisa para as 28 refeições da semana, com porções na medida da sua ingestão diária de ${k}. As quantidades estão arredondadas para cima, para não faltar nada.`,
     shopExtras: "Ervas, temperos e extras (confira na despensa)", shopCta: "Veja as receitas desta semana no FitMe →",
-    shopFooter: (site: string, unsub: string) => `Você recebe esta lista todo sábado como parte do seu plano de refeições FitMe. Para mudar suas calorias, recalcule no <a href="${site}" style="color:#6b655e;">FitMe</a> e faça a inscrição de novo com o mesmo e-mail. <a href="${unsub}" style="color:#6b655e;">Cancelar inscrição</a>.`,
+    shopFooter: (site: string, unsub: string) => `Você recebe esta lista todo sábado como parte do seu plano de refeições FitMe. Mude as proteínas ou seus dados na <a href="${site}account/" style="color:#6b655e;">sua conta</a>. Para mudar as calorias, recalcule no <a href="${site}" style="color:#6b655e;">FitMe</a> com o mesmo e-mail. <a href="${unsub}" style="color:#6b655e;">Cancelar inscrição</a>.`,
     doneTitle: "Inscrição cancelada", doneBody: (u: string) => `Seu e-mail e suas configurações foram apagados. Você pode <a href="${u}" style="color:#2e6b4f;">se inscrever de novo</a> quando quiser.`,
   },
 };
@@ -377,7 +453,7 @@ export function renderDailyEmail(opts: { siteUrl: string; unsubUrl: string; dayI
       const steps = m.rec.steps.map((s: string, i: number) => `  ${i + 1}. ${s}`).join("\n");
       return `${m.slot.label.toUpperCase()}: ${m.rec.name} (${kcal(m.n.k)}, ${Math.round(m.n.p)} g ${t.protein.toLowerCase()})\n${t.ingredients}:\n${ing}\n${t.method}:\n${steps}\n`;
     }))
-    .concat([`${t.textFull}: ${site}#meals`, `${t.textUnsub}: ${opts.unsubUrl}`]).join("\n");
+    .concat([`${t.textFull}: ${site}#meals`, `${t.textAccount}: ${site}account/`, `${t.textUnsub}: ${opts.unsubUrl}`]).join("\n");
   return { subject, html: shell(opts.siteUrl, summary + cards + cta, footer, lang), text };
 }
 
@@ -398,7 +474,7 @@ export function renderShoppingEmail(opts: { siteUrl: string; unsubUrl: string; d
   const cta = `<tr><td style="padding:18px 4px 0;font-size:14px;"><a href="${esc(site)}#meals" style="color:${c.accent};font-weight:600;">${t.shopCta}</a></td></tr>`;
   const text = [t.shopTitle + ` (${opts.dateLabel})`, t.shopIntro(kcalL(opts.intake, t.locale)), ""]
     .concat(list.groups.map((g: any) => g.aisle.toUpperCase() + "\n" + g.items.map((it: any) => `  [ ] ${it.n}: ${it.q}`).join("\n") + "\n"))
-    .concat([t.shopExtras + ": " + list.extras, "", `${t.textFull}: ${site}#meals`, `${t.textUnsub}: ${opts.unsubUrl}`]).join("\n");
+    .concat([t.shopExtras + ": " + list.extras, "", `${t.textFull}: ${site}#meals`, `${t.textAccount}: ${site}account/`, `${t.textUnsub}: ${opts.unsubUrl}`]).join("\n");
   return { subject: t.shopSubject, html: shell(opts.siteUrl, head + sections + extras + cta, t.shopFooter(esc(site), esc(opts.unsubUrl)), lang), text };
 }
 
@@ -409,4 +485,79 @@ export function htmlPage(siteUrl: string, title: string, body: string, status = 
 <main style="max-width:480px;margin:12vh auto;padding:0 18px;"><a href="${esc(sitePath(siteUrl, lang))}" style="text-decoration:none;color:${c.ink};font-size:26px;font-weight:700;">Fit<span style="color:${c.accent};">Me</span></a>
 <div style="background:${c.card};border:1px solid ${c.line};border-radius:12px;padding:24px;margin-top:16px;"><h1 style="margin:0 0 10px;font-size:21px;">${esc(title)}</h1>${body}</div></main></body></html>`,
     { status, headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store", "x-robots-tag": "noindex" } });
+}
+
+// ---------- Accounts: log in by email link ----------
+// No passwords. POST /api/login emails a one-time link (15 min); opening it shows a button that POSTs to /api/auth
+// (so email link scanners can't use it up), which starts a 30-day session kept in an HttpOnly cookie.
+// Blobs: login/<token> = { hash, exp }, sess/<sid> = { hash, exp }. Only addresses already on FitMe can log in.
+export const LOGIN_TTL_MS = 15 * 60 * 1000;
+export const SESSION_TTL_MS = 30 * 864e5;
+export const SESSION_COOKIE = "fm_s";
+export const loginKey = (token: string) => `login/${token}`;
+export const sessKey = (sid: string) => `sess/${sid}`;
+export const TOKEN_RE = /^[a-f0-9]{48}$/;
+
+export function sessionCookie(sid: string | null) {
+  const v = sid ? `${sid}; Max-Age=${SESSION_TTL_MS / 1000}` : `; Max-Age=0`;
+  return `${SESSION_COOKIE}=${v}; Path=/; HttpOnly; Secure; SameSite=Lax`;
+}
+
+export function readSid(req: Request): string | null {
+  const m = (req.headers.get("cookie") || "").match(new RegExp(`(?:^|;\\s*)${SESSION_COOKIE}=([a-f0-9]{48})`));
+  return m ? m[1] : null;
+}
+
+// The logged-in subscriber, or null (no cookie, expired session, or the address was unsubscribed/deleted).
+export async function currentUser(req: Request) {
+  const sid = readSid(req);
+  if (!sid) return null;
+  const store = subscribers();
+  const sess = (await store.get(sessKey(sid), { type: "json" })) as { hash: string; exp: number } | null;
+  if (!sess || sess.exp < Date.now()) { if (sess) await store.delete(sessKey(sid)); return null; }
+  const sub = (await store.get(subKey(sess.hash), { type: "json" })) as Subscriber | null;
+  if (!sub) { await store.delete(sessKey(sid)); return null; }
+  return { sid, hash: sess.hash, sub };
+}
+
+export const AUTH = {
+  en: {
+    mailSubject: "Your FitMe log-in link", mailTitle: "Log in to FitMe",
+    mailLead: "Tap the button below to log in to your FitMe account. The link works once and expires in 15 minutes.",
+    mailBtn: "Log in", mailIgnore: "If you didn't ask to log in, ignore this email. Nobody can log in without this link.",
+    mailFooter: "You're receiving this because someone asked to log in to FitMe with this address.",
+    pageTitle: "Log in to FitMe", pageBody: "Tap the button to finish logging in on this device.", pageBtn: "Log in",
+    expiredTitle: "This log-in link has expired", expiredBody: (u: string) => `Links work once and for 15 minutes. <a href="${u}" style="color:#2e6b4f;">Get a new link</a>.`,
+  },
+  pt: {
+    mailSubject: "O teu link de acesso ao FitMe", mailTitle: "Entrar no FitMe",
+    mailLead: "Carrega no botão abaixo para entrares na tua conta FitMe. O link só funciona uma vez e expira em 15 minutos.",
+    mailBtn: "Entrar", mailIgnore: "Se não pediste para entrar, ignora este email. Ninguém consegue entrar sem este link.",
+    mailFooter: "Recebes este email porque alguém pediu para entrar no FitMe com este endereço.",
+    pageTitle: "Entrar no FitMe", pageBody: "Carrega no botão para terminares a entrada neste dispositivo.", pageBtn: "Entrar",
+    expiredTitle: "Este link de acesso expirou", expiredBody: (u: string) => `Os links funcionam uma vez e durante 15 minutos. <a href="${u}" style="color:#2e6b4f;">Pede um novo link</a>.`,
+  },
+  br: {
+    mailSubject: "Seu link de acesso ao FitMe", mailTitle: "Entrar no FitMe",
+    mailLead: "Toque no botão abaixo para entrar na sua conta FitMe. O link funciona uma vez só e expira em 15 minutos.",
+    mailBtn: "Entrar", mailIgnore: "Se você não pediu para entrar, ignore este e-mail. Ninguém consegue entrar sem este link.",
+    mailFooter: "Você está recebendo este e-mail porque alguém pediu para entrar no FitMe com este endereço.",
+    pageTitle: "Entrar no FitMe", pageBody: "Toque no botão para terminar de entrar neste dispositivo.", pageBtn: "Entrar",
+    expiredTitle: "Este link de acesso expirou", expiredBody: (u: string) => `Os links funcionam uma vez só e por 15 minutos. <a href="${u}" style="color:#2e6b4f;">Peça um novo link</a>.`,
+  },
+};
+
+export const loginPath = (siteUrl: string, lang: Lang) => `${siteUrl}${lang === "en" ? "" : "/" + lang}/login/`;
+export const accountPath = (siteUrl: string, lang: Lang) => `${siteUrl}${lang === "en" ? "" : "/" + lang}/account/`;
+
+export function renderLoginEmail(siteUrl: string, url: string, lang: Lang = "en") {
+  const c = COLORS, a = AUTH[lang];
+  const inner = `<tr><td style="background:${c.card};border:1px solid ${c.line};border-radius:12px;padding:28px 24px;">
+<h1 style="margin:0 0 10px;font-size:22px;line-height:1.25;">${a.mailTitle}</h1>
+<p style="margin:0 0 22px;font-size:15px;line-height:1.55;color:${c.muted};">${a.mailLead}</p>
+<a href="${esc(url)}" style="display:inline-block;background:${c.accent};color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:12px 22px;border-radius:8px;">${a.mailBtn}</a>
+<p style="margin:22px 0 0;font-size:13px;line-height:1.5;color:${c.muted};">${a.mailIgnore}</p>
+</td></tr>`;
+  const text = `${a.mailTitle}\n\n${a.mailLead}\n\n${a.mailBtn}: ${url}\n\n${a.mailIgnore}`;
+  return { subject: a.mailSubject, html: shell(siteUrl, inner, a.mailFooter, lang), text };
 }
