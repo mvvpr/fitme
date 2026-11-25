@@ -356,7 +356,7 @@ function shoppingList(T, P, lang, imperial, diet) {
     if (t.g) parts.push(imperial ? num(Math.ceil(t.g / 28.35 * 2) / 2) + ' oz' : big(t.g, 'g', 'kg'));
     if (t.ml) parts.push(imperial ? num(Math.ceil(t.ml / 29.57 * 2) / 2) + ' fl oz' : big(t.ml, 'ml', 'l'));
     if (t.tsp) parts.push(t.tsp >= 3 ? frac(Math.ceil(t.tsp / 3 * 2) / 2) + ' ' + W.tbsp : frac(t.tsp) + ' ' + W.tsp);
-    (byAisle[d[5]] || (byAisle[d[5]] = [])).push({ n: ingName(k, lang), q: parts.join(' + ') });
+    (byAisle[d[5]] || (byAisle[d[5]] = [])).push({ id: k, n: ingName(k, lang), q: parts.join(' + ') }); // id: stable ingredient key (shopping-list ticks)
   });
   var groups = AISLES.filter(function (a) { return byAisle[a]; }).map(function (a) {
     return { aisle: pt ? pt.aisles[a] : a, items: byAisle[a].sort(function (x, y) { return x.n.localeCompare(y.n, loc); }) };
@@ -374,8 +374,8 @@ function shoppingList(T, P, lang, imperial, diet) {
       });
     });
   }
-  var ex = list.sort(function (a, b) { return a.localeCompare(b, loc); }).join(', ');
-  return { groups: groups, extras: ex };
+  list.sort(function (a, b) { return a.localeCompare(b, loc); });
+  return { groups: groups, extras: list.join(', '), extrasList: list };
 }
 function dayTotals(meals) {
   return meals.reduce(function (a, m) { a.k += m.n.k; a.p += m.n.p; a.c += m.n.c; a.f += m.n.f; return a; }, { k: 0, p: 0, c: 0, f: 0 });

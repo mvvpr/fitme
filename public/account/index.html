@@ -77,6 +77,11 @@ input[type=number]:focus, select:focus { outline: 2px solid var(--accent); outli
     <p class="muted" style="margin:0;"><span data-t="loggedAs">Logged in as</span> <strong id="email"></strong></p>
     <p id="pending" class="muted" style="margin:14px 0 0;padding:10px 12px;border:1px solid var(--line);border-radius:8px;" hidden data-t="pendingNote"></p>
   </div>
+  <div class="card" id="listCard" style="margin-top:14px;" hidden>
+    <h2 data-t="listH">Shopping list</h2>
+    <p class="muted" style="font-size:14px;margin:0 0 14px;" data-t="listLead"></p>
+    <a class="btn primary" id="listBtn" href="/account/list/" style="text-decoration:none;display:inline-block;" data-t="listBtn">Open my list</a>
+  </div>
   <form class="card" id="pf" style="margin-top:14px;" novalidate>
     <h2 data-t="profH">Your profile</h2>
     <p class="muted" style="font-size:14px;margin:0;" data-t="profLead"></p>
@@ -120,8 +125,8 @@ input[type=number]:focus, select:focus { outline: 2px solid var(--accent); outli
 <script>
 (function () {
   var T = {
-    en: { title: 'Your account', wH: "You're in!", wLead: 'Your email is confirmed and your first meal plan arrives tomorrow at 7:00. This is your FitMe account, where you can:',
-      wList: '<li>Change the proteins in your meals</li><li>Add your name and details</li><li>Tell us if you’d like a Fitness Coach or a personalised plan</li>',
+    en: { listH: 'Your shopping list', listLead: 'This week’s list, sized to your plan. Tap items off as you shop; your ticks save on any device.', listBtn: 'Open my list', title: 'Your account', wH: "You're in!", wLead: 'Your email is confirmed and your first meal plan arrives tomorrow at 7:00. This is your FitMe account, where you can:',
+      wList: '<li>Tick off your weekly shopping list as you shop</li><li>Change the proteins in your meals</li><li>Add your name and details</li><li>Tell us if you’d like a Fitness Coach or a personalised plan</li>',
       edit: 'Change proteins', editLead: 'Pick the proteins you want in your lunches and dinners. Changes apply straight away, and your next email uses them.', protG: 'Daily protein (g)',
       calHint: 'To change your calories or protein, <a data-home href="/">recalculate on FitMe</a> and enter the same email. It updates straight away, no need to confirm again.',
       lowWarn: 'Below 1,200 kcal a day is very low. Check with a doctor before eating this little.', protsHint: 'Pick at least 2. Your lunches and dinners are built around these.',
@@ -137,8 +142,8 @@ input[type=number]:focus, select:focus { outline: 2px solid var(--accent); outli
       lang: 'Language', units: 'Units', tz: 'Time zone', since: 'Member since', metric: 'Metric (kg, g)', imperial: 'Imperial (lb, oz)', veg: 'Vegetarian', all: 'All proteins',
       langs: { en: 'English', pt: 'Português (Portugal)', br: 'Português (Brasil)' },
       P: { chicken: 'Chicken', beef: 'Beef', pork: 'Pork', fish: 'Fish', eggs: 'Eggs', tofu: 'Tofu', beans: 'Beans' }, loc: 'en-GB' },
-    pt: { title: 'A tua conta', wH: 'Está feito!', wLead: 'O teu email está confirmado e o teu primeiro plano de refeições chega amanhã às 7:00. Esta é a tua conta FitMe, onde podes:',
-      wList: '<li>Mudar as proteínas das tuas refeições</li><li>Acrescentar o teu nome e dados</li><li>Dizer-nos se gostavas de um Fitness Coach ou de um plano personalizado</li>',
+    pt: { listH: 'A tua lista de compras', listLead: 'A lista desta semana, ajustada ao teu plano. Vai riscando enquanto fazes compras; fica guardado em qualquer dispositivo.', listBtn: 'Abrir a minha lista', title: 'A tua conta', wH: 'Está feito!', wLead: 'O teu email está confirmado e o teu primeiro plano de refeições chega amanhã às 7:00. Esta é a tua conta FitMe, onde podes:',
+      wList: '<li>Riscar a tua lista de compras semanal enquanto fazes compras</li><li>Mudar as proteínas das tuas refeições</li><li>Acrescentar o teu nome e dados</li><li>Dizer-nos se gostavas de um Fitness Coach ou de um plano personalizado</li>',
       edit: 'Mudar proteínas', editLead: 'Escolhe as proteínas que queres nos teus almoços e jantares. As alterações aplicam-se logo e o próximo email já as usa.', protG: 'Proteína diária (g)',
       calHint: 'Para mudares as calorias ou a proteína, <a data-home href="/pt/">recalcula no FitMe</a> e escreve o mesmo email. Atualiza logo, sem teres de confirmar outra vez.',
       lowWarn: 'Menos de 1200 kcal por dia é muito pouco. Fala com um médico antes de comeres tão pouco.', protsHint: 'Escolhe pelo menos 2. Os teus almoços e jantares são feitos à volta destas.',
@@ -154,8 +159,8 @@ input[type=number]:focus, select:focus { outline: 2px solid var(--accent); outli
       lang: 'Idioma', units: 'Unidades', tz: 'Fuso horário', since: 'Membro desde', metric: 'Métrico (kg, g)', imperial: 'Imperial (lb, oz)', veg: 'Vegetariano', all: 'Todas as proteínas',
       langs: { en: 'English', pt: 'Português (Portugal)', br: 'Português (Brasil)' },
       P: { chicken: 'Frango', beef: 'Vaca', pork: 'Porco', fish: 'Peixe', eggs: 'Ovos', tofu: 'Tofu', beans: 'Feijão' }, loc: 'pt-PT' },
-    br: { title: 'Sua conta', wH: 'Tudo certo!', wLead: 'Seu e-mail está confirmado e seu primeiro plano de refeições chega amanhã às 7h. Esta é sua conta FitMe, onde você pode:',
-      wList: '<li>Mudar as proteínas das suas refeições</li><li>Adicionar seu nome e dados</li><li>Contar se gostaria de um Fitness Coach ou de um plano personalizado</li>',
+    br: { listH: 'Sua lista de compras', listLead: 'A lista desta semana, na medida do seu plano. Vá marcando enquanto faz compras; fica salvo em qualquer aparelho.', listBtn: 'Abrir minha lista', title: 'Sua conta', wH: 'Tudo certo!', wLead: 'Seu e-mail está confirmado e seu primeiro plano de refeições chega amanhã às 7h. Esta é sua conta FitMe, onde você pode:',
+      wList: '<li>Marcar sua lista de compras semanal enquanto faz compras</li><li>Mudar as proteínas das suas refeições</li><li>Adicionar seu nome e dados</li><li>Contar se gostaria de um Fitness Coach ou de um plano personalizado</li>',
       edit: 'Mudar proteínas', editLead: 'Escolha as proteínas que você quer nos almoços e jantares. As mudanças valem na hora e o próximo e-mail já usa elas.', protG: 'Proteína diária (g)',
       calHint: 'Para mudar suas calorias ou proteína, <a data-home href="/br/">recalcule no FitMe</a> e digite o mesmo e-mail. Atualiza na hora, sem precisar confirmar de novo.',
       lowWarn: 'Menos de 1.200 kcal por dia é muito pouco. Fale com um médico antes de comer tão pouco.', protsHint: 'Escolha pelo menos 2. Seus almoços e jantares são montados em volta delas.',
@@ -236,6 +241,8 @@ input[type=number]:focus, select:focus { outline: 2px solid var(--accent); outli
       document.getElementById('email').textContent = me.email;
       document.getElementById('pending').hidden = me.status !== 'pending';
       ME = me; renderPlan(me);
+      document.getElementById('listCard').hidden = me.status !== 'active';
+      document.getElementById('listBtn').href = (path === 'en' ? '' : '/' + path) + '/account/list/';
       if (/[?&]welcome=1/.test(location.search)) {
         document.getElementById('welcome').hidden = false;
         try { history.replaceState(null, '', location.pathname); } catch (e) {}
