@@ -14,15 +14,15 @@
   var KEY = 'fitme-consent-v2';
   var TXT = {
     en: {
-      text: 'FitMe is free. Meta and Google cookies show us which ads bring people here, which helps keep it that way. They load only if you accept, and you can change your mind anytime.',
+      text: 'We use cookies to measure our ads and improve FitMe. They only load if you accept.',
       accept: 'Accept', decline: 'Decline', settings: 'Cookie settings', label: 'Cookie consent', privacy: 'Privacy policy'
     },
     pt: {
-      text: 'O FitMe é grátis. Os cookies da Meta e da Google mostram-nos que anúncios trazem pessoas até aqui, o que nos ajuda a mantê-lo assim. Só são carregados se aceitares, e podes mudar de ideias a qualquer momento.',
+      text: 'Usamos cookies para medir os nossos anúncios e melhorar o FitMe. Só são carregados se aceitares.',
       accept: 'Aceitar', decline: 'Recusar', settings: 'Definições de cookies', label: 'Consentimento de cookies', privacy: 'Política de privacidade'
     },
     br: {
-      text: 'O FitMe é grátis. Os cookies da Meta e do Google mostram quais anúncios trazem pessoas até aqui, o que ajuda a manter o site assim. Eles só são carregados se você aceitar, e você pode mudar de ideia quando quiser.',
+      text: 'Usamos cookies para medir nossos anúncios e melhorar o FitMe. Eles só são carregados se você aceitar.',
       accept: 'Aceitar', decline: 'Recusar', settings: 'Configurações de cookies', label: 'Consentimento de cookies', privacy: 'Política de privacidade'
     }
   };
