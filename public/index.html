@@ -408,6 +408,11 @@ tbody tr.goal td { font-weight: 500; color: var(--accent); }
 .sub-row .box { flex: 1; }
 .sub-row button { font: inherit; font-weight: 600; font-size: 14px; border: 0; border-radius: 6px; padding: 0 16px; background: var(--accent); color: var(--accent-ink); cursor: pointer; white-space: nowrap; }
 .sub-row button:disabled { opacity: 0.6; cursor: default; }
+/* Logged-in, confirmed users: the boxes become "update my plan" (no email field, no consent box). */
+.sub-box:not(.known) .when-known, .sub-box.known .when-new { display: none; }
+.sub-box.known .sub-row .box { display: none; }
+.sub-box.known .sub-row button { padding: 11px 18px; }
+.sub-box .sub-me { color: var(--ink, inherit); font-weight: 600; word-break: break-all; }
 .sub-row button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .consent { display: flex; gap: 8px; align-items: flex-start; font-size: 12.5px; color: var(--muted); line-height: 1.4; }
 .consent input { margin-top: 2px; accent-color: var(--accent); }
@@ -756,14 +761,18 @@ body.lang-fading .wrap > .step { opacity: 0; }
       <div class="days-bar"><div class="days" role="group" aria-label="Day of the week" id="days"></div></div>
       <div class="banner" id="sub-banner" hidden></div>
       <div class="sub-box compact" data-box="meals-top">
-          <div>
+          <div class="when-known">
+            <h3>Update your daily emails</h3>
+            <p>Save these calories and proteins to your plan. Your next email uses them. <span class="sub-as">Logged in as <span class="sub-me"></span></span></p>
+          </div>
+          <div class="when-new">
             <h3>Get these meals in your inbox at 7:00</h3>
             <p>Free. Sized to your calories, with your shopping list every Saturday.</p>
           </div>
           <form class="sub-form" novalidate>
             <div class="sub-row">
               <label class="box"><input class="sub-email" type="email" autocomplete="email" placeholder="you@example.com" aria-label="Email address" required></label>
-              <button type="submit" class="sub-btn">Subscribe</button>
+              <button type="submit" class="sub-btn"><span class="when-new">Subscribe</span><span class="when-known">Update my plan</span></button>
             </div>
             <label class="hp" aria-hidden="true">Website <input class="sub-web" tabindex="-1" autocomplete="off"></label>
             <label class="consent"><input type="checkbox" class="sub-consent"> <span>I agree to receive a daily meal-plan email from FitMe. We store your email, time zone and calorie settings to send it, and you can unsubscribe at any time. <a class="privacy-link" href="/privacy.html" target="_blank" rel="noopener">Privacy policy</a></span></label>
@@ -775,14 +784,18 @@ body.lang-fading .wrap > .step { opacity: 0; }
       <div class="meal-grid" id="meal-grid"></div>
       <div class="next-day"><button type="button" class="btn ghost" id="next-day"></button></div>
       <div class="sub-box" data-box="meals-bottom">
-          <div>
+          <div class="when-known">
+            <h3>Update your daily emails</h3>
+            <p>Save these calories and proteins to your plan. Your next email uses them. <span class="sub-as">Logged in as <span class="sub-me"></span></span></p>
+          </div>
+          <div class="when-new">
             <h3>Get each day's meals by email</h3>
             <p>Every morning at 7:00 your time: four meals with ingredients and method, sized to <strong class="sub-kcal">your calories</strong>. Plus your shopping list for the week every Saturday.</p>
           </div>
           <form class="sub-form" novalidate>
             <div class="sub-row">
               <label class="box"><input class="sub-email" type="email" autocomplete="email" placeholder="you@example.com" aria-label="Email address" required></label>
-              <button type="submit" class="sub-btn">Subscribe</button>
+              <button type="submit" class="sub-btn"><span class="when-new">Subscribe</span><span class="when-known">Update my plan</span></button>
             </div>
             <label class="hp" aria-hidden="true">Website <input class="sub-web" tabindex="-1" autocomplete="off"></label>
             <label class="consent"><input type="checkbox" class="sub-consent"> <span>I agree to receive a daily meal-plan email from FitMe. We store your email, time zone and calorie settings to send it, and you can unsubscribe at any time. <a class="privacy-link" href="/privacy.html" target="_blank" rel="noopener">Privacy policy</a></span></label>
@@ -1264,8 +1277,9 @@ body.lang-fading .wrap > .step { opacity: 0; }
   fetch('/api/me', { credentials: 'same-origin' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (me) {
     if (!me || !me.ok || me.status !== 'active') return;
     document.querySelectorAll('.sub-form').forEach(function (form) {
-      form.dataset.known = '1';
-      var e = form.querySelector('.sub-email'); if (e && !e.value) e.value = me.email;
+      form.dataset.known = '1'; form.dataset.email = me.email;
+      var box = form.closest('.sub-box'); if (box) { box.classList.add('known'); box.querySelectorAll('.sub-me').forEach(function (m) { m.textContent = me.email; }); }
+      var e = form.querySelector('.sub-email'); if (e) e.value = me.email;
       var c = form.querySelector('.sub-consent'); if (c) c.closest('label').hidden = true;
     });
   }).catch(function () {});
@@ -1309,7 +1323,7 @@ body.lang-fading .wrap > .step { opacity: 0; }
       fetch('/api/subscribe', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
         .then(function (res) { return res.json().catch(function () { return { ok: false, error: res.status === 429 ? 'rate' : 'unknown' }; }); })
         .then(function (data) {
-          if (data && data.ok) { subMsg(data.applied ? MSG.applied : MSG.ok, 'ok'); form.reset(); if (window.FITME_TRACK && data.lead) FITME_TRACK.leadDone(meta); }
+          if (data && data.ok) { subMsg(data.applied ? (form.dataset.known ? MSG.updated : MSG.applied) : MSG.ok, 'ok'); form.reset(); if (form.dataset.email) q('.sub-email').value = form.dataset.email; if (window.FITME_TRACK && data.lead) FITME_TRACK.leadDone(meta); }
           else if (data && data.error === 'typo' && data.suggest) askFix(email, data.suggest);
           else subMsg(data && data.error === 'rate' ? MSG.rate : (MSG[data && data.error] || MSG.error), 'err');
         })
