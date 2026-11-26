@@ -35,19 +35,19 @@ const L = {
     home: 'Home', recipes: 'Recipes', perPortion: 'per portion', kcal: 'kcal', protein: 'protein', carbs: 'carbs', fat: 'fat', time: 'Time',
     ingredients: 'Ingredients (1 portion)', method: 'Method', tips: 'Tips', fits: 'Where it fits in your day', scale: 'Cooking for more people? Multiply everything. In your FitMe plan, the amounts are scaled to your own calories.',
     cta: 'Get my free plan', ctaLead: 'Want a full week of meals like this, sized to your goal? Get your free FitMe plan and see when you\'ll reach your goal weight.',
-    more: 'More recipes', privacy: 'Privacy policy', g: 'g', serving: '1 portion', category: { breakfast: 'Breakfast', main: 'Main course' }, imgAlt: (n) => n },
+    more: 'More recipes', privacy: 'Privacy policy', g: 'g', serving: '1 portion', category: { breakfast: 'Breakfast', main: 'Main course', snack: 'Snack' }, imgAlt: (n) => n },
   pt: {
     share: 'Partilha esta receita', shareNative: 'Partilhar…', copy: 'Copiar link', copied: 'Link copiado', igCopied: 'Link copiado. Cola-o numa story ou mensagem do Instagram.', igOpen: 'Abrir o Instagram', manual: 'Copia este link:', email: 'Email', shareText: (n, k, p) => `${n}: ${k} kcal, ${p} g de proteína. Receita grátis no FitMe`,
     home: 'Início', recipes: 'Receitas', perPortion: 'por dose', kcal: 'kcal', protein: 'proteína', carbs: 'hidratos', fat: 'gordura', time: 'Tempo',
     ingredients: 'Ingredientes (1 dose)', method: 'Preparação', tips: 'Dicas', fits: 'Como encaixa no teu dia', scale: 'Vais cozinhar para mais pessoas? Multiplica tudo. No teu plano FitMe, as quantidades são ajustadas às tuas calorias.',
     cta: 'Quero o meu plano grátis', ctaLead: 'Queres uma semana inteira de refeições assim, ajustada ao teu objetivo? Faz o teu plano grátis no FitMe e vê quando chegas ao teu peso.',
-    more: 'Mais receitas', privacy: 'Política de privacidade', g: 'g', serving: '1 dose', category: { breakfast: 'Pequeno-almoço', main: 'Prato principal' }, imgAlt: (n) => n },
+    more: 'Mais receitas', privacy: 'Política de privacidade', g: 'g', serving: '1 dose', category: { breakfast: 'Pequeno-almoço', main: 'Prato principal', snack: 'Lanche' }, imgAlt: (n) => n },
   br: {
     share: 'Compartilhe esta receita', shareNative: 'Compartilhar…', copy: 'Copiar link', copied: 'Link copiado', igCopied: 'Link copiado. Cole num story ou mensagem do Instagram.', igOpen: 'Abrir o Instagram', manual: 'Copie este link:', email: 'E-mail', shareText: (n, k, p) => `${n}: ${k} kcal, ${p} g de proteína. Receita grátis no FitMe`,
     home: 'Início', recipes: 'Receitas', perPortion: 'por porção', kcal: 'kcal', protein: 'proteína', carbs: 'carboidratos', fat: 'gordura', time: 'Tempo',
     ingredients: 'Ingredientes (1 porção)', method: 'Modo de preparo', tips: 'Dicas', fits: 'Como encaixa no seu dia', scale: 'Vai fazer para mais pessoas ou para a semana? É só multiplicar. No seu plano FitMe, as quantidades já vêm ajustadas às suas calorias.',
     cta: 'Quero meu plano grátis', ctaLead: 'Quer uma semana inteira de refeições assim, ajustada ao seu objetivo? Monte seu plano grátis no FitMe e veja quando você chega ao seu peso.',
-    more: 'Mais receitas', privacy: 'Política de privacidade', g: 'g', serving: '1 porção', category: { breakfast: 'Café da manhã', main: 'Prato principal' }, imgAlt: (n) => n },
+    more: 'Mais receitas', privacy: 'Política de privacidade', g: 'g', serving: '1 porção', category: { breakfast: 'Café da manhã', main: 'Prato principal', snack: 'Lanche' }, imgAlt: (n) => n },
 };
 const HOME = { en: '/', pt: '/pt/', br: '/br/' };
 const PRIVACY = { en: '/privacy.html', pt: '/pt/privacy.html', br: '/br/privacy.html' };
@@ -62,6 +62,8 @@ function source(img) {
   for (const k of ['breakfast', 'lunch', 'snack', 'dinner']) {
     const i = M.RECIPES[k].findIndex((r) => r.img === img);
     if (i >= 0) return { k, i, rec: M.RECIPES[k][i] };
+    const v = M.RECIPES_VEG[k].findIndex((r) => r.img === img);
+    if (v >= 0) return { k, i: v, veg: true, rec: M.RECIPES_VEG[k][v] };
   }
   for (const [pool, trKey] of VARIANTS) {
     const t = (ctx[pool] || []).findIndex((r) => r && r.img === img);
@@ -75,9 +77,9 @@ function source(img) {
   throw new Error('No recipe with img ' + img);
 }
 function data(img, lang) {
-  const { k, i, trKey, menuB, t, rec } = source(img);
+  const { k, i, veg, trKey, menuB, t, rec } = source(img);
   const nu = M.nutrition(rec.ing);
-  const tr = lang === 'en' ? null : menuB ? M.ptData(lang).menuB[menuB][t] : trKey ? M.ptData(lang)[trKey][t] : M.ptData(lang).recipes[k][i];
+  const tr = lang === 'en' ? null : menuB ? M.ptData(lang).menuB[menuB][t] : trKey ? M.ptData(lang)[trKey][t] : M.ptData(lang)[veg ? 'recipesVeg' : 'recipes'][k][i];
   let x = 0;
   const ing = rec.ing.map((l) => {
     if (l[0] === '~') { const extra = tr ? tr.x[x] : l[1]; x++; return extra; }
@@ -174,7 +176,10 @@ function recipePage(r, lang) {
   const alternates = LANGS.map((l) => [l, url(l, r[l].slug)]);
   const crumbs = `<nav class="crumbs" aria-label="breadcrumb"><a href="${HOME[lang]}">${t.home}</a> › <a href="${HUB[lang].path}">${t.recipes}</a></nav>`;
   const tips = c.tips.length ? `<h2>${t.tips}</h2>\n<ul>${c.tips.map((x) => `<li>${x}</li>`).join('')}</ul>` : '';
-  const more = RECIPES.filter((o) => o !== r).map((o) => card(o, lang)).join('');
+  // Related recipes: same course first (in content order, starting after this one), then the rest; 8 cards.
+  const others = RECIPES.filter((o) => o !== r), at = RECIPES.indexOf(r);
+  const rot = (a) => { const j = a.findIndex((o) => RECIPES.indexOf(o) > at); return j < 0 ? a : [...a.slice(j), ...a.slice(0, j)]; };
+  const more = [...rot(others.filter((o) => o.course === r.course)), ...rot(others.filter((o) => o.course !== r.course))].slice(0, 8).map((o) => card(o, lang)).join('');
   const body = `<main>
 ${crumbs}
 <article>
@@ -230,6 +235,7 @@ function hubPage(lang) {
 <p class="lead">${esc(h.intro)}</p>
 ${group('main')}
 ${group('breakfast')}
+${group('snack')}
 <div class="cta"><p>${esc(h.cta)}</p><a class="btn" href="${h.ctaHref}">${L[lang].cta}</a></div>
 </main>`;
   const jsonld = { '@context': 'https://schema.org', '@type': 'ItemList', name: h.h1,
@@ -241,8 +247,20 @@ function write(rel, html) {
   const file = path.join(PUB, rel, 'index.html');
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, html);
+  HTML_OUT.set(rel, html);
   return rel;
 }
+
+// Sitemap lastmod: a page keeps its previous date unless its HTML changed (dates read from the old sitemap).
+const TODAY = new Date().toISOString().slice(0, 10);
+const prevHtml = new Map(), prevMod = new Map();
+const oldMap = path.join(PUB, 'sitemap.xml');
+if (fs.existsSync(oldMap)) for (const m of fs.readFileSync(oldMap, 'utf8').matchAll(/<loc>([^<]+)<\/loc>(?:.*?<lastmod>([^<]+)<\/lastmod>)?/g)) prevMod.set(m[1], m[2]);
+for (const dir of ['recipes', 'pt/receitas', 'br/receitas']) {
+  const walk = (d) => { if (!fs.existsSync(d)) return; for (const e of fs.readdirSync(d, { withFileTypes: true })) { const f = path.join(d, e.name); if (e.isDirectory()) walk(f); else if (e.name === 'index.html') prevHtml.set('/' + path.relative(PUB, path.dirname(f)).split(path.sep).join('/') + '/', fs.readFileSync(f, 'utf8')); } };
+  walk(path.join(PUB, dir));
+}
+const HTML_OUT = new Map();
 
 // Clean previous output so a removed recipe doesn't linger.
 for (const dir of ['recipes', 'pt/receitas', 'br/receitas']) fs.rmSync(path.join(PUB, dir), { recursive: true, force: true });
@@ -255,10 +273,12 @@ for (const lang of LANGS) {
 
 // Sitemap: home pages + hubs + recipes, each with its language alternates.
 const groups = [LANGS.map((l) => HOME[l]), LANGS.map((l) => HUB[l].path), ...RECIPES.map((r) => LANGS.map((l) => url(l, r[l].slug)))];
+// Built pages: today if new or changed, else the old date. Home pages (not built here) keep any old date.
+const lastmod = (h) => { const out = HTML_OUT.get(h); if (!out) return prevMod.get(SITE + h); const was = prevHtml.get(h); return was === out && prevMod.get(SITE + h) ? prevMod.get(SITE + h) : TODAY; };
 const alts = (g) => g.map((h, i) => `<xhtml:link rel="alternate" hreflang="${HREFLANG[LANGS[i]]}" href="${SITE}${h}"/>`).join('');
 const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
-${groups.flatMap((g) => g.map((h) => `  <url><loc>${SITE}${h}</loc>${alts(g)}</url>`)).join('\n')}
+${groups.flatMap((g) => g.map((h) => `  <url><loc>${SITE}${h}</loc>${lastmod(h) ? `<lastmod>${lastmod(h)}</lastmod>` : ''}${alts(g)}</url>`)).join('\n')}
 </urlset>
 `;
 fs.writeFileSync(path.join(PUB, 'sitemap.xml'), sitemap);
