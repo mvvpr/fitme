@@ -221,6 +221,86 @@ function recipeFor(slotKey, i, diet) {
   return (s.src === 'veg' ? RECIPES_VEG : RECIPES)[slotKey][i];
 }
 
+// Menu B: the second week of the recipe rotation (B2). Same shape as Menu A (3 breakfasts, 4 main templates, 2 snacks),
+// built from the same ingredients so the shopping list stays the same size. Data only for now: the plan, emails and
+// shopping list still use Menu A until the rotation is switched on. Breakfasts and snacks are vegetarian, so they serve
+// everyone. variants: the protein each version of a main template serves ('meat' = main, 'veg', 'fish', 'pork').
+var MENU_B = {
+  breakfast: [
+    { name: 'Greek yogurt bowl with banana, oats & peanut butter', img: 'yogurt-banana-oat-bowl', time: '5 min',
+      ing: [['yog', 200, 'g'], ['oats', 30, 'g'], ['banana', 1, 'pc'], ['pb', 15, 'g'], ['~', 'Pinch of ground cinnamon']],
+      steps: ['Spoon the yogurt into a bowl and slice the banana.', 'Warm the peanut butter for 10 seconds in the microwave (or stir in a teaspoon of hot water) so it drizzles.', 'Top the yogurt with the oats and banana, drizzle over the peanut butter and finish with the cinnamon.', 'Want a bigger bowl? Swap the peanut butter for a big handful of berries (about 150 g): fewer calories and much more food.'] },
+    { name: 'Scrambled egg & spinach breakfast wrap', img: 'scrambled-egg-breakfast-wrap', time: '10 min',
+      ing: [['egg', 2, 'pc'], ['cottage', 60, 'g'], ['spinach', 40, 'g'], ['cherry', 60, 'g'], ['wrap', 1, 'pc'], ['oil', 1, 'tsp'], ['~', 'Salt, black pepper, chilli flakes (optional)']],
+      steps: ['Whisk the eggs with the cottage cheese, a pinch of salt and pepper.', 'Heat the oil in a non-stick pan over a medium heat, add the spinach and stir for 1 minute until wilted.', 'Pour in the eggs and stir gently for about 2 minutes, taking the pan off the heat while they are still soft.', 'Warm the wrap in a dry pan for 20 seconds a side. Fill it with the eggs and the halved tomatoes, add the chilli flakes, roll up tightly and cut in half.'] },
+    { name: 'Apple & cinnamon protein porridge', img: 'apple-cinnamon-protein-porridge', time: '8 min',
+      ing: [['oats', 50, 'g'], ['milk', 200, 'ml'], ['yog', 100, 'g'], ['apple', 1, 'pc'], ['~', 'Pinch of ground cinnamon']],
+      steps: ['Put the oats, milk and cinnamon in a small pan and simmer for 4–5 minutes, stirring, until creamy. In the microwave: 2½–3 minutes, stirring halfway.', 'Grate half the apple and dice the other half.', 'Take the porridge off the heat and stir in half the yogurt and the grated apple. Top with the rest of the yogurt and the diced apple.'] }
+  ],
+  main: [
+    { name: 'Chicken & egg fried rice', img: 'chicken-egg-fried-rice', time: '25 min',
+      ing: [['chicken', 130, 'g'], ['basmati', 60, 'g'], ['egg', 1, 'pc'], ['peas', 60, 'g'], ['carrot', 0.5, 'pc'], ['garlic', 1, 'pc'], ['soy', 1, 'tbsp'], ['oil', 2, 'tsp'], ['~', 'Spring onion (optional), ground or fresh ginger']],
+      steps: ['Cook the rice according to the pack and spread it on a plate to cool. Rice cooked the day before is even better: it fries instead of going sticky.', 'Dice the chicken and the carrot. Heat 1 tsp of the oil in a large frying pan or wok over a high heat and cook the chicken for 5–6 minutes until cooked through. Lift it onto a plate.', 'Add the rest of the oil, the carrot and the peas and stir-fry for 3 minutes. Add the crushed garlic and a pinch of ginger for 30 seconds.', 'Push everything to one side, crack in the egg and scramble it for 1 minute. Add the rice, the chicken and the soy sauce and toss for 2–3 minutes until piping hot. Top with sliced spring onion.'] },
+    { name: 'Pesto chicken traybake with roasted veg & couscous', img: 'pesto-chicken-traybake', time: '35 min',
+      ing: [['chicken', 140, 'g'], ['courgette', 0.5, 'pc'], ['pepper', 0.5, 'pc'], ['redonion', 0.5, 'pc'], ['cherry', 80, 'g'], ['pesto', 15, 'g'], ['couscous', 50, 'g'], ['oil', 1, 'tsp'], ['~', 'Salt and black pepper, fresh basil (optional)']],
+      steps: ['Heat the oven to 200°C (180°C fan). Cut the courgette, pepper and red onion into chunks, toss with the oil, salt and pepper on a tray and roast for 10 minutes.', 'Cut the chicken into thick strips and coat it in half the pesto. Add it to the tray with the tomatoes and roast for 18–20 minutes, until the chicken is cooked through.', 'Meanwhile, put the couscous in a bowl, pour over about 75 ml of boiling water, cover and leave for 5 minutes. Fluff it up with a fork.', 'Loosen the rest of the pesto with 1 tbsp of water and stir it through the vegetables. Serve the chicken and veg over the couscous, with basil if you have it.'] },
+    { name: 'Beef & sweetcorn wraps with tomato salsa', img: 'beef-sweetcorn-wraps', time: '20 min',
+      ing: [['beef', 120, 'g'], ['wrap', 1, 'pc'], ['sweetcorn', 50, 'g'], ['pepper', 0.5, 'pc'], ['onion', 0.25, 'pc'], ['tomato', 1, 'pc'], ['yog', 40, 'g'], ['leaves', 20, 'g'], ['oil', 1, 'tsp'], ['~', '1 tsp ground cumin, 1 tsp smoked paprika, chilli powder to taste, salt']],
+      steps: ['Heat the oil in a frying pan and cook the sliced onion and pepper for 4 minutes.', 'Add the beef and brown it for 5 minutes, breaking it up. Stir in the spices for 1 minute, then the sweetcorn and 2 tbsp of water, and cook for 2 minutes more.', 'Dice the tomato and season it with a pinch of salt for a quick salsa. Warm the wrap in a dry pan for 20 seconds a side.', 'Spread the yogurt over the wrap, add the salad leaves, the beef and the salsa, and roll up. For tomorrow\'s lunch, keep the filling in its own box and roll the wrap fresh.'] },
+    { name: 'Creamy chicken, pea & spinach pasta', img: 'creamy-chicken-pea-pasta', time: '20 min',
+      ing: [['chicken', 120, 'g'], ['pasta', 60, 'g'], ['cottage', 100, 'g'], ['peas', 60, 'g'], ['spinach', 40, 'g'], ['garlic', 1, 'pc'], ['parm', 10, 'g'], ['oil', 1, 'tsp'], ['~', 'Salt, black pepper, pinch of chilli flakes']],
+      steps: ['Cook the pasta according to the pack, adding the peas for the last 3 minutes. Keep a mug of the cooking water.', 'Meanwhile, cut the chicken into strips and cook it in the oil for 6–7 minutes until cooked through. Add the crushed garlic for the last minute.', 'Blend the cottage cheese until smooth, or mash it well with a fork.', 'Drain the pasta and peas and return them to the pan off the heat. Stir in the chicken, cottage cheese, spinach and a splash of the cooking water until the spinach wilts and the sauce coats the pasta. Do not let it boil once the cheese is in. Top with the parmesan, pepper and chilli flakes.'] }
+  ],
+  snack: [
+    { name: 'Apple slices with peanut butter yogurt dip', img: 'apple-peanut-butter-dip', time: '3 min',
+      ing: [['apple', 1, 'pc'], ['yog', 100, 'g'], ['pb', 15, 'g'], ['~', 'Pinch of ground cinnamon']],
+      steps: ['Stir the peanut butter and cinnamon into the yogurt until smooth.', 'Slice the apple and dip it in. A squeeze of lemon stops the slices browning if you pack it for later.', 'Want a bigger snack? Leave out the peanut butter and have a second apple: about the same calories and twice the food.'] },
+    { name: 'Rice cakes with cottage cheese, hummus & cucumber', img: 'rice-cakes-cottage-cucumber', time: '3 min',
+      ing: [['ricecake', 2, 'pc'], ['cottage', 100, 'g'], ['hummus', 20, 'g'], ['cucumber', 60, 'g'], ['~', 'Black pepper, chilli flakes']],
+      steps: ['Spread the hummus thinly over the rice cakes and top with the cottage cheese.', 'Add the sliced cucumber, black pepper and chilli flakes. Eat straight away so the rice cakes stay crisp.'] }
+  ],
+  // Meat-free versions of the main templates (eggs and dairy; no meat, fish or animal-rennet cheese).
+  veg: [
+    { name: 'Tofu & egg fried rice', img: 'tofu-egg-fried-rice', time: '25 min',
+      ing: [['tofu', 150, 'g'], ['basmati', 60, 'g'], ['egg', 1, 'pc'], ['peas', 60, 'g'], ['carrot', 0.5, 'pc'], ['garlic', 1, 'pc'], ['soy', 1, 'tbsp'], ['oil', 2, 'tsp'], ['~', 'Spring onion (optional), ground or fresh ginger']],
+      steps: ['Cook the rice according to the pack and spread it on a plate to cool. Rice cooked the day before is even better: it fries instead of going sticky.', 'Pat the tofu dry with kitchen paper and cut it into small cubes. Heat 1 tsp of the oil in a large frying pan or wok over a high heat and fry the tofu for 5–6 minutes, turning, until golden. Lift it onto a plate.', 'Add the rest of the oil, the diced carrot and the peas and stir-fry for 3 minutes. Add the crushed garlic and a pinch of ginger for 30 seconds.', 'Push everything to one side, crack in the egg and scramble it for 1 minute. Add the rice, the tofu and the soy sauce and toss for 2–3 minutes until piping hot. Top with sliced spring onion.'] },
+    { name: 'Roasted veg & chickpea couscous with lemon yogurt', img: 'roasted-veg-chickpea-couscous', time: '35 min',
+      ing: [['chickpeas', 140, 'g'], ['courgette', 0.5, 'pc'], ['pepper', 0.5, 'pc'], ['redonion', 0.5, 'pc'], ['cherry', 80, 'g'], ['yog', 100, 'g'], ['lemon', 10, 'ml'], ['couscous', 50, 'g'], ['oil', 2, 'tsp'], ['~', '1 tsp dried oregano, 1 tsp smoked paprika, salt and black pepper']],
+      steps: ['Heat the oven to 200°C (180°C fan). Cut the courgette, pepper and red onion into chunks and toss on a tray with 1 tsp of the oil, salt and pepper. Roast for 10 minutes.', 'Pat the chickpeas dry and toss them with the rest of the oil, the paprika and the oregano. Add them to the tray with the tomatoes and roast for 18–20 minutes, until the chickpeas are crisp at the edges.', 'Meanwhile, put the couscous in a bowl, pour over about 75 ml of boiling water, cover and leave for 5 minutes. Fluff it up with a fork. Mix the yogurt with the lemon juice and a pinch of salt.', 'Serve the vegetables and chickpeas over the couscous with the lemon yogurt spooned on top.'] },
+    { name: 'Black bean & sweetcorn wraps with tomato salsa', img: 'black-bean-sweetcorn-wraps', time: '15 min',
+      ing: [['blackbeans', 150, 'g'], ['wrap', 1, 'pc'], ['sweetcorn', 50, 'g'], ['pepper', 0.5, 'pc'], ['onion', 0.25, 'pc'], ['tomato', 1, 'pc'], ['yog', 60, 'g'], ['leaves', 20, 'g'], ['oil', 1, 'tsp'], ['~', '1 tsp ground cumin, 1 tsp smoked paprika, chilli powder to taste, salt']],
+      steps: ['Heat the oil in a frying pan and cook the sliced onion and pepper for 4 minutes.', 'Add the black beans and the spices with 3 tbsp of water. Cook for 3 minutes, roughly mashing about half the beans with a fork so the filling holds together. Stir in the sweetcorn for the last minute.', 'Dice the tomato and season it with a pinch of salt for a quick salsa. Warm the wrap in a dry pan for 20 seconds a side.', 'Spread the yogurt over the wrap, add the salad leaves, the beans and the salsa, and roll up. For tomorrow\'s lunch, keep the filling in its own box and roll the wrap fresh.'] },
+    { name: 'Creamy pea & spinach pasta with boiled eggs', img: 'creamy-pea-pasta-eggs', time: '20 min',
+      ing: [['pasta', 60, 'g'], ['egg', 2, 'pc'], ['cottage', 150, 'g'], ['peas', 60, 'g'], ['spinach', 40, 'g'], ['garlic', 1, 'pc'], ['vparm', 10, 'g'], ['oil', 1, 'tsp'], ['~', 'Salt, black pepper, pinch of chilli flakes']],
+      steps: ['Boil the eggs for 7 minutes, cool them in cold water and peel. Cook the pasta according to the pack, adding the peas for the last 3 minutes. Keep a mug of the cooking water.', 'Warm the oil in a small pan and cook the crushed garlic for 1 minute without letting it brown.', 'Blend the cottage cheese with the garlic oil until smooth, or mash it well with a fork.', 'Drain the pasta and peas and return them to the pan off the heat. Stir in the cottage cheese, spinach and a splash of the cooking water until the spinach wilts. Do not let it boil once the cheese is in. Top with the halved eggs, the grated cheese, pepper and chilli flakes.'] }
+  ],
+  fish: [
+    { name: 'Prawn & egg fried rice', img: 'prawn-egg-fried-rice', time: '20 min',
+      ing: [['prawns', 150, 'g'], ['basmati', 60, 'g'], ['egg', 1, 'pc'], ['peas', 60, 'g'], ['carrot', 0.5, 'pc'], ['garlic', 1, 'pc'], ['soy', 1, 'tbsp'], ['oil', 2, 'tsp'], ['~', 'Spring onion (optional), ground or fresh ginger']],
+      steps: ['Cook the rice according to the pack and spread it on a plate to cool. Rice cooked the day before is even better: it fries instead of going sticky.', 'Heat the oil in a large frying pan or wok over a high heat. Add the diced carrot and the peas and stir-fry for 3 minutes, then the crushed garlic and a pinch of ginger for 30 seconds.', 'Add the prawns and cook for 2–3 minutes, until pink all the way through.', 'Push everything to one side, crack in the egg and scramble it for 1 minute. Add the rice and the soy sauce and toss for 2–3 minutes until piping hot. Top with sliced spring onion.'] },
+    { name: 'Pesto cod traybake with roasted veg & couscous', img: 'pesto-cod-traybake', time: '35 min',
+      ing: [['cod', 170, 'g'], ['courgette', 0.5, 'pc'], ['pepper', 0.5, 'pc'], ['redonion', 0.5, 'pc'], ['cherry', 80, 'g'], ['pesto', 15, 'g'], ['couscous', 50, 'g'], ['oil', 1, 'tsp'], ['~', 'Salt and black pepper, lemon wedge (optional)']],
+      steps: ['Heat the oven to 200°C (180°C fan). Cut the courgette, pepper and red onion into chunks, toss with the oil, salt and pepper on a tray and roast for 15 minutes.', 'Add the tomatoes to the tray, lay the cod on top and spread half the pesto over the fish. Roast for 12–15 minutes, until the cod flakes easily.', 'Meanwhile, put the couscous in a bowl, pour over about 75 ml of boiling water, cover and leave for 5 minutes. Fluff it up with a fork.', 'Loosen the rest of the pesto with 1 tbsp of water and stir it through the vegetables. Serve the cod and veg over the couscous.'] },
+    null,
+    { name: 'Creamy tuna, pea & spinach pasta', img: 'creamy-tuna-pea-pasta', time: '15 min',
+      ing: [['tuna', 110, 'g'], ['pasta', 60, 'g'], ['cottage', 100, 'g'], ['peas', 60, 'g'], ['spinach', 40, 'g'], ['garlic', 1, 'pc'], ['lemon', 5, 'ml'], ['oil', 1, 'tsp'], ['~', 'Salt, black pepper, pinch of chilli flakes']],
+      steps: ['Cook the pasta according to the pack, adding the peas for the last 3 minutes. Keep a mug of the cooking water.', 'Warm the oil in a small pan and cook the crushed garlic for 1 minute without letting it brown.', 'Blend the cottage cheese with the garlic oil and the lemon juice until smooth, or mash it well with a fork.', 'Drain the pasta and peas and return them to the pan off the heat. Stir in the cottage cheese, spinach and a splash of the cooking water until the spinach wilts, then fold in the drained tuna in big flakes. Season with pepper and chilli flakes.'] }
+  ],
+  pork: [
+    null,
+    { name: 'Pesto pork traybake with roasted veg & couscous', img: 'pesto-pork-traybake', time: '35 min',
+      ing: [['pork', 140, 'g'], ['courgette', 0.5, 'pc'], ['pepper', 0.5, 'pc'], ['redonion', 0.5, 'pc'], ['cherry', 80, 'g'], ['pesto', 15, 'g'], ['couscous', 50, 'g'], ['oil', 1, 'tsp'], ['~', 'Salt and black pepper, fresh basil (optional)']],
+      steps: ['Heat the oven to 200°C (180°C fan). Cut the courgette, pepper and red onion into chunks, toss with the oil, salt and pepper on a tray and roast for 10 minutes.', 'Slice the pork into 2 cm medallions and coat them in half the pesto. Add them to the tray with the tomatoes and roast for 15–18 minutes, until the pork is cooked through and the juices run clear.', 'Meanwhile, put the couscous in a bowl, pour over about 75 ml of boiling water, cover and leave for 5 minutes. Fluff it up with a fork.', 'Loosen the rest of the pesto with 1 tbsp of water and stir it through the vegetables. Serve the pork and veg over the couscous.'] },
+    null, null
+  ],
+  variants: [
+    [['chicken', 'meat'], ['tofu', 'veg'], ['fish', 'fish']],                     // fried rice
+    [['chicken', 'meat'], ['beans', 'veg'], ['fish', 'fish'], ['pork', 'pork']],  // pesto traybake with couscous
+    [['beef', 'meat'], ['beans', 'veg']],                                         // wraps
+    [['chicken', 'meat'], ['eggs', 'veg'], ['fish', 'fish']]                      // creamy pea & spinach pasta
+  ]
+};
+
 /* Shared meal-plan logic: used by the FitMe page (classic script) and the Netlify Functions (side-effect import). */
 var SLOTS = [
   { key: 'breakfast', label: 'Breakfast', share: 0.25 },
@@ -380,4 +460,4 @@ function shoppingList(T, P, lang, imperial, diet) {
 function dayTotals(meals) {
   return meals.reduce(function (a, m) { a.k += m.n.k; a.p += m.n.p; a.c += m.n.c; a.f += m.n.f; return a; }, { k: 0, p: 0, c: 0, f: 0 });
 }
-globalThis.FITME_MEALS = { DB: DB, RECIPES: RECIPES, RECIPES_VEG: RECIPES_VEG, recipesFor: recipesFor, PROTEINS: PROTEINS, recipeFor: recipeFor, SLOTS: SLOTS, DAY_NAMES: DAY_NAMES, lineGrams: lineGrams, frac: frac, scaleLine: scaleLine, amountText: amountText, nutrition: nutrition, buildDay: buildDay, dayTotals: dayTotals, ingName: ingName, pieceLabels: pieceLabels, ptData: ptData, proteinTarget: proteinTarget, PROTEIN_PER_KG: PROTEIN_PER_KG, shoppingList: shoppingList };
+globalThis.FITME_MEALS = { DB: DB, RECIPES: RECIPES, RECIPES_VEG: RECIPES_VEG, recipesFor: recipesFor, PROTEINS: PROTEINS, recipeFor: recipeFor, SLOTS: SLOTS, DAY_NAMES: DAY_NAMES, lineGrams: lineGrams, frac: frac, scaleLine: scaleLine, amountText: amountText, nutrition: nutrition, buildDay: buildDay, dayTotals: dayTotals, ingName: ingName, pieceLabels: pieceLabels, ptData: ptData, proteinTarget: proteinTarget, PROTEIN_PER_KG: PROTEIN_PER_KG, shoppingList: shoppingList, MENU_B: MENU_B };
