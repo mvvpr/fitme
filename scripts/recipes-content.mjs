@@ -302,9 +302,9 @@ export const RECIPES = [
       tips: [],
     },
   },
-// ---- Menu B, batch 1 (drafts: not built live until photos are in and Moreno has read them) ----
+// ---- Menu B, batch 1 (live 26 Nov 2026; photos to follow) ----
   {
-    img: 'chicken-egg-fried-rice', course: 'main', draft: true,
+    img: 'chicken-egg-fried-rice', course: 'main',
     en: {
       slug: 'high-protein-chicken-fried-rice',
       h1: 'High protein chicken fried rice with egg and peas',
@@ -334,7 +334,7 @@ export const RECIPES = [
     },
   },
   {
-    img: 'pesto-chicken-traybake', course: 'main', draft: true,
+    img: 'pesto-chicken-traybake', course: 'main',
     en: {
       slug: 'pesto-chicken-traybake-couscous',
       h1: 'Pesto chicken traybake with roasted veg and couscous',
@@ -364,7 +364,7 @@ export const RECIPES = [
     },
   },
   {
-    img: 'beef-sweetcorn-wraps', course: 'main', draft: true,
+    img: 'beef-sweetcorn-wraps', course: 'main',
     en: {
       slug: 'high-protein-beef-mince-wraps',
       h1: 'High protein beef mince wraps with sweetcorn and tomato salsa',
@@ -394,7 +394,7 @@ export const RECIPES = [
     },
   },
   {
-    img: 'creamy-chicken-pea-pasta', course: 'main', draft: true,
+    img: 'creamy-chicken-pea-pasta', course: 'main',
     en: {
       slug: 'high-protein-creamy-chicken-pasta',
       h1: 'High protein creamy chicken pasta with peas and spinach (no cream)',
@@ -424,7 +424,7 @@ export const RECIPES = [
     },
   },
   {
-    img: 'apple-cinnamon-protein-porridge', course: 'breakfast', draft: true,
+    img: 'apple-cinnamon-protein-porridge', course: 'breakfast',
     en: {
       slug: 'high-protein-porridge',
       h1: 'High protein porridge with apple and cinnamon',
@@ -454,7 +454,7 @@ export const RECIPES = [
     },
   },
   {
-    img: 'scrambled-egg-breakfast-wrap', course: 'breakfast', draft: true,
+    img: 'scrambled-egg-breakfast-wrap', course: 'breakfast',
     en: {
       slug: 'high-protein-breakfast-wrap',
       h1: 'High protein breakfast wrap with scrambled eggs and spinach',

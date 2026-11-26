@@ -37,6 +37,7 @@ a { color: var(--accent); }
 .cards li { margin: 0; }
 .cards a { display:flex; flex-direction:column; height:100%; background: var(--surface); border:1px solid var(--line); border-radius: 12px; overflow:hidden; text-decoration:none; color: var(--ink); }
 .cards img { width:100%; height:auto; aspect-ratio: 16 / 10; object-fit: cover; display:block; }
+.card-ph { display:block; width:100%; aspect-ratio: 16 / 10; background: var(--line) url(/brand/fitme-icon.svg) center / 44px no-repeat; opacity: .9; }
 .card-name { font-weight: 600; padding: 10px 12px 2px; line-height:1.3; }
 .card-meta { font-size: 13px; color: var(--muted); padding: 0 12px 12px; }
 main > h2 { margin-top: 26px; }
