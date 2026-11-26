@@ -192,10 +192,10 @@ function prefsOf(diet) {
 // templates, so a batch-cooked dinner stays the same dish for tomorrow's lunch). Spread the picks: each template
 // takes the picked protein used least so far. No picked protein fits a template: its meat-free version.
 var _choiceCache = {};
-function templateChoice(diet) {
-  var p = prefsOf(diet), key = p.slice().sort().join(',');
+function templateChoice(diet, menu) {
+  var mm = menuOf(menu), p = prefsOf(diet), key = (menu === 'B' ? 'B:' : '') + p.slice().sort().join(',');
   if (_choiceCache[key]) return _choiceCache[key];
-  var used = {}, out = TEMPLATE_VARIANTS.map(function (vars) {
+  var used = {}, out = mm.variants.map(function (vars) {
     var ok = vars.filter(function (v) { return p.indexOf(v[0]) >= 0; });
     if (!ok.length) return 'veg';
     ok.sort(function (a, b) { return (used[a[0]] || 0) - (used[b[0]] || 0); });
@@ -204,21 +204,25 @@ function templateChoice(diet) {
   });
   return (_choiceCache[key] = out);
 }
-function sourceFor(slotKey, i, diet) {
-  var p = prefsOf(diet);
+// The two weekly menus. A = POOL (the live week), B = MENU_B (defined further down; filled in there).
+// menu is optional everywhere: anything but 'B' means Menu A, so existing callers are unchanged.
+var MENUS = { A: { recipes: RECIPES, recipesVeg: RECIPES_VEG, main: POOL.main, variants: TEMPLATE_VARIANTS, fish: POOL_FISH, pork: POOL_PORK } };
+function menuOf(menu) { return menu === 'B' && MENUS.B ? MENUS.B : MENUS.A; }
+function sourceFor(slotKey, i, diet, menu) {
+  var p = prefsOf(diet), mm = menuOf(menu);
   if (slotKey === 'lunch' || slotKey === 'dinner') {
-    var t = POOL.main.indexOf(RECIPES[slotKey][i]);
-    return { src: templateChoice(diet)[t], t: t };
+    var t = mm.main.indexOf(mm.recipes[slotKey][i]);
+    return { src: templateChoice(diet, menu)[t], t: t };
   }
   var anyMeat = p.indexOf('chicken') >= 0 || p.indexOf('beef') >= 0 || p.indexOf('pork') >= 0 || p.indexOf('fish') >= 0;
   return { src: slotKey === 'breakfast' && !anyMeat ? 'veg' : 'meat', t: -1 }; // vegetarian cheese in the omelette
 }
 function useVeg(slotKey, i, diet) { return sourceFor(slotKey, i, diet).src === 'veg'; }
-function recipeFor(slotKey, i, diet) {
-  var s = sourceFor(slotKey, i, diet);
-  if (s.src === 'fish') return POOL_FISH[s.t];
-  if (s.src === 'pork') return POOL_PORK[s.t];
-  return (s.src === 'veg' ? RECIPES_VEG : RECIPES)[slotKey][i];
+function recipeFor(slotKey, i, diet, menu) {
+  var s = sourceFor(slotKey, i, diet, menu), mm = menuOf(menu);
+  if (s.src === 'fish') return mm.fish[s.t];
+  if (s.src === 'pork') return mm.pork[s.t];
+  return (s.src === 'veg' ? mm.recipesVeg : mm.recipes)[slotKey][i];
 }
 
 // Menu B: the second week of the recipe rotation (B2). Same shape as Menu A (3 breakfasts, 4 main templates, 2 snacks),
@@ -300,6 +304,10 @@ var MENU_B = {
     [['chicken', 'meat'], ['eggs', 'veg'], ['fish', 'fish']]                      // creamy pea & spinach pasta
   ]
 };
+// No real photos for Menu B yet: the site shows a placeholder and the emails skip the photo (see POOL_FISH).
+['breakfast', 'main', 'snack', 'veg', 'fish', 'pork'].forEach(function (k) { MENU_B[k].forEach(function (r) { if (r) r.noPhoto = true; }); });
+// Menu B's week uses the same WEEK pattern as Menu A. Breakfasts and snacks are vegetarian, so both versions share them.
+MENUS.B = { recipes: weekPlan({ breakfast: MENU_B.breakfast, main: MENU_B.main, snack: MENU_B.snack }), recipesVeg: weekPlan({ breakfast: MENU_B.breakfast, main: MENU_B.veg, snack: MENU_B.snack }), main: MENU_B.main, variants: MENU_B.variants, fish: MENU_B.fish, pork: MENU_B.pork };
 
 /* Shared meal-plan logic: used by the FitMe page (classic script) and the Netlify Functions (side-effect import). */
 var SLOTS = [
@@ -334,6 +342,8 @@ function ptData(lang) {
   var pt = lang === 'pt' ? globalThis.FITME_MEALS_PT || null : lang === 'br' ? globalThis.FITME_MEALS_BR || null : null;
   if (pt && pt.recipes.main) pt.recipes = weekPlan(pt.recipes); // the Portuguese pool follows the same weekly rotation
   if (pt && pt.recipesVeg && pt.recipesVeg.main) pt.recipesVeg = weekPlan(pt.recipesVeg);
+  // Menu B translations stay in pool form in pt.menuB (the recipe pages read them that way); the week view is kept beside it.
+  if (pt && pt.menuB && !pt.menuBWeek) { var b = pt.menuB; pt.menuBWeek = { recipes: weekPlan({ breakfast: b.breakfast, main: b.main, snack: b.snack }), recipesVeg: weekPlan({ breakfast: b.breakfast, main: b.veg, snack: b.snack }), fish: b.fish, pork: b.pork }; }
   return pt;
 }
 function ingName(key, lang) { var pt = ptData(lang); return pt && pt.db[key] ? pt.db[key][0] : DB[key][0]; }
@@ -366,9 +376,9 @@ function proteinTarget(goalKg) { return Math.round(PROTEIN_PER_KG * goalKg); }
 // Build a day's four meals for an intake of T kcal. If P (grams of protein) is given and the
 // calorie-scaled day falls short, protein-rich ingredients are scaled up and the rest scaled down
 // so the day keeps its calories and reaches P.
-function buildDay(i, T, P, lang, diet) {
+function buildDay(i, T, P, lang, diet, menu) {
   var meals = SLOTS.map(function (slot) {
-    var rec = recipeFor(slot.key, i, diet);
+    var rec = recipeFor(slot.key, i, diet, menu);
     var base = nutrition(rec.ing);
     return { slot: slot, rec: rec, f: mClamp((T * slot.share) / base.k, 0.5, 2.2) };
   });
@@ -395,7 +405,9 @@ function buildDay(i, T, P, lang, diet) {
     var lines = m.rec.ing.map(function (l) { return l[0] === '~' ? l : scaleLine(l, m.f * (isProteinRich(l[0]) ? a : b)); });
     var out = { slot: m.slot, rec: m.rec, lines: lines, n: nutrition(lines) };
     if (pt) {
-      var srcI = sourceFor(m.slot.key, i, diet), tr = srcI.src === 'fish' ? pt.recipesFish[srcI.t] : srcI.src === 'pork' ? pt.recipesPork[srcI.t] : (srcI.src === 'veg' ? pt.recipesVeg : pt.recipes)[m.slot.key][i], xi = 0;
+      var srcI = sourceFor(m.slot.key, i, diet, menu), xi = 0, tr;
+      if (menu === 'B') { var pb = pt.menuBWeek; tr = srcI.src === 'fish' ? pb.fish[srcI.t] : srcI.src === 'pork' ? pb.pork[srcI.t] : (srcI.src === 'veg' ? pb.recipesVeg : pb.recipes)[m.slot.key][i]; }
+      else tr = srcI.src === 'fish' ? pt.recipesFish[srcI.t] : srcI.src === 'pork' ? pt.recipesPork[srcI.t] : (srcI.src === 'veg' ? pt.recipesVeg : pt.recipes)[m.slot.key][i];
       out.rec = { name: tr.name, time: tr.time, steps: tr.steps, ing: m.rec.ing, img: m.rec.img, noPhoto: m.rec.noPhoto };
       out.slot = { key: m.slot.key, label: pt.slots[m.slot.key], share: m.slot.share };
       out.lines = lines.map(function (l) { return l[0] === '~' ? ['~', tr.x[xi++] || l[1]] : l; });

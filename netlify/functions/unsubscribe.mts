@@ -2,7 +2,7 @@
 // GET shows a confirm button (so link scanners can't unsubscribe people); POST deletes the subscriber.
 // POST also serves RFC 8058 one-click unsubscribe from mail clients (List-Unsubscribe-Post).
 import type { Config, Context } from "@netlify/functions";
-import { subscribers, subKey, tokKey, unsKey, clkKey, actKey, deleteListData, htmlPage, esc, sitePath, T, asLang, type Subscriber } from "../lib/core.mts";
+import { subscribers, subKey, tokKey, unsKey, clkKey, actKey, swpKey, deleteListData, htmlPage, esc, sitePath, T, asLang, type Subscriber } from "../lib/core.mts";
 
 export default async (req: Request, context: Context) => {
   const siteUrl = context.site.url || new URL(req.url).origin;
@@ -25,6 +25,7 @@ export default async (req: Request, context: Context) => {
     if (sub?.confirmToken) await store.delete(tokKey(sub.confirmToken));
     if (sub?.clickToken) await store.delete(clkKey(sub.clickToken));
     await store.delete(actKey(hash)); // email click history goes with the rest
+    await store.delete(swpKey(hash)); // today's menu swap, if any
     await deleteListData(store, hash, sub); // shopping-list ticks, own items and list link
     await store.delete(subKey(hash));
     await store.delete(unsKey(token));

@@ -2,7 +2,8 @@
 // when it is 07:xx in their own time zone (once per local day), and on Saturdays at 08:xx
 // their shopping list for the week (once per Saturday).
 import type { Config, Context } from "@netlify/functions";
-import { subscribers, subKey, tokKey, unsKey, actKey, ensureClickToken, ensureListToken, pruneActivity, type Activity, mailConfig, sendMail, renderDailyEmail, renderShoppingEmail, asLang, planDiet, type Subscriber } from "../lib/core.mts";
+import { subscribers, subKey, tokKey, unsKey, actKey, ensureClickToken, ensureListToken, pruneActivity, type Activity, mailConfig, sendMail, renderDailyEmail, renderShoppingEmail, asLang, planDiet, localParts, type Subscriber } from "../lib/core.mts";
+export { localParts }; // moved to core (the swap page needs it too); kept exported here for anything importing it from this file
 
 const SEND_HOUR = 7;
 const SHOP_HOUR = 8;
@@ -12,17 +13,6 @@ const LIST_FALLBACK_UNTIL = "2026-12-06";
 const CONCURRENCY = 8;
 const PENDING_TTL_MS = 30 * 864e5; // unconfirmed sign-ups are deleted after 30 days (privacy policy)
 const TIME_BUDGET_MS = 24_000; // scheduled functions stop at 30s
-
-const WEEKDAY: Record<string, number> = { Mon: 0, Tue: 1, Wed: 2, Thu: 3, Fri: 4, Sat: 5, Sun: 6 };
-
-export function localParts(now: Date, tz: string, lang: "en" | "pt" | "br" = "en") {
-  const parts = Object.fromEntries(
-    new Intl.DateTimeFormat("en-GB", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", hourCycle: "h23", weekday: "short" })
-      .formatToParts(now).map((p) => [p.type, p.value]),
-  );
-  const label = new Intl.DateTimeFormat(lang === "br" ? "pt-BR" : lang === "pt" ? "pt-PT" : "en-GB", { timeZone: tz, weekday: "long", day: "numeric", month: "long" }).format(now);
-  return { date: `${parts.year}-${parts.month}-${parts.day}`, hour: Number(parts.hour), dayIndex: WEEKDAY[parts.weekday] ?? 0, label };
-}
 
 export default async (req: Request, context: Context) => {
   const started = Date.now();

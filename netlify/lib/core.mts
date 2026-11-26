@@ -159,12 +159,14 @@ export const tokKey = (token: string) => `tok/${token}`;
 export const unsKey = (token: string) => `uns/${token}`;
 export const clkKey = (token: string) => `clk/${token}`;
 export const actKey = (hash: string) => `act/${hash}`;
+export const swpKey = (hash: string) => `swp/${hash}`;
 
 // ---------- Email click tracking (first-party) ----------
 // Links in the daily and Saturday emails go through /api/go on our own domain (HTTPS), which records the click on the
 // subscriber's activity record (act/<hash>) and redirects to the page. Mailgun's own click tracking stays off.
 // Never wrap one-time links (confirm, log in) or the unsubscribe link.
-export const CLICK_KINDS = ["week", "shop", "account", "recalc", "list"] as const;
+// swap = the daily email's "swap today's menu" link was opened; swapped = a swap was made on that page (counted by /api/swap).
+export const CLICK_KINDS = ["week", "shop", "account", "recalc", "list", "swap", "swapped"] as const;
 export type ClickKind = (typeof CLICK_KINDS)[number];
 export const ACT_KEEP_DAYS = 120;
 // Kept apart from the subscriber record so a click never races with send-daily writing that record.
@@ -560,6 +562,7 @@ export function renderReminderEmail(siteUrl: string, confirmUrl: string, unsubUr
 }
 
 export function renderDailyEmail(opts: { siteUrl: string; unsubUrl: string; clickToken?: string; dayIndex: number; dateLabel: string; intake: number; prot: number; imperial: boolean; lang?: Lang; diet?: "all" | "veg" | string[] }) {
+  const swapUrl = opts.clickToken ? trackedLink(opts.siteUrl, opts.clickToken, "swap", `${opts.siteUrl}/api/swap?c=${opts.clickToken}${asLang(opts.lang) !== "en" ? "&l=" + asLang(opts.lang) : ""}`) : "";
   const c = COLORS, lang: Lang = asLang(opts.lang), t = T[lang];
   const kcal = (v: number) => kcalL(v, t.locale);
   const site = sitePath(opts.siteUrl, lang);
@@ -569,6 +572,7 @@ export function renderDailyEmail(opts: { siteUrl: string; unsubUrl: string; clic
   const meals = M.buildDay(opts.dayIndex, opts.intake, opts.prot, lang, opts.diet);
   const tot = M.dayTotals(meals);
   const dayName = lang === "en" ? M.DAY_NAMES[opts.dayIndex] : (globalThis as any)[lang === "br" ? "FITME_MEALS_BR" : "FITME_MEALS_PT"].days[opts.dayIndex].toLowerCase();
+  const swapRow = swapUrl ? `<tr><td style="padding:12px 4px 0;font-size:14px;color:${c.muted};">${SWAP[lang].emailLead} <a href="${esc(swapUrl)}" style="color:${c.accent};font-weight:600;">${SWAP[lang].emailLink}</a></td></tr>` : "";
   const summary = `<tr><td style="background:${c.card};border:1px solid ${c.line};border-radius:12px;padding:20px 22px;">
 <div style="font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:${c.muted};">${esc(opts.dateLabel)}</div>
 <h1 style="margin:4px 0 12px;font-size:24px;line-height:1.2;">${t.yourDayPlan(dayName)}</h1>
@@ -577,15 +581,34 @@ export function renderDailyEmail(opts: { siteUrl: string; unsubUrl: string; clic
 <td style="padding-right:10px;">${t.protein}<br><b style="font-size:16px;color:${c.ink};">${Math.round(tot.p)} g</b> <span>/ ${opts.prot} g</span></td>
 <td style="padding-right:10px;">${t.carbs}<br><b style="font-size:16px;color:${c.ink};">${Math.round(tot.c)} g</b></td>
 <td>${t.fat}<br><b style="font-size:16px;color:${c.ink};">${Math.round(tot.f)} g</b></td></tr></table></td></tr>`;
-  const cards = meals.map((m: any) => {
+  const cards = mealCards(meals, opts.siteUrl, opts.imperial, lang);
+  const cta = `<tr><td style="padding:18px 4px 0;font-size:14px;"><a href="${esc(weekUrl)}" style="color:${c.accent};font-weight:600;">${t.fullWeek}</a></td></tr>`;
+  const footer = t.footer(kcal(opts.intake), esc(homeUrl), esc(accountUrl), esc(opts.unsubUrl));
+  const subject = t.subject(dayName, meals[1].rec.name);
+  const text = [`${t.yourDayPlan(dayName)} (${opts.dateLabel})`, `${t.calories} ${kcal(tot.k)} / ${kcal(opts.intake)} · ${t.protein} ${Math.round(tot.p)} g`, ""]
+    .concat(swapUrl ? [`${SWAP[lang].emailLead} ${SWAP[lang].emailLinkText}: ${swapUrl}`, ""] : [])
+    .concat(meals.map((m: any) => {
+      const ing = m.lines.map((l: any) => (l[0] === "~" ? `  - ${l[1]}` : `  - ${M.amountText(l, opts.imperial, lang).q} ${M.amountText(l, opts.imperial, lang).n}`)).join("\n");
+      const steps = m.rec.steps.map((s: string, i: number) => `  ${i + 1}. ${s}`).join("\n");
+      return `${m.slot.label.toUpperCase()}: ${m.rec.name} (${kcal(m.n.k)}, ${Math.round(m.n.p)} g ${t.protein.toLowerCase()})\n${t.ingredients}:\n${ing}\n${t.method}:\n${steps}\n`;
+    }))
+    .concat([`${t.textFull}: ${weekUrl}`, `${t.textAccount}: ${accountUrl}`, `${t.textUnsub}: ${opts.unsubUrl}`]).join("\n");
+  return { subject, html: shell(opts.siteUrl, summary + swapRow + cards + cta, footer, lang), text };
+}
+
+// The four meal cards of a day (photo, macros, ingredients, method), shared by the daily email and the swap page.
+export function mealCards(meals: any[], siteUrl: string, imperial: boolean, lang: Lang) {
+  const c = COLORS, t = T[lang];
+  const kcal = (v: number) => kcalL(v, t.locale);
+  return meals.map((m: any) => {
     const ing = m.lines.map((l: any) => {
       if (l[0] === "~") return `<tr><td></td><td style="padding:3px 0;color:${c.muted};font-size:13px;">${esc(l[1])}</td></tr>`;
-      const a = M.amountText(l, opts.imperial, lang);
+      const a = M.amountText(l, imperial, lang);
       return `<tr><td style="padding:3px 12px 3px 0;white-space:nowrap;font-family:Menlo,Consolas,monospace;font-size:13px;vertical-align:top;">${esc(a.q)}</td><td style="padding:3px 0;font-size:14px;">${esc(a.n)}</td></tr>`;
     }).join("");
     const steps = m.rec.steps.map((st: string) => `<li style="margin:0 0 6px;">${esc(st)}</li>`).join("");
     // Dish photo (JPEG, not WebP, so it shows in every mail app). Served from the site: public/img/email/<slug>.jpg.
-    const photo = m.rec.img && !m.rec.noPhoto ? `<img src="${esc(opts.siteUrl)}/img/email/${esc(m.rec.img)}.jpg" width="556" alt="${esc(m.rec.name)}" style="display:block;width:100%;max-width:100%;height:auto;border:0;border-radius:12px 12px 0 0;background:#e8e5df;">` : "";
+    const photo = m.rec.img && !m.rec.noPhoto ? `<img src="${esc(siteUrl)}/img/email/${esc(m.rec.img)}.jpg" width="556" alt="${esc(m.rec.name)}" style="display:block;width:100%;max-width:100%;height:auto;border:0;border-radius:12px 12px 0 0;background:#e8e5df;">` : "";
     return `<tr><td style="height:14px;"></td></tr><tr><td style="background:${c.card};border:1px solid ${c.line};border-radius:12px;padding:0;overflow:hidden;">${photo}<div style="padding:18px 22px 20px;">
 <div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:${c.accent};">${esc(m.slot.label)} · ${esc(m.rec.time)}</div>
 <h2 style="margin:4px 0 8px;font-size:19px;line-height:1.25;">${esc(m.rec.name)}</h2>
@@ -596,17 +619,6 @@ export function renderDailyEmail(opts: { siteUrl: string; unsubUrl: string; clic
 <div style="font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:${c.muted};margin:0 0 4px;">${t.method}</div>
 <ol style="margin:0;padding-left:20px;font-size:14px;line-height:1.5;">${steps}</ol></div></td></tr>`;
   }).join("");
-  const cta = `<tr><td style="padding:18px 4px 0;font-size:14px;"><a href="${esc(weekUrl)}" style="color:${c.accent};font-weight:600;">${t.fullWeek}</a></td></tr>`;
-  const footer = t.footer(kcal(opts.intake), esc(homeUrl), esc(accountUrl), esc(opts.unsubUrl));
-  const subject = t.subject(dayName, meals[1].rec.name);
-  const text = [`${t.yourDayPlan(dayName)} (${opts.dateLabel})`, `${t.calories} ${kcal(tot.k)} / ${kcal(opts.intake)} · ${t.protein} ${Math.round(tot.p)} g`, ""]
-    .concat(meals.map((m: any) => {
-      const ing = m.lines.map((l: any) => (l[0] === "~" ? `  - ${l[1]}` : `  - ${M.amountText(l, opts.imperial, lang).q} ${M.amountText(l, opts.imperial, lang).n}`)).join("\n");
-      const steps = m.rec.steps.map((s: string, i: number) => `  ${i + 1}. ${s}`).join("\n");
-      return `${m.slot.label.toUpperCase()}: ${m.rec.name} (${kcal(m.n.k)}, ${Math.round(m.n.p)} g ${t.protein.toLowerCase()})\n${t.ingredients}:\n${ing}\n${t.method}:\n${steps}\n`;
-    }))
-    .concat([`${t.textFull}: ${weekUrl}`, `${t.textAccount}: ${accountUrl}`, `${t.textUnsub}: ${opts.unsubUrl}`]).join("\n");
-  return { subject, html: shell(opts.siteUrl, summary + cards + cta, footer, lang), text };
 }
 
 // Saturday email: a reminder that the week's list is ready, with a button to the list page (/account/list/).
@@ -649,6 +661,103 @@ export function htmlPage(siteUrl: string, title: string, body: string, status = 
 <main style="max-width:480px;margin:12vh auto;padding:0 18px;"><a href="${esc(sitePath(siteUrl, lang))}" style="text-decoration:none;color:${c.ink};font-size:26px;font-weight:700;">Fit<span style="color:${c.accent};">Me</span></a>
 <div style="background:${c.card};border:1px solid ${c.line};border-radius:12px;padding:24px;margin-top:16px;"><h1 style="margin:0 0 10px;font-size:21px;">${esc(title)}</h1>${body}</div></main></body></html>`,
     { status, headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store", "x-robots-tag": "noindex" } });
+}
+
+// Local date, hour and weekday (Mon = 0) for a subscriber's time zone, plus a date label in their language.
+const WEEKDAY: Record<string, number> = { Mon: 0, Tue: 1, Wed: 2, Thu: 3, Fri: 4, Sat: 5, Sun: 6 };
+
+export function localParts(now: Date, tz: string, lang: "en" | "pt" | "br" = "en") {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-GB", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", hourCycle: "h23", weekday: "short" })
+      .formatToParts(now).map((p) => [p.type, p.value]),
+  );
+  const label = new Intl.DateTimeFormat(lang === "br" ? "pt-BR" : lang === "pt" ? "pt-PT" : "en-GB", { timeZone: tz, weekday: "long", day: "numeric", month: "long" }).format(now);
+  return { date: `${parts.year}-${parts.month}-${parts.day}`, hour: Number(parts.hour), dayIndex: WEEKDAY[parts.weekday] ?? 0, label };
+}
+
+// ---------- Swap today's menu (/api/swap) ----------
+// The daily email links to /api/swap?c=<clickToken>. GET only shows a page (link scanners open links); the swap itself is
+// a POST from that page, which picks another day's menu at random from every day of Menu A and Menu B (M.buildDay with
+// menu 'A' | 'B'), sized to the subscriber's calories and protein. Only today changes: swp/<hash> = { date, menu, day },
+// and a swap from another day is ignored. Kept apart from the subscriber record so it never races with send-daily.
+export type SwapState = { date: string; menu: "A" | "B"; day: number };
+export const SWAP = {
+  en: {
+    emailLead: "Not in the mood for today's menu?", emailLink: "Swap it for another day's →", emailLinkText: "Swap it for another day's",
+    pageTitle: "Swap today's menu", introTitle: "Want something different today?",
+    introBody: "We'll pick another day's menu at random from all FitMe menus, sized to your calories and protein. A swap only changes today: tomorrow's email is back to your plan.",
+    btn: "Swap today's menu", againBtn: "Swap again", resetBtn: "Back to today's original menu", newTitle: "Your new menu for today",
+    notOnList: (l: string) => `Not on this week's shopping list: ${l}.`, allOnList: "Everything you need is already on this week's shopping list.",
+    account: "Your account",
+  },
+  pt: {
+    emailLead: "Não te apetece o menu de hoje?", emailLink: "Troca-o pelo de outro dia →", emailLinkText: "Troca-o pelo de outro dia",
+    pageTitle: "Trocar o menu de hoje", introTitle: "Queres algo diferente hoje?",
+    introBody: "Escolhemos ao acaso o menu de outro dia, de entre todos os menus do FitMe, ajustado às tuas calorias e proteína. A troca só vale para hoje: amanhã o email volta ao teu plano.",
+    btn: "Trocar o menu de hoje", againBtn: "Trocar outra vez", resetBtn: "Voltar ao menu original de hoje", newTitle: "O teu novo menu de hoje",
+    notOnList: (l: string) => `Não está na lista de compras desta semana: ${l}.`, allOnList: "Tudo o que precisas já está na lista de compras desta semana.",
+    account: "A tua conta",
+  },
+  br: {
+    emailLead: "Não está a fim do cardápio de hoje?", emailLink: "Troque pelo de outro dia →", emailLinkText: "Troque pelo de outro dia",
+    pageTitle: "Trocar o cardápio de hoje", introTitle: "Quer algo diferente hoje?",
+    introBody: "A gente sorteia o cardápio de outro dia, entre todos os cardápios do FitMe, na medida das suas calorias e proteína. A troca vale só para hoje: amanhã o e-mail volta ao seu plano.",
+    btn: "Trocar o cardápio de hoje", againBtn: "Trocar de novo", resetBtn: "Voltar ao cardápio original de hoje", newTitle: "Seu novo cardápio de hoje",
+    notOnList: (l: string) => `Não está na lista de compras desta semana: ${l}.`, allOnList: "Tudo o que você precisa já está na lista de compras desta semana.",
+    account: "Sua conta",
+  },
+};
+
+// A random day menu that differs from both the one showing now and today's original (days with the same dishes count once).
+export function pickSwap(sub: Subscriber, dayIndex: number, current: { menu: "A" | "B"; day: number }): { menu: "A" | "B"; day: number } {
+  const diet = planDiet(sub);
+  const sig = (menu: "A" | "B", day: number) => M.buildDay(day, sub.intake, sub.prot, "en", diet, menu).map((m: any) => m.rec.name).join("|");
+  const avoid = new Set([sig(current.menu, current.day), sig("A", dayIndex)]);
+  const options: { menu: "A" | "B"; day: number }[] = [];
+  for (const menu of ["A", "B"] as const) for (let day = 0; day < 7; day++) {
+    const s = sig(menu, day);
+    if (!avoid.has(s)) { avoid.add(s); options.push({ menu, day }); }
+  }
+  return options.length ? options[Math.floor(Math.random() * options.length)] : current;
+}
+
+// Ingredients of a day that aren't on this week's shopping list (the list follows the regular plan).
+export function notOnWeekList(sub: Subscriber, lang: Lang, meals: any[]): string[] {
+  const list = M.shoppingList(sub.intake, sub.prot, lang, sub.units === "imperial", planDiet(sub));
+  const have = new Set<string>(list.groups.flatMap((g: any) => g.items.map((it: any) => String(it.id))));
+  const miss: string[] = [];
+  for (const m of meals) for (const l of m.lines) if (l[0] !== "~" && !have.has(l[0]) && !miss.includes(l[0])) miss.push(l[0]);
+  return miss.map((k) => M.ingName(k, lang));
+}
+
+// The swap page: today's swapped menu (or the offer to swap), in the email's layout.
+export function swapPage(siteUrl: string, lang: Lang, o: { token: string; dateLabel: string; sub: Subscriber; meals?: any[]; missing?: string[] }) {
+  const c = COLORS, s = SWAP[lang], t = T[lang];
+  const kcal = (v: number) => kcalL(v, t.locale);
+  const action = `/api/swap?c=${esc(o.token)}${lang !== "en" ? "&l=" + lang : ""}`;
+  const btn = (label: string, value: string, primary: boolean) => `<form method="post" action="${action}" style="display:inline-block;margin:0 8px 8px 0;"><input type="hidden" name="do" value="${value}"><button type="submit" style="background:${primary ? c.accent : "transparent"};color:${primary ? "#fff" : c.accent};border:${primary ? "0" : "1px solid " + c.accent};border-radius:8px;padding:11px 18px;font-size:15px;font-weight:600;cursor:pointer;">${label}</button></form>`;
+  let inner: string;
+  if (!o.meals) {
+    inner = `<tr><td style="background:${c.card};border:1px solid ${c.line};border-radius:12px;padding:22px;">
+<div style="font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:${c.muted};">${esc(o.dateLabel)}</div>
+<h1 style="margin:4px 0 10px;font-size:23px;line-height:1.2;">${s.introTitle}</h1>
+<p style="margin:0 0 18px;line-height:1.55;color:${c.muted};">${s.introBody}</p>${btn(s.btn, "swap", true)}</td></tr>`;
+  } else {
+    const tot = M.dayTotals(o.meals);
+    const miss = o.missing && o.missing.length ? s.notOnList(o.missing.map(esc).join(" · ")) : s.allOnList;
+    inner = `<tr><td style="background:${c.card};border:1px solid ${c.line};border-radius:12px;padding:20px 22px;">
+<div style="font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:${c.muted};">${esc(o.dateLabel)}</div>
+<h1 style="margin:4px 0 12px;font-size:23px;line-height:1.2;">${s.newTitle}</h1>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:13px;color:${c.muted};margin:0 0 14px;"><tr>
+<td style="padding-right:10px;">${t.calories}<br><b style="font-size:16px;color:${c.ink};">${kcal(tot.k)}</b> <span>/ ${kcal(o.sub.intake)}</span></td>
+<td style="padding-right:10px;">${t.protein}<br><b style="font-size:16px;color:${c.ink};">${Math.round(tot.p)} g</b> <span>/ ${o.sub.prot} g</span></td>
+<td style="padding-right:10px;">${t.carbs}<br><b style="font-size:16px;color:${c.ink};">${Math.round(tot.c)} g</b></td>
+<td>${t.fat}<br><b style="font-size:16px;color:${c.ink};">${Math.round(tot.f)} g</b></td></tr></table>
+<p style="margin:0 0 14px;font-size:14px;line-height:1.5;color:${c.muted};">${miss}</p>${btn(s.againBtn, "swap", true)}${btn(s.resetBtn, "reset", false)}</td></tr>` + mealCards(o.meals, siteUrl, o.sub.units === "imperial", lang);
+  }
+  const footer = `<a href="${esc(accountPath(siteUrl, lang))}" style="color:${c.muted};">${s.account}</a>`;
+  const html = shell(siteUrl, inner, footer, lang).replace("<head>", `<head><title>${esc(s.pageTitle)} · FitMe</title><meta name="robots" content="noindex">`);
+  return new Response(html, { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store", "x-robots-tag": "noindex" } });
 }
 
 // ---------- Accounts: log in by email link ----------
