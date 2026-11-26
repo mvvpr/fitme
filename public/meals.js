@@ -306,7 +306,7 @@ var MENU_B = {
 };
 // Menu B recipes without a real photo yet: the site shows a placeholder and the emails skip the photo (see POOL_FISH).
 // Add a recipe's img here once public/img/meals/<img>-{1200,720,thumb}.webp and public/img/email/<img>.jpg exist.
-var MENU_B_PHOTOS = ['apple-cinnamon-protein-porridge', 'chicken-egg-fried-rice', 'pesto-chicken-traybake', 'beef-sweetcorn-wraps', 'creamy-chicken-pea-pasta'];
+var MENU_B_PHOTOS = ['scrambled-egg-breakfast-wrap', 'apple-cinnamon-protein-porridge', 'chicken-egg-fried-rice', 'pesto-chicken-traybake', 'beef-sweetcorn-wraps', 'creamy-chicken-pea-pasta'];
 ['breakfast', 'main', 'snack', 'veg', 'fish', 'pork'].forEach(function (k) { MENU_B[k].forEach(function (r) { if (r && MENU_B_PHOTOS.indexOf(r.img) < 0) r.noPhoto = true; }); });
 // Menu B's week uses the same WEEK pattern as Menu A. Breakfasts and snacks are vegetarian, so both versions share them.
 MENUS.B = { recipes: weekPlan({ breakfast: MENU_B.breakfast, main: MENU_B.main, snack: MENU_B.snack }), recipesVeg: weekPlan({ breakfast: MENU_B.breakfast, main: MENU_B.veg, snack: MENU_B.snack }), main: MENU_B.main, variants: MENU_B.variants, fish: MENU_B.fish, pork: MENU_B.pork };
