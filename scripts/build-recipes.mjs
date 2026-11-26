@@ -143,13 +143,18 @@ ${body}
 `;
 }
 
+// A recipe has a photo once public/img/meals/<img>-1200.webp exists. Until then the page shows no hero, the cards a plain
+// tile, and the Recipe schema has no image (Google then shows the page as a normal result, without the recipe card).
+const hasPhoto = (img) => fs.existsSync(path.join(SRC, 'img', 'meals', img + '-1200.webp'));
 function picture(img, alt, eager) {
+  if (!hasPhoto(img)) return '';
   return `<img class="hero" src="/img/meals/${img}-720.webp" srcset="/img/meals/${img}-720.webp 720w, /img/meals/${img}-1200.webp 1200w" sizes="(max-width: 760px) 100vw, 720px" width="1200" height="750" alt="${esc(alt)}"${eager ? ' fetchpriority="high"' : ' loading="lazy"'}>`;
 }
 
 function card(r, lang) {
   const d = data(r.img, lang);
-  return `<li><a href="${url(lang, r[lang].slug)}"><img src="/img/meals/${r.img}-720.webp" width="1200" height="750" loading="lazy" alt=""><span class="card-name">${esc(d.name)}</span><span class="card-meta">${d.kcal} ${L[lang].kcal} · ${d.p} ${L[lang].g} ${L[lang].protein} · ${esc(d.time)}</span></a></li>`;
+  const thumb = hasPhoto(r.img) ? `<img src="/img/meals/${r.img}-720.webp" width="1200" height="750" loading="lazy" alt="">` : '<span class="card-ph" aria-hidden="true"></span>';
+  return `<li><a href="${url(lang, r[lang].slug)}">${thumb}<span class="card-name">${esc(d.name)}</span><span class="card-meta">${d.kcal} ${L[lang].kcal} · ${d.p} ${L[lang].g} ${L[lang].protein} · ${esc(d.time)}</span></a></li>`;
 }
 
 // Share bar at the end of each recipe. Links carry utm_source=<channel>&utm_medium=share&utm_campaign=recipe.
@@ -157,7 +162,7 @@ function card(r, lang) {
 function shareBlock(r, lang, d) {
   const t = L[lang], link = SITE + url(lang, r[lang].slug);
   const btn = (ch, label, extra = '') => `<button type="button" class="sh sh-${ch}" data-ch="${ch}"${extra}>${label}</button>`;
-  return `<section class="share" aria-label="${esc(t.share)}" data-url="${esc(link)}" data-text="${esc(t.shareText(d.name, d.kcal, d.p))}" data-img="${SITE}/img/meals/${r.img}-1200.webp" data-copied="${esc(t.copied)}" data-ig="${esc(t.igCopied)}" data-ig-open="${esc(t.igOpen)}" data-manual="${esc(t.manual)}" data-recipe="${esc(r[lang].slug)}">
+  return `<section class="share" aria-label="${esc(t.share)}" data-url="${esc(link)}" data-text="${esc(t.shareText(d.name, d.kcal, d.p))}" data-img="${SITE}${hasPhoto(r.img) ? `/img/meals/${r.img}-1200.webp` : `/img/og/fitme-${lang}.jpg`}" data-copied="${esc(t.copied)}" data-ig="${esc(t.igCopied)}" data-ig-open="${esc(t.igOpen)}" data-manual="${esc(t.manual)}" data-recipe="${esc(r[lang].slug)}">
 <h2>${t.share}</h2>
 <div class="sh-row">${btn('native', t.shareNative, ' hidden')}${btn('whatsapp', 'WhatsApp')}${btn('instagram', 'Instagram')}${btn('facebook', 'Facebook')}${btn('pinterest', 'Pinterest')}${btn('x', 'X')}${btn('telegram', 'Telegram')}${btn('email', t.email)}${btn('copy', t.copy)}</div>
 <p class="sh-toast" role="status" aria-live="polite" hidden></p>
@@ -201,7 +206,7 @@ ${shareBlock(r, lang, d)}
   if (!sx || !sx.cuisine || !sx.cuisine[lang] || !sx[lang]) throw new Error('Missing SCHEMA (cuisine/keywords) for ' + r.img + ' ' + lang);
   const jsonld = [{
     '@context': 'https://schema.org', '@type': 'Recipe', name: d.name, description: c.description,
-    image: [`${SITE}/img/meals/${r.img}-1200.webp`], author: { '@type': 'Organization', name: 'FitMe', url: SITE },
+    ...(hasPhoto(r.img) ? { image: [`${SITE}/img/meals/${r.img}-1200.webp`] } : {}), author: { '@type': 'Organization', name: 'FitMe', url: SITE },
     inLanguage: HTML_LANG[lang], recipeCategory: t.category[r.course], recipeCuisine: sx.cuisine[lang], keywords: sx[lang], recipeYield: t.serving,
     ...(/[+]/.test(source(r.img).rec.time) ? { prepTime: iso(d.time) } : { totalTime: iso(d.time) }),
     recipeIngredient: d.ing, recipeInstructions: d.steps.map((s, i) => ({ '@type': 'HowToStep', name: stepName(s), text: s, url: `${SITE}${url(lang, c.slug)}#step-${i + 1}` })),
@@ -213,7 +218,7 @@ ${shareBlock(r, lang, d)}
       { '@type': 'ListItem', position: 3, name: d.name, item: SITE + url(lang, c.slug) },
     ],
   }];
-  return page({ lang, title: c.title, description: c.description, canonical: url(lang, c.slug), alternates, ogImage: `/img/meals/${r.img}-1200.webp`, body, jsonld, ogType: 'article' });
+  return page({ lang, title: c.title, description: c.description, canonical: url(lang, c.slug), alternates, ogImage: hasPhoto(r.img) ? `/img/meals/${r.img}-1200.webp` : `/img/og/fitme-${lang}.jpg`, body, jsonld, ogType: 'article' });
 }
 
 function hubPage(lang) {
