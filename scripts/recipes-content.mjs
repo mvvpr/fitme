@@ -4,29 +4,31 @@
 // tips: filled from Moreno's answers to the 4 questions; an empty list hides the Tips section.
 // URLs are permanent once live: never change a slug without adding a 301 redirect.
 
+import { RECIPES_2, SCHEMA_2 } from './recipes-content-2.mjs';
+
 export const HUB = {
   en: {
     path: '/recipes/', title: 'High protein recipes for weight loss | FitMe',
     h1: 'High protein recipes',
-    description: 'Simple high protein breakfasts and main meals with calories and macros per portion, made with supermarket ingredients.',
+    description: 'Simple high protein breakfasts, main meals and snacks with calories and macros per portion, made with supermarket ingredients.',
     intro: 'Every recipe here is in the FitMe meal plan. They use ingredients you can find in any supermarket, and each one shows calories, protein, carbs and fat per portion.',
-    breakfast: 'Breakfasts', main: 'Lunch and dinner',
+    breakfast: 'Breakfasts', main: 'Lunch and dinner', snack: 'Snacks',
     cta: 'Get a free week of these meals, sized to your goal', ctaHref: '/',
   },
   pt: {
     path: '/pt/receitas/', title: 'Receitas saudáveis e proteicas para perder peso | FitMe',
     h1: 'Receitas saudáveis e proteicas',
-    description: 'Pequenos-almoços e refeições ricas em proteína, com calorias e macros por dose, feitos com ingredientes de supermercado.',
+    description: 'Pequenos-almoços, refeições e lanches ricos em proteína, com calorias e macros por dose, feitos com ingredientes de supermercado.',
     intro: 'Todas estas receitas fazem parte do plano FitMe. Usam ingredientes que encontras em qualquer supermercado e cada uma mostra as calorias, a proteína, os hidratos e a gordura por dose.',
-    breakfast: 'Pequenos-almoços', main: 'Almoço e jantar',
+    breakfast: 'Pequenos-almoços', main: 'Almoço e jantar', snack: 'Lanches',
     cta: 'Recebe uma semana destas refeições, ajustada ao teu objetivo', ctaHref: '/pt/',
   },
   br: {
     path: '/br/receitas/', title: 'Receitas fit e proteicas para emagrecer | FitMe',
     h1: 'Receitas fit com bastante proteína',
-    description: 'Cafés da manhã e refeições fit com calorias e macros por porção, feitos com ingredientes de supermercado.',
+    description: 'Cafés da manhã, refeições e lanches fit com calorias e macros por porção, feitos com ingredientes de supermercado.',
     intro: 'Todas estas receitas fazem parte do plano FitMe. Os ingredientes são fáceis de achar em qualquer mercado, e cada receita mostra calorias, proteína, carboidratos e gordura por porção.',
-    breakfast: 'Café da manhã', main: 'Almoço e jantar',
+    breakfast: 'Café da manhã', main: 'Almoço e jantar', snack: 'Lanches',
     cta: 'Receba uma semana dessas refeições, ajustada ao seu objetivo', ctaHref: '/br/',
   },
 };
@@ -483,6 +485,7 @@ export const RECIPES = [
       tips: [],
     },
   },
+  ...RECIPES_2,
 ];
 
 // Structured data per recipe (Search Console): recipeCuisine and keywords per language. Keywords are the
@@ -548,4 +551,5 @@ export const SCHEMA = {
     en: 'high protein breakfast wrap, scrambled egg wrap, breakfast wrap, high protein breakfast',
     pt: 'wrap de ovos mexidos, wrap de ovo, pequeno-almoço proteico, receitas saudáveis',
     br: 'wrap de ovo, wrap de ovo fit, café da manhã fit, café da manhã proteico' },
+  ...SCHEMA_2,
 };
