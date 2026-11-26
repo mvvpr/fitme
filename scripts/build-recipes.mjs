@@ -5,10 +5,17 @@ import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
-import { HUB, RECIPES } from './recipes-content.mjs';
+import { HUB, RECIPES as ALL_RECIPES, SCHEMA } from './recipes-content.mjs';
+
+// Draft pages (draft: true) are left out of the live build. DRAFTS=1 node scripts/build-recipes.mjs --out=<dir>
+// builds everything, drafts included, into another folder for review; never commit that output.
+const DRAFTS = process.env.DRAFTS === '1';
+const OUT_ARG = process.argv.find((a) => a.startsWith('--out='));
+const RECIPES = ALL_RECIPES.filter((r) => DRAFTS || !r.draft);
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const PUB = path.join(ROOT, 'public');
+const SRC = path.join(ROOT, 'public');
+const PUB = OUT_ARG ? path.resolve(OUT_ARG.slice(6)) : SRC;
 const SITE = 'https://fitmeplan.com';
 const LANGS = ['en', 'pt', 'br'];
 const HTML_LANG = { en: 'en', pt: 'pt-PT', br: 'pt-BR' };
@@ -19,7 +26,7 @@ const OG_LOCALE = { en: 'en_GB', pt: 'pt_PT', br: 'pt_BR' };
 const ctx = { console };
 ctx.globalThis = ctx; ctx.window = ctx;
 vm.createContext(ctx);
-for (const f of ['meals.js', 'meals.pt.js', 'meals.br.js']) vm.runInContext(fs.readFileSync(path.join(PUB, f), 'utf8'), ctx, { filename: f });
+for (const f of ['meals.js', 'meals.pt.js', 'meals.br.js']) vm.runInContext(fs.readFileSync(path.join(SRC, f), 'utf8'), ctx, { filename: f });
 const M = ctx.FITME_MEALS;
 
 const L = {
@@ -60,12 +67,17 @@ function source(img) {
     const t = (ctx[pool] || []).findIndex((r) => r && r.img === img);
     if (t >= 0) return { trKey, t, rec: ctx[pool][t] };
   }
+  const B = M.MENU_B;
+  for (const k of ['breakfast', 'main', 'snack', 'veg', 'fish', 'pork']) {
+    const t = B[k].findIndex((r) => r && r.img === img);
+    if (t >= 0) return { menuB: k, t, rec: B[k][t] };
+  }
   throw new Error('No recipe with img ' + img);
 }
 function data(img, lang) {
-  const { k, i, trKey, t, rec } = source(img);
+  const { k, i, trKey, menuB, t, rec } = source(img);
   const nu = M.nutrition(rec.ing);
-  const tr = lang === 'en' ? null : trKey ? M.ptData(lang)[trKey][t] : M.ptData(lang).recipes[k][i];
+  const tr = lang === 'en' ? null : menuB ? M.ptData(lang).menuB[menuB][t] : trKey ? M.ptData(lang)[trKey][t] : M.ptData(lang).recipes[k][i];
   let x = 0;
   const ing = rec.ing.map((l) => {
     if (l[0] === '~') { const extra = tr ? tr.x[x] : l[1]; x++; return extra; }
@@ -78,6 +90,8 @@ function data(img, lang) {
     kcal: r5(nu.k), p: Math.round(nu.p), c: Math.round(nu.c), f: Math.round(nu.f) };
 }
 // "30 min" -> PT30M; "5 min + overnight" -> PT5M (prep only).
+// A step's short name for HowToStep: its first sentence, without the full stop.
+const stepName = (s) => s.split(/(?<=[.!?])\s/)[0].replace(/[.!?:]$/, '');
 const iso = (t) => 'PT' + parseInt(t, 10) + 'M';
 
 const url = (lang, slug) => (lang === 'en' ? '/recipes/' : HUB[lang].path) + slug + '/';
@@ -174,7 +188,7 @@ ${picture(r.img, d.name, true)}
 <ul class="ing">${d.ing.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>
 <p class="note">${esc(t.scale)}</p>
 <h2>${t.method}</h2>
-<ol class="steps">${d.steps.map((x) => `<li>${esc(x)}</li>`).join('')}</ol>
+<ol class="steps">${d.steps.map((x, i) => `<li id="step-${i + 1}">${esc(x)}</li>`).join('')}</ol>
 ${tips}
 <h2>${t.fits}</h2>
 <p>${esc(c.fits)}</p>
@@ -183,12 +197,14 @@ ${shareBlock(r, lang, d)}
 </article>
 <section class="more"><h2>${t.more}</h2><ul class="cards">${more}</ul></section>
 </main>`;
+  const sx = SCHEMA[r.img];
+  if (!sx || !sx.cuisine || !sx.cuisine[lang] || !sx[lang]) throw new Error('Missing SCHEMA (cuisine/keywords) for ' + r.img + ' ' + lang);
   const jsonld = [{
     '@context': 'https://schema.org', '@type': 'Recipe', name: d.name, description: c.description,
     image: [`${SITE}/img/meals/${r.img}-1200.webp`], author: { '@type': 'Organization', name: 'FitMe', url: SITE },
-    inLanguage: HTML_LANG[lang], recipeCategory: t.category[r.course], recipeYield: t.serving,
+    inLanguage: HTML_LANG[lang], recipeCategory: t.category[r.course], recipeCuisine: sx.cuisine[lang], keywords: sx[lang], recipeYield: t.serving,
     ...(/[+]/.test(source(r.img).rec.time) ? { prepTime: iso(d.time) } : { totalTime: iso(d.time) }),
-    recipeIngredient: d.ing, recipeInstructions: d.steps.map((s) => ({ '@type': 'HowToStep', text: s })),
+    recipeIngredient: d.ing, recipeInstructions: d.steps.map((s, i) => ({ '@type': 'HowToStep', name: stepName(s), text: s, url: `${SITE}${url(lang, c.slug)}#step-${i + 1}` })),
     nutrition: { '@type': 'NutritionInformation', servingSize: t.serving, calories: d.kcal + ' kcal', proteinContent: d.p + ' g', carbohydrateContent: d.c + ' g', fatContent: d.f + ' g' },
   }, {
     '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [
