@@ -75,3 +75,6 @@ footer a { color: var(--muted); }
 .guide-list a { display: block; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; text-decoration: none; color: var(--ink); }
 .guide-list .card-name { display: block; font-family: var(--font-display); font-weight: 700; font-size: 18px; }
 .guide-list .card-meta { display: block; color: var(--muted); font-size: 14px; margin-top: 4px; }
+/* Recipe FAQ (Brazilian pages) */
+.faq h3 { font-size: 16px; margin: 18px 0 4px; }
+.faq p { margin: 0 0 6px; }

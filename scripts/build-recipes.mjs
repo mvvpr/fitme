@@ -7,6 +7,7 @@ import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { HUB, RECIPES as ALL_RECIPES, SCHEMA } from './recipes-content.mjs';
 import { GUIDES, GUIDE_HUB, ABOUT } from './guides-content.mjs';
+import { BR_EXTRA } from './recipes-br-extra.mjs';
 
 // Draft pages (draft: true) are left out of the live build. DRAFTS=1 node scripts/build-recipes.mjs --out=<dir>
 // builds everything, drafts included, into another folder for review; never commit that output.
@@ -175,7 +176,13 @@ function recipePage(r, lang) {
   const c = r[lang]; const d = data(r.img, lang); const t = L[lang];
   const alternates = LANGS.map((l) => [l, url(l, r[l].slug)]);
   const crumbs = `<nav class="crumbs" aria-label="breadcrumb"><a href="${HOME[lang]}">${t.home}</a> › <a href="${HUB[lang].path}">${t.recipes}</a></nav>`;
-  const tips = c.tips.length ? `<h2>${t.tips}</h2>\n<ul>${c.tips.map((x) => `<li>${x}</li>`).join('')}</ul>` : '';
+  // Brazilian pages carry their own intro, tips, storage note and FAQ (recipes-br-extra.mjs), so they don't read as copies of /pt/.
+  const x = lang === 'br' ? BR_EXTRA[r.img] : null;
+  if (lang === 'br' && !x) throw new Error('Missing BR_EXTRA for ' + r.img);
+  const intro = x ? x.intro : c.intro, tipList = x ? x.tips : c.tips;
+  const tips = tipList.length ? `<h2>${t.tips}</h2>\n<ul>${tipList.map((y) => `<li>${x ? esc(y) : y}</li>`).join('')}</ul>` : '';
+  const store = x ? `<h2>${esc(x.store[0])}</h2>\n<p>${esc(x.store[1])}</p>` : '';
+  const faqHtml = x ? `<section class="faq"><h2>Perguntas frequentes</h2>\n${x.faq.map(([q, a]) => `<h3>${esc(q)}</h3>\n<p>${esc(a)}</p>`).join('\n')}</section>` : '';
   // Related recipes: same course first (in content order, starting after this one), then the rest; 8 cards.
   const others = RECIPES.filter((o) => o !== r), at = RECIPES.indexOf(r);
   const rot = (a) => { const j = a.findIndex((o) => RECIPES.indexOf(o) > at); return j < 0 ? a : [...a.slice(j), ...a.slice(0, j)]; };
@@ -184,7 +191,7 @@ function recipePage(r, lang) {
 ${crumbs}
 <article>
 <h1>${esc(c.h1)}</h1>
-${c.intro.map((p) => `<p class="lead">${esc(p)}</p>`).join('\n')}
+${intro.map((p) => `<p class="lead">${esc(p)}</p>`).join('\n')}
 ${picture(r.img, d.name, true)}
 <dl class="glance" aria-label="${t.perPortion}">
   <div><dt>${t.time}</dt><dd>${esc(d.time)}</dd></div>
@@ -199,9 +206,9 @@ ${picture(r.img, d.name, true)}
 <p class="note">${esc(t.scale)}</p>
 <h2>${t.method}</h2>
 <ol class="steps">${d.steps.map((x, i) => `<li id="step-${i + 1}">${esc(x)}</li>`).join('')}</ol>
-${tips}
+${tips}${store ? '\n' + store : ''}
 <h2>${t.fits}</h2>
-<p>${esc(c.fits)}</p>
+<p>${esc(c.fits)}</p>${faqHtml ? '\n' + faqHtml : ''}
 ${shareBlock(r, lang, d)}
 <div class="cta"><p>${esc(t.ctaLead)}</p><a class="btn" href="${HOME[lang]}">${t.cta}</a></div>
 </article>
@@ -213,7 +220,7 @@ ${shareBlock(r, lang, d)}
     '@context': 'https://schema.org', '@type': 'Recipe', name: d.name, description: c.description,
     ...(hasPhoto(r.img) ? { image: [`${SITE}/img/meals/${r.img}-1200.webp`] } : {}), author: { '@type': 'Organization', name: 'FitMe', url: SITE },
     inLanguage: HTML_LANG[lang], recipeCategory: t.category[r.course], recipeCuisine: sx.cuisine[lang], keywords: sx[lang], recipeYield: t.serving,
-    ...(/[+]/.test(source(r.img).rec.time) ? { prepTime: iso(d.time) } : { totalTime: iso(d.time) }),
+    ...(/[+]/.test(source(r.img).rec.time) ? { prepTime: iso(d.time), cookTime: 'PT0M', totalTime: 'PT4H' + parseInt(d.time, 10) + 'M' } : { totalTime: iso(d.time) }),
     recipeIngredient: d.ing, recipeInstructions: d.steps.map((s, i) => ({ '@type': 'HowToStep', name: stepName(s), text: s, url: `${SITE}${url(lang, c.slug)}#step-${i + 1}` })),
     nutrition: { '@type': 'NutritionInformation', servingSize: t.serving, calories: d.kcal + ' kcal', proteinContent: d.p + ' g', carbohydrateContent: d.c + ' g', fatContent: d.f + ' g' },
   }, {
@@ -223,6 +230,7 @@ ${shareBlock(r, lang, d)}
       { '@type': 'ListItem', position: 3, name: d.name, item: SITE + url(lang, c.slug) },
     ],
   }];
+  if (x) jsonld.push({ '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: x.faq.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) });
   return page({ lang, title: c.title, description: c.description, canonical: url(lang, c.slug), alternates, ogImage: hasPhoto(r.img) ? `/img/meals/${r.img}-1200.webp` : `/img/og/fitme-${lang}.jpg`, body, jsonld, ogType: 'article' });
 }
 
