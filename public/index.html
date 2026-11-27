@@ -548,7 +548,6 @@ body.lang-fading .wrap > .step { opacity: 0; }
 <div class="wrap">
   <header class="topbar">
     <a class="brand" href="#start" aria-label="FitMe home"><svg class="mark" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16" fill="var(--accent)"/><path d="M13 19 C22 19 24 41 33 41 L51 21" fill="none" stroke="var(--mark-line)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="13" cy="19" r="3.5" fill="#f0eee9"/></svg><span class="wordmark">Fit<span>Me</span></span></a>
-    <div class="lang-switch" role="group" aria-label="Language / Idioma"><a href="/" data-lang="en" hreflang="en">EN</a><a href="/pt/" data-lang="pt" hreflang="pt-PT" title="Português (Portugal)">PT</a><a href="/br/" data-lang="br" hreflang="pt-BR" title="Português (Brasil)">BR</a></div>
     <nav class="progress" id="progress" aria-label="Steps" hidden>
       <ol>
         <li><a href="#about" data-step="about"><span class="num">1</span><span class="lab">About you</span></a></li>
@@ -828,8 +827,9 @@ body.lang-fading .wrap > .step { opacity: 0; }
   var I18N = globalThis.FITME_I18N, L = I18N.L, LANG = I18N.lang, applyLangGlobals = function () {};
   // Visitors are routed by country at the edge (netlify.toml: Brazil -> /br/, Portugal and Portuguese-speaking Africa -> /pt/).
   // Fallback on the English page: a Portuguese browser goes to /br/ (pt-BR) or /pt/ (other pt), unless the visitor chose a language before.
+  // A logged-in user's account language (fm_lang cookie, followed by track.js) always wins over the browser's.
   try {
-    var chosen = localStorage.getItem('fitme-lang'), navLang = navigator.language || '';
+    var chosen = localStorage.getItem('fitme-lang') || (/(?:^|;\s*)fm_lang=(en|pt|br)\b/.test(document.cookie) ? 'account' : ''), navLang = navigator.language || '';
     if (LANG === 'en' && !chosen && /^pt\b/i.test(navLang) && location.protocol !== 'file:' && !/claude|artifact/.test(location.hostname)) {
       location.replace((/^pt-br$/i.test(navLang) ? '/br/' : '/pt/') + location.hash); return;
     }

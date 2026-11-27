@@ -45,7 +45,6 @@ input[type=email]:focus { outline: 2px solid var(--accent); outline-offset: 1px;
 <div class="wrap">
 <header>
   <a class="brand" id="home" href="/"><img src="/brand/fitme-icon-512.png" alt=""><b style="font-weight:inherit">Fit<span>Me</span></b></a>
-  <div class="lang-switch" role="group" aria-label="Language / Idioma"><a href="/login/" data-lang="en" hreflang="en">EN</a><a href="/pt/login/" data-lang="pt" hreflang="pt-PT">PT</a><a href="/br/login/" data-lang="br" hreflang="pt-BR">BR</a></div>
 </header>
 <main class="card">
   <section id="ask">
@@ -85,12 +84,13 @@ input[type=email]:focus { outline: 2px solid var(--accent); outline-offset: 1px;
       invalid: 'Digite um endereço de e-mail válido.', failed: 'Não conseguimos enviar o e-mail. Tente de novo daqui a um minuto.', busy: 'Muitas tentativas. Espere um minuto e tente de novo.' }
   };
   var path = /^\/br(\/|$)/.test(location.pathname) ? 'br' : /^\/pt(\/|$)/.test(location.pathname) ? 'pt' : 'en';
+  var ck = document.cookie.match(/(?:^|;\s*)fm_lang=(en|pt|br)\b/);
+  if (ck && ck[1] !== path) { location.replace((ck[1] === 'en' ? '' : '/' + ck[1]) + '/login/' + location.search); return; }
   var L = T[path];
   document.documentElement.lang = path === 'br' ? 'pt-BR' : path === 'pt' ? 'pt-PT' : 'en';
   document.title = L.title + ' · FitMe';
   var home = path === 'en' ? '/' : '/' + path + '/';
   document.getElementById('home').href = home;
-  document.querySelectorAll('.lang-switch a').forEach(function (a) { a.setAttribute('aria-current', String(a.dataset.lang === path)); });
   document.querySelectorAll('[data-t]').forEach(function (el) { el.innerHTML = L[el.dataset.t]; });
   document.querySelectorAll('[data-home]').forEach(function (el) { el.href = home; });
   var acct = (path === 'en' ? '' : '/' + path) + '/account/', login = (path === 'en' ? '' : '/' + path) + '/login/';

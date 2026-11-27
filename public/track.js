@@ -3,6 +3,24 @@
    Tracked events are also pushed to the GTM dataLayer (event = the same name: PageView, ViewContent, Step1_About, ..., Lead),
    so tags in GTM can use them. Don't add a Meta Pixel tag in GTM: it is already here, with server-side deduplication.
    Every browser event carries an event_id; the server sends the same id so Meta counts it once. */
+// Account language: a logged-in user picks a language on /account/ (saved in the fm_lang cookie by the server).
+// Every public page lists its language versions in <link rel="alternate" hreflang>; if the account language differs
+// from this page's, go to that version. Crawlers never have the cookie, so /pt/ and /br/ stay indexable as they are.
+(function () {
+  try {
+    var m = document.cookie.match(/(?:^|;\s*)fm_lang=(en|pt|br)\b/);
+    if (!m || location.protocol === 'file:') return;
+    var code = { en: 'en', pt: 'pt-PT', br: 'pt-BR' }[m[1]], here = location.pathname, cur = null, want = null;
+    document.querySelectorAll('link[rel="alternate"][hreflang]').forEach(function (l) {
+      var p; try { p = new URL(l.href, location.href).pathname; } catch (e) { return; }
+      var h = l.getAttribute('hreflang');
+      if (h === 'x-default') return;
+      if (p === here) cur = h;
+      if (h === code) want = p;
+    });
+    if (cur && want && cur !== code && want !== here) location.replace(want + location.search + location.hash);
+  } catch (e) {}
+})();
 (function () {
   'use strict';
   var PIXEL_ID = '1320302420180623';

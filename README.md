@@ -12,7 +12,8 @@ A calorie-deficit weight loss calculator. Enter your details and a daily deficit
 - Week-by-week table under "How we calculated this"
 - Safety flags for very low intake, fast loss rates and low goal BMI
 - Weekly high-protein meal plan: 4 meals a day (breakfast, lunch, snack, dinner) with ingredients and method, portions scaled to the user's intake, plus a weekly shopping list. The week rotates a small pool (`POOL` in `meals.js`): 3 breakfasts, 4 mains that serve as lunch or dinner (tonight's dinner is tomorrow's lunch) and 2 snacks, sharing ingredients so the shopping list stays at about 27 items
-- English and European Portuguese (`/pt/`): interface, recipes, shopping list and emails
+- English, European Portuguese (`/pt/`) and Brazilian Portuguese (`/br/`): interface, recipes, shopping list and emails
+- Language is an account setting: there is no language switch in the site headers. Logged-out visitors get a language from the URL, country routing (netlify.toml) and the browser. Logged-in users choose it on `/account/` (POST `/api/me` `{action:"lang"}`, saved as the subscriber's `lang`), and it drives everything: emails, the account, list, swap and log-in pages, and every public page. The server keeps the readable cookie `fm_lang` (plus `nf_country`) in step, set on log-in, on confirmation, on every `/api/me` GET and on change, and cleared on log-out. `track.js` sends a page with a different language to its version listed in `<link rel="alternate" hreflang>`. Crawlers never carry the cookie, so `/pt/` and `/br/` stay indexed as they are. Recalculating on another language's page keeps the account language
 - Metric and imperial units; light and dark themes
 
 - Daily meal-plan email at 07:00 and a weekly shopping-list email on Saturdays at 08:00, in each subscriber's time zone and language; double opt-in, one-click unsubscribe

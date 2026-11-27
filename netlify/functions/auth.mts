@@ -2,7 +2,7 @@
 // GET shows a button (email link scanners open links and would use the one-time token up); POST uses the token,
 // starts a 30-day session cookie and goes to the account page.
 import type { Config, Context } from "@netlify/functions";
-import { subscribers, subKey, loginKey, sessKey, newToken, TOKEN_RE, SESSION_TTL_MS, sessionCookie, htmlPage, esc, asLang, AUTH, loginPath, accountPath, type Subscriber } from "../lib/core.mts";
+import { subscribers, subKey, loginKey, sessKey, newToken, TOKEN_RE, SESSION_TTL_MS, sessionHeaders, sessionCookie, htmlPage, esc, asLang, AUTH, loginPath, accountPath, type Subscriber } from "../lib/core.mts";
 
 export default async (req: Request, context: Context) => {
   const siteUrl = context.site.url || new URL(req.url).origin;
@@ -27,7 +27,8 @@ export default async (req: Request, context: Context) => {
   if (!sub) return expired();
   const sid = newToken();
   await store.setJSON(sessKey(sid), { hash: login.hash, exp: Date.now() + SESSION_TTL_MS });
-  return new Response(null, { status: 303, headers: { Location: accountPath(siteUrl, asLang(sub.lang || lang)), "Set-Cookie": sessionCookie(sid), "cache-control": "no-store" } });
+  const acctLang = asLang(sub.lang || lang);
+  return new Response(null, { status: 303, headers: sessionHeaders({ Location: accountPath(siteUrl, acctLang), "cache-control": "no-store" }, sid, acctLang) });
 };
 
 export const config: Config = { path: "/api/auth", method: ["GET", "POST"] };

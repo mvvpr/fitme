@@ -17,7 +17,7 @@ export default async (req: Request, context: Context) => {
     const t = T[lang];
     return htmlPage(siteUrl, t.expiredTitle, `<p style="line-height:1.55;color:#6b655e;">${t.expiredBody(sitePath(siteUrl, lang))}</p>`, 410, lang);
   }
-  lang = asLang(url.searchParams.get("l") || sub.lang);
+  lang = asLang(sub.lang || url.searchParams.get("l"));
   const local = localParts(new Date(), sub.tz, lang);
   const saved = (await store.get(swpKey(hash), { type: "json" })) as SwapState | null;
   let today = saved && saved.date === local.date ? saved : null;

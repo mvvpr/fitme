@@ -102,7 +102,7 @@ const url = (lang, slug) => (lang === 'en' ? '/recipes/' : HUB[lang].path) + slu
 function page({ lang, title, description, canonical, alternates, ogImage, body, jsonld, ogType = 'website' }) {
   const alt = alternates.map(([l, h]) => `<link rel="alternate" hreflang="${HREFLANG[l]}" href="${SITE}${h}">`).join('\n') +
     `\n<link rel="alternate" hreflang="x-default" href="${SITE}${alternates.find((a) => a[0] === 'en')[1]}">`;
-  const switcher = alternates.map(([l, h]) => `<a href="${h}" hreflang="${HREFLANG[l]}"${l === lang ? ' aria-current="true"' : ''}>${l.toUpperCase()}</a>`).join('');
+  // No language switch in the header: the language is an account setting (see track.js); hreflang links stay in <head>.
   return `<!DOCTYPE html>
 <html lang="${HTML_LANG[lang]}">
 <head>
@@ -133,7 +133,6 @@ ${alt}
 <div class="wrap">
 <header>
   <a class="brand" href="${HOME[lang]}"><img src="/brand/fitme-icon-512.png" alt="" width="34" height="34"><b>Fit<span>Me</span></b></a>
-  <nav class="lang-switch" aria-label="Language / Idioma">${switcher}</nav>
 </header>
 ${body}
 <footer><a href="${HUB[lang].path}">${L[lang].recipes}</a> · <a href="${GUIDE_HUB[lang].path}">${GUIDE_HUB[lang].label}</a> · <a href="${ABOUT[lang].path}">${ABOUT[lang].label}</a> · <a href="${PRIVACY[lang]}">${L[lang].privacy}</a></footer>
