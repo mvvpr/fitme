@@ -58,6 +58,8 @@ export default async (req: Request, context: Context) => {
   // didn't make doesn't go unnoticed.
   if (existing?.status === "active") {
     if (existing.confirmToken) await store.delete(tokKey(existing.confirmToken));
+    // The language is an account setting (changed on /account/), so recalculating on another language's page keeps it.
+    settings.lang = asLang(existing.lang || settings.lang);
     await store.setJSON(subKey(hash), { ...existing, ...settings, pending: null, confirmToken: null, planUpdatedAt: now });
     const me = await currentUser(req);
     if (!(me && me.hash === hash)) {

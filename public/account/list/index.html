@@ -130,6 +130,8 @@ ul.items li:first-child { border-top: 0; }
       toAccount: '← Sua conta', doneH: 'Tudo pronto!', doneBody: 'Você marcou tudo da lista. Boa semana de refeições.', loc: 'pt-BR', htmlLang: 'pt-BR' }
   };
   var lang = /^\/br(\/|$)/.test(location.pathname) ? 'br' : /^\/pt(\/|$)/.test(location.pathname) ? 'pt' : 'en';
+  var ck = document.cookie.match(/(?:^|;\s*)fm_lang=(en|pt|br)\b/);
+  if (ck && ck[1] !== lang) { location.replace((ck[1] === 'en' ? '' : '/' + ck[1]) + '/account/list/' + location.search + location.hash); return; }
   var L = T[lang], pre = lang === 'en' ? '' : '/' + lang, $ = function (id) { return document.getElementById(id); };
   document.documentElement.lang = L.htmlLang; document.title = L.title + ' · FitMe';
   $('home').href = pre + '/';

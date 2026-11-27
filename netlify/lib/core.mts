@@ -776,6 +776,19 @@ export function sessionCookie(sid: string | null) {
   return `${SESSION_COOKIE}=${v}; Path=/; HttpOnly; Secure; SameSite=Lax`;
 }
 
+// The account language, readable by the site's own scripts so every page can follow it (not a secret, so not HttpOnly).
+export const LANG_COOKIE = "fm_lang";
+export function langCookies(lang: Lang | null): string[] {
+  return [`${LANG_COOKIE}=${lang || ""}; Path=/; Max-Age=${lang ? 31536000 : 0}; Secure; SameSite=Lax`];
+}
+// Headers for a session response: the session cookie plus the account-language cookies.
+export function sessionHeaders(base: Record<string, string>, sid: string | null, lang: Lang | null): Headers {
+  const h = new Headers(base);
+  h.append("Set-Cookie", sessionCookie(sid));
+  for (const c of langCookies(lang)) h.append("Set-Cookie", c);
+  return h;
+}
+
 export function readSid(req: Request): string | null {
   const m = (req.headers.get("cookie") || "").match(new RegExp(`(?:^|;\\s*)${SESSION_COOKIE}=([a-f0-9]{48})`));
   return m ? m[1] : null;

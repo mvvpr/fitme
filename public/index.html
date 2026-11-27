@@ -548,7 +548,6 @@ body.lang-fading .wrap > .step { opacity: 0; }
 <div class="wrap">
   <header class="topbar">
     <a class="brand" href="#start" aria-label="FitMe home"><svg class="mark" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16" fill="var(--accent)"/><path d="M13 19 C22 19 24 41 33 41 L51 21" fill="none" stroke="var(--mark-line)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="13" cy="19" r="3.5" fill="#f0eee9"/></svg><span class="wordmark">Fit<span>Me</span></span></a>
-    <div class="lang-switch" role="group" aria-label="Language / Idioma"><a href="/" data-lang="en" hreflang="en">EN</a><a href="/pt/" data-lang="pt" hreflang="pt-PT" title="Português (Portugal)">PT</a><a href="/br/" data-lang="br" hreflang="pt-BR" title="Português (Brasil)">BR</a></div>
     <nav class="progress" id="progress" aria-label="Steps" hidden>
       <ol>
         <li><a href="#about" data-step="about"><span class="num">1</span><span class="lab">About you</span></a></li>
@@ -826,10 +825,11 @@ body.lang-fading .wrap > .step { opacity: 0; }
 (function () {
   var $ = function (id) { return document.getElementById(id); };
   var I18N = globalThis.FITME_I18N, L = I18N.L, LANG = I18N.lang, applyLangGlobals = function () {};
-  // Visitors are routed by country at the edge (netlify.toml: Brazil -> /br/, Portugal and Portuguese-speaking Africa -> /pt/).
-  // Fallback on the English page: a Portuguese browser goes to /br/ (pt-BR) or /pt/ (other pt), unless the visitor chose a language before.
+  // Logged-out visitors get the language of their browser: on the English page a pt-BR browser goes to /br/ and any other
+  // Portuguese browser to /pt/. A logged-in user's account language (fm_lang cookie, followed by track.js) always wins,
+  // and the language only changes when they pick one on /account/.
   try {
-    var chosen = localStorage.getItem('fitme-lang'), navLang = navigator.language || '';
+    var chosen = /(?:^|;\s*)fm_lang=(en|pt|br)\b/.test(document.cookie) ? 'account' : '', navLang = navigator.language || '';
     if (LANG === 'en' && !chosen && /^pt\b/i.test(navLang) && location.protocol !== 'file:' && !/claude|artifact/.test(location.hostname)) {
       location.replace((/^pt-br$/i.test(navLang) ? '/br/' : '/pt/') + location.hash); return;
     }
@@ -839,11 +839,6 @@ body.lang-fading .wrap > .step { opacity: 0; }
   document.title = L.title;
   function langPath(lang) { return lang === 'pt' ? '/pt/' : lang === 'br' ? '/br/' : '/'; }
   function pathLangOf(path) { return /^\/br(\/|$)/.test(path) ? 'br' : /^\/pt(\/|$)/.test(path) ? 'pt' : 'en'; }
-  // Remember an explicit choice: localStorage for this page, and Netlify's nf_country cookie so the edge geo-redirect respects it next time.
-  function rememberLang(lang) {
-    try { localStorage.setItem('fitme-lang', lang); } catch (err) {}
-    try { document.cookie = 'nf_country=' + (lang === 'br' ? 'BR' : lang === 'pt' ? 'PT' : 'ZZ') + '; path=/; max-age=31536000; SameSite=Lax' + (location.protocol === 'https:' ? '; Secure' : ''); } catch (err) {}
-  }
   function canPushPath() { return location.protocol !== 'file:' && !/claude|artifact/.test(location.hostname); }
   function markLangSwitch() {
     document.querySelectorAll('.lang-switch a').forEach(function (a) { a.setAttribute('aria-current', String(a.dataset.lang === LANG)); });
@@ -865,13 +860,6 @@ body.lang-fading .wrap > .step { opacity: 0; }
     }
     if (reduce) apply(); else { document.body.classList.add('lang-fading'); setTimeout(apply, 140); }
   }
-  document.querySelectorAll('.lang-switch a').forEach(function (a) {
-    a.addEventListener('click', function (e) {
-      e.preventDefault();
-      rememberLang(a.dataset.lang);
-      switchLang(a.dataset.lang);
-    });
-  });
   window.addEventListener('popstate', function () {
     var pathLang = pathLangOf(location.pathname);
     if (pathLang !== LANG) switchLang(pathLang, true);

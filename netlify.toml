@@ -10,22 +10,9 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
 
-# Country routing for the homepage only: Brazil -> /br/, Portugal and Portuguese-speaking Africa/Timor -> /pt/, everyone else stays on English.
-# Netlify applies these at the edge. A visitor's explicit choice is kept in the nf_country cookie (set by the language switch: BR, PT or ZZ for English),
-# which overrides the detected country. Direct links to /pt/ or /br/ are never redirected.
-[[redirects]]
-  from = "/"
-  to = "/br/"
-  status = 302
-  force = true
-  conditions = { Country = ["BR"] }
-
-[[redirects]]
-  from = "/"
-  to = "/pt/"
-  status = 302
-  force = true
-  conditions = { Country = ["PT", "AO", "MZ", "CV", "GW", "ST", "TL"] }
+# No country routing: logged-out visitors get the homepage language from their browser (index.html: pt-BR -> /br/,
+# other pt -> /pt/), and a logged-in user's account language (fm_lang cookie, see track.js) overrides it.
+# The language only changes when the user picks one on /account/. Direct links to /pt/ or /br/ are never redirected.
 
 # Brazilian site: /br/ serves the same page as /pt/ and /, with pt-BR text (language is picked from the path).
 [[redirects]]

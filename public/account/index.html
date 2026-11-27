@@ -63,7 +63,6 @@ input[type=number]:focus, select:focus { outline: 2px solid var(--accent); outli
 <div class="wrap">
 <header>
   <a class="brand" id="home" href="/"><img src="/brand/fitme-icon-512.png" alt=""><b style="font-weight:inherit">Fit<span>Me</span></b></a>
-  <div class="lang-switch" role="group" aria-label="Language / Idioma"><a href="/account/" data-lang="en" hreflang="en">EN</a><a href="/pt/account/" data-lang="pt" hreflang="pt-PT">PT</a><a href="/br/account/" data-lang="br" hreflang="pt-BR">BR</a></div>
 </header>
 <main class="card" id="loading"><p class="muted" data-t="loading">Loading…</p></main>
 <main id="acct" hidden>
@@ -116,6 +115,17 @@ input[type=number]:focus, select:focus { outline: 2px solid var(--accent); outli
       <p style="margin:18px 0 0;display:flex;gap:10px;flex-wrap:wrap;"><button class="btn primary" type="submit" id="esave" data-t="saveChanges"></button><button class="btn ghost" type="button" id="ecancel" data-t="cancel"></button></p>
     </form>
   </div>
+  <form class="card" id="lf" style="margin-top:14px;" novalidate>
+    <h2 data-t="langH">Language</h2>
+    <p class="muted" style="font-size:14px;margin:0 0 4px;" data-t="langLead"></p>
+    <div class="chips" id="langs" role="radiogroup">
+      <label class="chip"><input type="radio" name="lang" value="en"> English</label>
+      <label class="chip"><input type="radio" name="lang" value="pt"> Português (Portugal)</label>
+      <label class="chip"><input type="radio" name="lang" value="br"> Português (Brasil)</label>
+    </div>
+    <p class="err" id="lerr" role="alert" hidden></p>
+    <p style="margin:18px 0 0;"><button class="btn primary" type="submit" id="lsave" data-t="langSave">Save language</button></p>
+  </form>
   <p style="margin:18px 0 0;display:flex;gap:10px;flex-wrap:wrap;">
     <a class="btn primary" data-home href="/" style="text-decoration:none;" data-t="toPlan">Go to FitMe</a>
     <button class="btn ghost" type="button" id="out" data-t="logout">Log out</button>
@@ -177,13 +187,22 @@ input[type=number]:focus, select:focus { outline: 2px solid var(--accent); outli
       langs: { en: 'English', pt: 'Português (Portugal)', br: 'Português (Brasil)' },
       P: { chicken: 'Frango', beef: 'Carne bovina', pork: 'Porco', fish: 'Peixe', eggs: 'Ovos', tofu: 'Tofu', beans: 'Feijão' }, loc: 'pt-BR' }
   };
+  var LT = {
+    en: { langH: 'Language', langLead: 'Your emails, your account and the whole FitMe site use this language.', langSave: 'Save language' },
+    pt: { langH: 'Idioma', langLead: 'Os teus emails, a tua conta e todo o site FitMe usam este idioma.', langSave: 'Guardar idioma' },
+    br: { langH: 'Idioma', langLead: 'Seus e-mails, sua conta e todo o site do FitMe usam este idioma.', langSave: 'Salvar idioma' }
+  };
+  Object.keys(LT).forEach(function (k) { Object.assign(T[k], LT[k]); });
   var path = /^\/br(\/|$)/.test(location.pathname) ? 'br' : /^\/pt(\/|$)/.test(location.pathname) ? 'pt' : 'en';
+  function langUrl(l) { return (l === 'en' ? '' : '/' + l) + '/account/' + location.search; }
+  // The account language wins: if it isn't this page's language, open the account page in the right one.
+  var ck = document.cookie.match(/(?:^|;\s*)fm_lang=(en|pt|br)\b/);
+  if (ck && ck[1] !== path) { location.replace(langUrl(ck[1])); return; }
   var L = T[path];
   document.documentElement.lang = path === 'br' ? 'pt-BR' : path === 'pt' ? 'pt-PT' : 'en';
   document.title = L.title + ' · FitMe';
   var home = path === 'en' ? '/' : '/' + path + '/';
   document.getElementById('home').href = home;
-  document.querySelectorAll('.lang-switch a').forEach(function (a) { a.setAttribute('aria-current', String(a.dataset.lang === path)); });
   document.querySelectorAll('[data-t]').forEach(function (el) { el.innerHTML = L[el.dataset.t]; });
   document.querySelectorAll('[data-home]').forEach(function (el) { el.href = home; });
   var acct = (path === 'en' ? '' : '/' + path) + '/account/', login = (path === 'en' ? '' : '/' + path) + '/login/';
@@ -202,7 +221,6 @@ input[type=number]:focus, select:focus { outline: 2px solid var(--accent); outli
     row(L.cal, n(Math.round(p.intake / 10) * 10) + ' kcal');
     row(L.prot, n(p.prot) + ' g');
     row(L.prots, p.prots && p.prots.length ? p.prots.map(function (x) { return L.P[x] || x; }).join(', ') : (p.diet === 'veg' ? L.veg : L.all));
-    row(L.lang, L.langs[p.lang] || p.lang);
     row(L.units, p.units === 'imperial' ? L.imperial : L.metric);
     row(L.tz, String(p.tz).replace(/_/g, ' '));
     row(L.since, new Date(me.since).toLocaleDateString(L.loc, { day: 'numeric', month: 'long', year: 'numeric' }));
@@ -240,7 +258,9 @@ input[type=number]:focus, select:focus { outline: 2px solid var(--accent); outli
       if (!me || !me.ok) { location.replace(login); return; }
       document.getElementById('email').textContent = me.email;
       document.getElementById('pending').hidden = me.status !== 'pending';
+      if (me.plan && me.plan.lang && me.plan.lang !== path) { location.replace(langUrl(me.plan.lang)); return; }
       ME = me; renderPlan(me);
+      var cur = document.querySelector('#langs input[value="' + (me.plan.lang || 'en') + '"]'); if (cur) cur.checked = true;
       document.getElementById('listCard').hidden = me.status !== 'active';
       document.getElementById('listBtn').href = (path === 'en' ? '' : '/' + path) + '/account/list/';
       if (/[?&]welcome=1/.test(location.search)) {
@@ -272,6 +292,20 @@ input[type=number]:focus, select:focus { outline: 2px solid var(--accent); outli
       .catch(function (x) { if (x === 0) return; save.disabled = false; save.textContent = L.save; pErr(L.eFail); });
   });
   var fn = document.getElementById('fn'), ln = document.getElementById('ln'), ph = document.getElementById('ph'), so = document.getElementById('so'), ic = document.getElementById('ic'), ip = document.getElementById('ip');
+  var lf = document.getElementById('lf'), lerr = document.getElementById('lerr'), lsave = document.getElementById('lsave');
+  lf.addEventListener('submit', function (e) {
+    e.preventDefault(); lerr.hidden = true;
+    var pick = lf.querySelector('input[name="lang"]:checked'); if (!pick) return;
+    if (ME && pick.value === ME.plan.lang) return;
+    lsave.disabled = true;
+    fetch('/api/me', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'lang', lang: pick.value }) })
+      .then(function (r) { if (r.status === 401) { location.replace(login); throw 0; } return r.json(); })
+      .then(function (j) {
+        if (j && j.ok) { location.replace((pick.value === 'en' ? '' : '/' + pick.value) + '/account/'); return; }
+        lsave.disabled = false; lerr.textContent = L.eFail; lerr.hidden = false;
+      })
+      .catch(function (x) { if (x === 0) return; lsave.disabled = false; lerr.textContent = L.eFail; lerr.hidden = false; });
+  });
   document.getElementById('out').addEventListener('click', function () {
     fetch('/api/me', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'logout' }) })
       .finally(function () { location.replace(home); });
