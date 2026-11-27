@@ -556,6 +556,71 @@ body.lang-fading .wrap > .step { opacity: 0; }
 .topbar .progress { order: 2; margin-left: auto; }
 @media (max-width: 640px) { .topbar .progress { order: 4; width: 100%; margin-left: 0; } }
 .foot { font-size: 12.5px; color: var(--muted); margin: 0; max-width: 84ch; }
+/* Option A carried through steps 1–5 (Nov 2026). Same ground, cards and pill buttons as the start screen, toned down for forms:
+   one faint glow instead of two, no pulse (only the start CTA pulses), a single short fade-up when a step opens. */
+:root { --step-glow: rgba(166,205,74,.2); --step-field: #f6f7f2; --step-shadow: 0 10px 30px -20px rgba(23,32,27,.32); }
+@media (prefers-color-scheme: dark) { :root { --step-glow: rgba(143,179,57,.09); --step-field: #161915; --step-shadow: 0 10px 30px -18px rgba(0,0,0,.6); } }
+body { background: var(--start-bg); }
+body:has(.wrap > .step:not(.welcome):not([hidden]))::before { content: ''; position: fixed; z-index: -1; pointer-events: none; top: -260px; right: -230px; width: 500px; height: 500px; border-radius: 50%; background: radial-gradient(circle, var(--step-glow) 0%, rgba(143,179,57,0) 70%); }
+.building { background: var(--start-bg); }
+.building h2 { font-weight: 800; letter-spacing: -0.03em; }
+/* Cards and headings */
+.wrap > .step .panel { background: var(--start-card); border-color: var(--start-card-line); border-radius: 20px; box-shadow: var(--step-shadow); }
+.step-panel { padding: 24px; gap: 16px; }
+.step-title, .meals-head h2 { font-weight: 800; font-size: clamp(24px, 4.2vw, 28px); letter-spacing: -0.03em; }
+.step-intro, .meals-head p { color: var(--start-muted); font-size: 15px; }
+.wrap > .step .lbl { color: var(--start-muted); font-weight: 500; }
+/* Fields: softer, rounder, a little taller for thumbs */
+.wrap > .step .box { background: var(--step-field); border-color: var(--start-card-line); border-radius: 12px; padding: 0 14px; transition: border-color .15s, background .15s, box-shadow .15s; }
+.wrap > .step .box input, .wrap > .step .box select { padding: 12px 0; }
+.wrap > .step .box:focus-within { background: var(--start-card); border-color: var(--accent); outline: 0; box-shadow: 0 0 0 3px rgba(143,179,57,.3); }
+.wrap > .step .seg { border-radius: 999px; background: var(--step-field); border-color: var(--start-card-line); }
+.wrap > .step .seg button { border-radius: 999px; }
+.advanced { border-top-color: var(--start-card-line); }
+/* Pace choices: cards, the recommended one tinted like the start-screen icons */
+.wrap > .step .chip { border-radius: 14px; background: var(--start-card); border-color: var(--start-card-line); transition: border-color .15s, background .15s, box-shadow .15s; }
+.wrap > .step .chips.big .chip { padding: 14px; }
+@media (hover: hover) { .wrap > .step .chip:hover { border-color: var(--accent); } }
+.wrap > .step .chip.rec { border-color: var(--accent); background: var(--start-ico); }
+.wrap > .step .chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); box-shadow: 0 8px 20px -10px rgba(46,107,79,.55); }
+/* Progress pills */
+.progress .num { background: var(--start-card); border-color: var(--start-card-line); }
+.progress a.current { background: var(--start-card); box-shadow: 0 0 0 1px var(--start-card-line), 0 6px 16px -10px rgba(23,32,27,.35); }
+/* Buttons: pills like the start CTA, with its shadow but no pulse */
+.step-nav .btn, .next-day .btn { border-radius: 999px; padding: 13px 26px; }
+.step-nav .btn.primary { box-shadow: 0 10px 24px -12px rgba(46,107,79,.6); transition: filter .15s, transform .15s; }
+.step-nav .btn.primary:active { transform: scale(.98); }
+.wrap > .step .btn.ghost { background: var(--start-card); border-color: var(--start-card-line); }
+@media (hover: hover) { .wrap > .step .btn.ghost:hover { border-color: var(--accent); } }
+@media (max-width: 640px) { .step-nav { background: linear-gradient(to top, var(--start-bg) 75%, rgba(251,251,248,0)); padding-top: 18px; } }
+@media (max-width: 640px) and (prefers-color-scheme: dark) { .step-nav { background: linear-gradient(to top, var(--start-bg) 75%, rgba(18,21,17,0)); } }
+/* Plan: the two daily numbers sit on the soft green tint */
+.summary .chip-s { background: var(--start-card); border-color: var(--start-card-line); }
+.today > div { background: var(--start-ico); border-color: transparent; border-radius: 14px; padding: 12px 16px; }
+.warn { border-radius: 12px; }
+thead th { background: var(--start-card); }
+.energy, .tablewrap { border-color: var(--start-card-line); border-radius: 12px; }
+/* Proteins: a picked protein gets the same tinted tile as the start-screen icons */
+#step-proteins .prot-chips button { border-radius: 18px; transition: color .15s, background .2s; }
+#step-proteins .prot-chips button[aria-pressed="true"] { background: var(--start-ico); }
+@media (hover: hover) { #step-proteins .prot-chips button[aria-pressed="false"]:hover { background: var(--step-field); } }
+/* Meals: rounder cards and pills; the subscribe box gets the green tint so it stands out without a hard border */
+.days-bar { background: var(--start-card); border-bottom-color: var(--start-card-line); }
+.days button { border-radius: 999px; background: var(--step-field); border-color: var(--start-card-line); }
+.daytot { background: var(--start-ico); border-color: transparent; border-radius: 14px; }
+.meal { border-radius: 16px; border-color: var(--start-card-line); background: var(--start-card); box-shadow: 0 8px 22px -18px rgba(23,32,27,.4); }
+.macros span { background: var(--step-field); border-color: var(--start-card-line); }
+.sub-box { border: 1px solid rgba(46,107,79,.22); border-radius: 18px; background: var(--start-ico); }
+.wrap > .step .sub-box .box { background: var(--start-card); border-radius: 999px; padding: 0 18px; }
+.sub-row button { border-radius: 999px; padding: 0 22px; box-shadow: 0 8px 20px -12px rgba(46,107,79,.6); }
+.sub-msg .fix-btns button { border-radius: 999px; }
+.shop { border-radius: 14px; background: var(--step-field); border-color: var(--start-card-line); }
+.banner { border-radius: 12px; }
+/* One short fade-up when a step opens (animations restart as the step is shown); no fill after it ends so sticky bars behave. */
+.wrap > .step:not(.welcome):not([hidden]) > * { animation: fmUp .42s cubic-bezier(.2,.7,.2,1) backwards; }
+.wrap > .step:not(.welcome) > :nth-child(2) { animation-delay: .05s; }
+.wrap > .step:not(.welcome) > :nth-child(n+3) { animation-delay: .1s; }
+@media (prefers-reduced-motion: reduce) { .wrap > .step:not(.welcome) > * { animation: none !important; } }
 </style>
 </head>
 <body>
