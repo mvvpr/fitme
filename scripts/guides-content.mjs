@@ -153,7 +153,7 @@ Weighing my food for the first few weeks was what fixed it. You don't need to do
 - **Similar lunches and dinners.** A few meals I liked, repeated, like a [chicken and egg fried rice](/recipes/high-protein-chicken-fried-rice/) or a [pesto chicken traybake](/recipes/pesto-chicken-traybake-couscous/).
 - **Cooking ahead.** Mostly at the weekend, with a top-up mid-week.
 - **Avoiding eating out at the start.** Once I understood portions, I ate out again with confidence.
-- **Better snacks.** Snacks were a problem until I changed what I chose. Greek yogurt and whey protein saved me there. A [chocolate protein yogurt](/recipes/chocolate-protein-yogurt/) is about 140 kcal.
+- **Better snacks.** Snacks were a problem until I changed what I chose. Greek yogurt and whey protein saved me there. A [chocolate protein yogurt](/recipes/chocolate-protein-yogurt/) is about 140 kcal. More ideas in the [high protein foods list](/guides/high-protein-foods/).
 
 ### When the scale stops moving
 
@@ -235,7 +235,7 @@ Pesar a comida nas primeiras semanas foi o que resolveu isto para mim. Não prec
 - **Almoços e jantares parecidos.** Algumas refeições de que gostava, repetidas, como um [arroz chau-chau com frango](/pt/receitas/arroz-chau-chau-com-frango/) ou um [frango com pesto no forno](/pt/receitas/frango-com-pesto-no-forno/).
 - **Cozinhar com antecedência.** Sobretudo ao fim de semana, com um reforço a meio da semana.
 - **Evitar comer fora no início.** Quando percebi as porções, voltei a comer fora com confiança.
-- **Melhores lanches.** Os lanches eram um problema até mudar o que escolhia. O iogurte grego e o whey salvaram-me aí. Um [iogurte proteico de chocolate](/pt/receitas/iogurte-proteico-de-chocolate/) tem cerca de 140 kcal.
+- **Melhores lanches.** Os lanches eram um problema até mudar o que escolhia. O iogurte grego e o whey salvaram-me aí. Um [iogurte proteico de chocolate](/pt/receitas/iogurte-proteico-de-chocolate/) tem cerca de 140 kcal. Mais ideias na [lista de alimentos ricos em proteína](/pt/guias/alimentos-ricos-em-proteina/).
 
 ### Quando a balança pára
 
@@ -317,7 +317,7 @@ Pesar a comida nas primeiras semanas foi o que resolveu isso para mim. Você nã
 - **Almoços e jantares parecidos.** Algumas refeições de que eu gostava, repetidas, como um [arroz frito com frango](/br/receitas/arroz-frito-com-frango-fit/) ou um [frango ao pesto com legumes assados](/br/receitas/frango-ao-pesto-com-legumes-assados/).
 - **Marmitas prontas.** Principalmente no fim de semana, com uma leva extra no meio da semana.
 - **Evitar comer fora no começo.** Quando entendi as porções, voltei a comer fora com confiança.
-- **Lanches melhores.** Os lanches eram um problema até eu mudar o que escolhia. Iogurte grego e whey me salvaram nessa. Um [iogurte proteico de chocolate](/br/receitas/iogurte-proteico-de-chocolate/) tem cerca de 140 kcal.
+- **Lanches melhores.** Os lanches eram um problema até eu mudar o que escolhia. Iogurte grego e whey me salvaram nessa. Um [iogurte proteico de chocolate](/br/receitas/iogurte-proteico-de-chocolate/) tem cerca de 140 kcal. Mais ideias na [lista de alimentos ricos em proteína](/br/guias/alimentos-ricos-em-proteina/).
 
 ### Quando a balança para
 
@@ -340,6 +340,316 @@ No fim das contas, é o que você come que decide se você emagrece. O seu estil
 **Vou ter que contar calorias para sempre?** Não. Use os números para aprender as porções. Depois, mantenha os hábitos.
 
 [[cta:Calcular minhas calorias e receber um plano grátis]]
+
+*Este guia é informação geral e não substitui orientação médica. Se você tem alguma doença, está grávida ou tem menos de 18 anos, converse com um médico antes de mudar a alimentação.*`,
+    },
+  },
+  {
+    key: 'high-protein-foods',
+    published: '2026-11-27', updated: '2026-11-27',
+    sources: [
+      ['Leidy et al. (2015), The role of protein in weight loss and maintenance, American Journal of Clinical Nutrition', 'https://pubmed.ncbi.nlm.nih.gov/25926512/'],
+    ],
+    en: {
+      slug: 'high-protein-foods',
+      title: 'High protein low calorie foods: the list that keeps you full | FitMe',
+      description: '28 high protein, low calorie foods ranked by protein per 100 kcal, how much protein you need to lose weight, and a 128 g protein day.',
+      h1: 'High protein, low calorie foods: the list that keeps you full',
+      faqHeading: 'Questions people ask', sourcesLabel: 'Sources',
+      body: `When I was losing weight, the same five high protein foods went into my basket every week: 0% Greek yogurt, whey protein, chicken, tuna and eggs. Protein is what kept me full on fewer calories. This guide ranks 28 high protein, low calorie foods from the supermarket by how much protein you get per calorie, and shows how much you need.
+
+[[cta:Find my daily protein target]]
+
+### Why a high protein diet helps you lose weight
+
+In a [calorie deficit](/guides/calorie-deficit/), you want the weight you lose to be fat, not muscle. Studies comparing diets with the same calories find that people eating more protein keep more muscle and lose more fat. Protein also helps you feel full, which makes eating less easier to stick to.
+
+### How much protein do you need to lose weight?
+
+Research on weight loss points to about 1.2 to 1.6 g of protein per kg of body weight a day, with around 25 to 30 g at each meal. FitMe uses 1.5 g per kg of your goal weight. If your goal is 75 kg, that's about 110 g a day.
+
+The calculator works out your number and builds a meal plan that reaches it.
+
+### High protein, low calorie foods: the full list
+
+The last column is the one that matters when you're cutting calories: grams of protein for every 100 kcal. The higher it is, the more protein you get for your calories.
+
+| Food | Protein per 100 g | kcal per 100 g | Protein per 100 kcal |
+| --- | --- | --- | --- |
+| Raw peeled prawns | 20 g | 85 | 23.5 g |
+| Tuna in water (drained) | 26 g | 116 | 22.4 g |
+| Cod fillet | 18 g | 82 | 22.0 g |
+| Egg whites | 11 g | 52 | 21.2 g |
+| Whey protein powder | 80 g | 400 | 20.0 g |
+| Chicken breast | 23 g | 120 | 19.2 g |
+| Pork tenderloin | 21 g | 120 | 17.5 g |
+| Greek yogurt 0% | 10 g | 59 | 16.9 g |
+| Turkey mince (5% fat) | 21 g | 130 | 16.2 g |
+| Smoked salmon | 18 g | 117 | 15.4 g |
+| Lean beef mince (5% fat) | 21 g | 137 | 15.3 g |
+| Baby spinach | 2.9 g | 23 | 12.6 g |
+| Cottage cheese | 11 g | 98 | 11.2 g |
+| Firm tofu | 15.5 g | 144 | 10.8 g |
+| Salmon fillet | 20 g | 208 | 9.6 g |
+| Eggs | 12.6 g | 143 | 8.8 g |
+| Parmesan | 38 g | 431 | 8.8 g |
+| Broccoli | 2.8 g | 34 | 8.2 g |
+| Red lentils (dry) | 25 g | 352 | 7.1 g |
+| Frozen peas | 5.4 g | 81 | 6.7 g |
+| Black beans (canned, drained) | 7 g | 110 | 6.4 g |
+| Chickpeas (canned, drained) | 7.2 g | 139 | 5.2 g |
+| Hummus | 8 g | 166 | 4.8 g |
+| Peanut butter | 25 g | 588 | 4.3 g |
+| Wholewheat pasta (dry) | 13 g | 348 | 3.7 g |
+| Almonds | 21 g | 579 | 3.6 g |
+| Rolled oats | 13 g | 379 | 3.4 g |
+| Wholewheat couscous (dry) | 12 g | 362 | 3.3 g |
+
+Spinach and broccoli score well per calorie, but you'd need a lot of them to make a difference. Their job is volume and fibre. Your protein comes from the top of the list.
+
+### My five weekly protein staples
+
+- **Greek yogurt 0%.** 10 g of protein per 100 g for 59 kcal. Breakfast, snacks and creamy sauces, as in the [chocolate protein yogurt](/recipes/chocolate-protein-yogurt/).
+- **Whey protein.** The easiest 20 to 25 g of protein in the day. I had it every morning.
+- **Chicken breast.** The base of most of my lunches and dinners, like the [chicken and egg fried rice](/recipes/high-protein-chicken-fried-rice/).
+- **Tuna in water.** Cheap, keeps for months and needs no cooking. Try the [creamy tuna pasta](/recipes/high-protein-tuna-pasta/).
+- **Eggs.** Breakfast in five minutes, like the [spinach and parmesan omelette](/recipes/spinach-parmesan-omelette/).
+
+### My best trick: Greek yogurt, whey and berries
+
+Stir a scoop of whey into a bowl of 0% Greek yogurt and top it with berries. It tastes like dessert, and it's one of the highest-protein snacks you can make for the calories. I had it at breakfast or as an afternoon snack.
+
+### Do you need protein powder?
+
+No. Whey makes it easier, and it worked for me, but it's optional. Every FitMe recipe reaches its protein from normal food. The [protein porridge](/recipes/high-protein-porridge/), for example, gets 24 g from milk and Greek yogurt.
+
+### A high protein day from FitMe recipes
+
+| Meal | Recipe | Protein | kcal |
+| --- | --- | --- | --- |
+| Breakfast | [Apple and cinnamon protein porridge](/recipes/high-protein-porridge/) | 24 g | 435 |
+| Lunch | [Chicken and egg fried rice](/recipes/high-protein-chicken-fried-rice/) | 46 g | 595 |
+| Snack | [Chocolate protein yogurt](/recipes/chocolate-protein-yogurt/) | 16 g | 140 |
+| Dinner | [Pesto chicken traybake with couscous](/recipes/pesto-chicken-traybake-couscous/) | 42 g | 535 |
+| **Total** | | **128 g** | **1,705** |
+
+In your FitMe plan, the portions are scaled to your own calories and protein target.
+
+### Watch the high protein foods that are high in calories
+
+Peanut butter, almonds and parmesan have plenty of protein, but a lot of calories come with it. Use them in small amounts. In the plan, wherever a recipe uses peanut butter, swapping it for fruit gives you a bigger portion for fewer calories.
+
+### Questions people ask
+
+**Which food has the most protein per calorie?** Of everyday supermarket foods, prawns, tuna in water, white fish like cod, and egg whites come out on top, at over 20 g of protein per 100 kcal.
+
+**Is 1.5 g per kg too much protein?** For most healthy adults, no. It sits inside the range studied for weight loss. If you have kidney disease, talk to your doctor first.
+
+**Can I get enough protein as a vegetarian?** Yes. Greek yogurt, cottage cheese, eggs, tofu, lentils and beans cover it. Every FitMe main meal has a vegetarian version, like the [tofu curry](/recipes/high-protein-tofu-curry/).
+
+[[cta:Get my free high protein plan]]
+
+*This guide is general information, not medical advice. If you have a health condition, are pregnant or are under 18, talk to a doctor before changing how you eat.*`,
+    },
+    pt: {
+      slug: 'alimentos-ricos-em-proteina',
+      title: 'Alimentos ricos em proteína: a lista para emagrecer saciado | FitMe',
+      description: '28 alimentos ricos em proteína ordenados por proteína por 100 kcal, quanta proteína precisas para emagrecer e um dia com 128 g.',
+      h1: 'Alimentos ricos em proteína: a lista para emagrecer saciado',
+      faqHeading: 'Perguntas frequentes', sourcesLabel: 'Fontes',
+      body: `Quando estava a emagrecer, os mesmos cinco alimentos ricos em proteína iam para o cesto todas as semanas: iogurte grego magro, whey, frango, atum e ovos. Foi a proteína que me manteve saciado com menos calorias. Este guia ordena 28 alimentos de supermercado pela proteína que dão por caloria e mostra de quanta precisas.
+
+[[cta:Calcular a minha proteína diária]]
+
+### Porque uma dieta rica em proteína ajuda a emagrecer
+
+Num [défice calórico](/pt/guias/defice-calorico/), queres que o peso que perdes seja gordura e não músculo. Os estudos que comparam dietas com as mesmas calorias mostram que quem come mais proteína mantém mais músculo e perde mais gordura. A proteína também ajuda a ficar saciado, o que torna mais fácil comer menos.
+
+### De quanta proteína precisas para emagrecer?
+
+A investigação sobre perda de peso aponta para cerca de 1,2 a 1,6 g de proteína por kg de peso por dia, com 25 a 30 g em cada refeição. O FitMe usa 1,5 g por kg do teu peso objetivo. Se o teu objetivo são 75 kg, dá cerca de 110 g por dia.
+
+A calculadora faz a conta por ti e monta um plano de refeições que lá chega.
+
+### Alimentos ricos em proteína: a lista completa
+
+A última coluna é a que conta quando estás a cortar calorias: gramas de proteína por cada 100 kcal. Quanto mais alta, mais proteína tens pelas mesmas calorias.
+
+| Alimento | Proteína por 100 g | kcal por 100 g | Proteína por 100 kcal |
+| --- | --- | --- | --- |
+| Camarão cru descascado | 20 g | 85 | 23,5 g |
+| Atum ao natural (escorrido) | 26 g | 116 | 22,4 g |
+| Bacalhau fresco, lombo | 18 g | 82 | 22,0 g |
+| Claras de ovo | 11 g | 52 | 21,2 g |
+| Proteína whey em pó | 80 g | 400 | 20,0 g |
+| Peito de frango | 23 g | 120 | 19,2 g |
+| Lombinho de porco | 21 g | 120 | 17,5 g |
+| Iogurte grego magro (0%) | 10 g | 59 | 16,9 g |
+| Carne picada de peru (5% gordura) | 21 g | 130 | 16,2 g |
+| Salmão fumado | 18 g | 117 | 15,4 g |
+| Carne picada de vaca magra (5% gordura) | 21 g | 137 | 15,3 g |
+| Espinafres baby | 2,9 g | 23 | 12,6 g |
+| Queijo cottage | 11 g | 98 | 11,2 g |
+| Tofu firme | 15,5 g | 144 | 10,8 g |
+| Lombo de salmão | 20 g | 208 | 9,6 g |
+| Ovos | 12,6 g | 143 | 8,8 g |
+| Queijo parmesão | 38 g | 431 | 8,8 g |
+| Brócolos | 2,8 g | 34 | 8,2 g |
+| Lentilhas vermelhas (secas) | 25 g | 352 | 7,1 g |
+| Ervilhas congeladas | 5,4 g | 81 | 6,7 g |
+| Feijão preto cozido (escorrido) | 7 g | 110 | 6,4 g |
+| Grão-de-bico cozido (escorrido) | 7,2 g | 139 | 5,2 g |
+| Húmus | 8 g | 166 | 4,8 g |
+| Manteiga de amendoim | 25 g | 588 | 4,3 g |
+| Massa integral (crua) | 13 g | 348 | 3,7 g |
+| Amêndoas | 21 g | 579 | 3,6 g |
+| Flocos de aveia | 13 g | 379 | 3,4 g |
+| Cuscuz integral (cru) | 12 g | 362 | 3,3 g |
+
+Os espinafres e os brócolos têm boa nota por caloria, mas era preciso comer muito para fazerem diferença. O papel deles é dar volume e fibra. A proteína vem do topo da lista.
+
+### As minhas cinco fontes de proteína da semana
+
+- **Iogurte grego magro.** 10 g de proteína por 100 g, com 59 kcal. Pequeno-almoço, lanches e molhos cremosos, como no [iogurte proteico de chocolate](/pt/receitas/iogurte-proteico-de-chocolate/).
+- **Whey.** Os 20 a 25 g de proteína mais fáceis do dia. Eu tomava todas as manhãs.
+- **Peito de frango.** A base da maioria dos meus almoços e jantares, como o [arroz chau-chau com frango](/pt/receitas/arroz-chau-chau-com-frango/).
+- **Atum ao natural.** Barato, aguenta meses na despensa e não precisa de cozinhar. Experimenta a [massa cremosa com atum](/pt/receitas/massa-cremosa-com-atum/).
+- **Ovos.** Pequeno-almoço em cinco minutos, como a [omelete de espinafres e parmesão](/pt/receitas/omelete-de-espinafres-e-parmesao/).
+
+### O meu melhor truque: iogurte grego, whey e frutos vermelhos
+
+Mistura uma dose de whey numa taça de iogurte grego magro e junta frutos vermelhos por cima. Sabe a sobremesa e é dos lanches com mais proteína que podes fazer pelas calorias. Eu comia ao pequeno-almoço ou a meio da tarde.
+
+### Precisas de proteína em pó?
+
+Não. O whey facilita, e comigo resultou, mas é opcional. Todas as receitas do FitMe chegam à proteína com comida normal. As [papas de aveia proteicas](/pt/receitas/papas-de-aveia-proteicas/), por exemplo, chegam aos 24 g com leite e iogurte grego.
+
+### Um dia rico em proteína com receitas FitMe
+
+| Refeição | Receita | Proteína | kcal |
+| --- | --- | --- | --- |
+| Pequeno-almoço | [Papas de aveia proteicas com maçã e canela](/pt/receitas/papas-de-aveia-proteicas/) | 24 g | 435 |
+| Almoço | [Arroz chau-chau com frango e ovo](/pt/receitas/arroz-chau-chau-com-frango/) | 46 g | 595 |
+| Lanche | [Iogurte proteico de chocolate](/pt/receitas/iogurte-proteico-de-chocolate/) | 16 g | 140 |
+| Jantar | [Frango com pesto no forno e cuscuz](/pt/receitas/frango-com-pesto-no-forno/) | 42 g | 535 |
+| **Total** | | **128 g** | **1705** |
+
+No teu plano FitMe, as doses são ajustadas às tuas calorias e à tua proteína.
+
+### Cuidado com os alimentos proteicos que têm muitas calorias
+
+A manteiga de amendoim, as amêndoas e o parmesão têm bastante proteína, mas trazem muitas calorias com ela. Usa-os em pouca quantidade. No plano, sempre que uma receita leva manteiga de amendoim, trocá-la por fruta dá uma dose maior com menos calorias.
+
+### Perguntas frequentes
+
+**Qual é o alimento com mais proteína por caloria?** Entre os alimentos de supermercado do dia a dia, o camarão, o atum ao natural, o peixe branco como o bacalhau fresco e as claras de ovo ficam no topo, com mais de 20 g de proteína por 100 kcal.
+
+**1,5 g por kg é proteína a mais?** Para a maioria dos adultos saudáveis, não. Está dentro do intervalo estudado para a perda de peso. Se tens doença renal, fala primeiro com o teu médico.
+
+**Dá para comer proteína suficiente sendo vegetariano?** Sim. Iogurte grego, queijo cottage, ovos, tofu, lentilhas e feijão chegam. Todas as refeições principais do FitMe têm versão vegetariana, como o [caril de tofu](/pt/receitas/caril-de-tofu-com-grao/).
+
+[[cta:Receber o meu plano proteico grátis]]
+
+*Este guia é informação geral e não substitui aconselhamento médico. Se tens alguma doença, estás grávida ou tens menos de 18 anos, fala com um médico antes de mudares a alimentação.*`,
+    },
+    br: {
+      slug: 'alimentos-ricos-em-proteina',
+      title: 'Alimentos ricos em proteína: a lista para emagrecer sem passar fome | FitMe',
+      description: '28 alimentos ricos em proteína em ordem de proteína por 100 kcal, quanta proteína você precisa para emagrecer e um dia com 128 g.',
+      h1: 'Alimentos ricos em proteína: a lista para emagrecer sem passar fome',
+      faqHeading: 'Perguntas frequentes', sourcesLabel: 'Fontes',
+      body: `Quando eu estava emagrecendo, os mesmos cinco alimentos ricos em proteína iam para o carrinho toda semana: iogurte grego desnatado, whey, frango, atum e ovos. Foi a proteína que me deixou saciado comendo menos calorias. Este guia coloca 28 alimentos de mercado em ordem pela proteína que eles dão por caloria e mostra de quanta você precisa.
+
+[[cta:Calcular minha proteína diária]]
+
+### Por que uma dieta rica em proteína ajuda a emagrecer
+
+No [déficit calórico](/br/guias/deficit-calorico/), você quer que o peso perdido seja gordura, e não músculo. Estudos que comparam dietas com as mesmas calorias mostram que quem come mais proteína mantém mais músculo e perde mais gordura. A proteína também ajuda a dar saciedade, o que deixa mais fácil comer menos.
+
+### De quanta proteína você precisa para emagrecer?
+
+As pesquisas sobre perda de peso apontam para cerca de 1,2 a 1,6 g de proteína por kg de peso por dia, com 25 a 30 g em cada refeição. O FitMe usa 1,5 g por kg do seu peso meta. Se a sua meta é 75 kg, dá uns 110 g por dia.
+
+A calculadora faz essa conta e monta um cardápio que chega lá.
+
+### Alimentos ricos em proteína: a lista completa
+
+A última coluna é a que importa quando você está cortando calorias: gramas de proteína a cada 100 kcal. Quanto maior o número, mais proteína você ganha pelas mesmas calorias.
+
+| Alimento | Proteína por 100 g | kcal por 100 g | Proteína por 100 kcal |
+| --- | --- | --- | --- |
+| Camarão cru descascado | 20 g | 85 | 23,5 g |
+| Atum em água (escorrido) | 26 g | 116 | 22,4 g |
+| Bacalhau fresco, lombo | 18 g | 82 | 22,0 g |
+| Claras de ovo | 11 g | 52 | 21,2 g |
+| Whey protein em pó | 80 g | 400 | 20,0 g |
+| Peito de frango | 23 g | 120 | 19,2 g |
+| Lombo de porco | 21 g | 120 | 17,5 g |
+| Iogurte grego natural desnatado (0%) | 10 g | 59 | 16,9 g |
+| Carne moída de peru (5% de gordura) | 21 g | 130 | 16,2 g |
+| Salmão defumado | 18 g | 117 | 15,4 g |
+| Carne moída magra (patinho, 5% de gordura) | 21 g | 137 | 15,3 g |
+| Espinafre baby | 2,9 g | 23 | 12,6 g |
+| Queijo cottage | 11 g | 98 | 11,2 g |
+| Tofu firme | 15,5 g | 144 | 10,8 g |
+| Lombo de salmão | 20 g | 208 | 9,6 g |
+| Ovos | 12,6 g | 143 | 8,8 g |
+| Queijo parmesão | 38 g | 431 | 8,8 g |
+| Brócolis | 2,8 g | 34 | 8,2 g |
+| Lentilha vermelha (seca) | 25 g | 352 | 7,1 g |
+| Ervilhas congeladas | 5,4 g | 81 | 6,7 g |
+| Feijão preto cozido (escorrido) | 7 g | 110 | 6,4 g |
+| Grão-de-bico cozido (escorrido) | 7,2 g | 139 | 5,2 g |
+| Homus | 8 g | 166 | 4,8 g |
+| Pasta de amendoim | 25 g | 588 | 4,3 g |
+| Macarrão integral (cru) | 13 g | 348 | 3,7 g |
+| Amêndoas | 21 g | 579 | 3,6 g |
+| Aveia em flocos | 13 g | 379 | 3,4 g |
+| Cuscuz marroquino integral (cru) | 12 g | 362 | 3,3 g |
+
+Espinafre e brócolis vão bem por caloria, mas você teria que comer muito para fazer diferença. O papel deles é dar volume e fibra. A proteína vem do topo da lista.
+
+### Minhas cinco fontes de proteína da semana
+
+- **Iogurte grego desnatado.** 10 g de proteína por 100 g, com 59 kcal. Café da manhã, lanches e molhos cremosos, como no [iogurte proteico de chocolate](/br/receitas/iogurte-proteico-de-chocolate/).
+- **Whey.** Os 20 a 25 g de proteína mais fáceis do dia. Eu tomava toda manhã.
+- **Peito de frango.** A base da maioria dos meus almoços e jantares, como o [arroz frito com frango](/br/receitas/arroz-frito-com-frango-fit/).
+- **Atum em água.** Barato, dura meses no armário e não precisa cozinhar. Experimente o [macarrão cremoso com atum](/br/receitas/macarrao-cremoso-com-atum-fit/).
+- **Ovos.** Café da manhã em cinco minutos, como a [omelete de espinafre e parmesão](/br/receitas/omelete-de-espinafre-e-parmesao/).
+
+### Meu melhor truque: iogurte grego, whey e frutas vermelhas
+
+Misture uma dose de whey num pote de iogurte grego desnatado e coloque frutas vermelhas por cima. Tem gosto de sobremesa e é um dos lanches com mais proteína que você pode fazer pelas calorias. Eu comia no café da manhã ou no meio da tarde.
+
+### Você precisa de proteína em pó?
+
+Não. O whey facilita, e funcionou para mim, mas é opcional. Todas as receitas do FitMe chegam à proteína com comida de verdade. O [mingau de aveia proteico](/br/receitas/mingau-de-aveia-proteico/), por exemplo, chega a 24 g com leite e iogurte grego.
+
+### Um dia rico em proteína com receitas do FitMe
+
+| Refeição | Receita | Proteína | kcal |
+| --- | --- | --- | --- |
+| Café da manhã | [Mingau de aveia proteico com maçã e canela](/br/receitas/mingau-de-aveia-proteico/) | 24 g | 435 |
+| Almoço | [Arroz frito com frango e ovo](/br/receitas/arroz-frito-com-frango-fit/) | 46 g | 595 |
+| Lanche | [Iogurte proteico de chocolate](/br/receitas/iogurte-proteico-de-chocolate/) | 16 g | 140 |
+| Jantar | [Frango ao pesto com legumes assados e cuscuz marroquino](/br/receitas/frango-ao-pesto-com-legumes-assados/) | 42 g | 535 |
+| **Total** | | **128 g** | **1.705** |
+
+No seu plano FitMe, as porções são ajustadas às suas calorias e à sua meta de proteína.
+
+### Cuidado com os alimentos proteicos que têm muitas calorias
+
+Pasta de amendoim, amêndoas e parmesão têm bastante proteína, mas trazem muitas calorias junto. Use em pouca quantidade. No cardápio, sempre que uma receita leva pasta de amendoim, trocar por fruta dá uma porção maior com menos calorias.
+
+### Perguntas frequentes
+
+**Qual alimento tem mais proteína por caloria?** Entre os alimentos de mercado do dia a dia, camarão, atum em água, peixe branco como o bacalhau fresco e claras de ovo ficam no topo, com mais de 20 g de proteína a cada 100 kcal.
+
+**1,5 g por kg é proteína demais?** Para a maioria dos adultos saudáveis, não. Está dentro da faixa estudada para perda de peso. Se você tem doença renal, converse antes com o seu médico.
+
+**Dá para comer proteína suficiente sendo vegetariano?** Dá. Iogurte grego, queijo cottage, ovos, tofu, lentilha e feijão resolvem. Todas as refeições principais do FitMe têm versão vegetariana, como o [curry de tofu](/br/receitas/curry-de-tofu-fit/).
+
+[[cta:Receber meu cardápio proteico grátis]]
 
 *Este guia é informação geral e não substitui orientação médica. Se você tem alguma doença, está grávida ou tem menos de 18 anos, converse com um médico antes de mudar a alimentação.*`,
     },
