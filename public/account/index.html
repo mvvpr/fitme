@@ -301,7 +301,7 @@ input[type=number]:focus, select:focus { outline: 2px solid var(--accent); outli
     fetch('/api/me', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'lang', lang: pick.value }) })
       .then(function (r) { if (r.status === 401) { location.replace(login); throw 0; } return r.json(); })
       .then(function (j) {
-        if (j && j.ok) { try { localStorage.setItem('fitme-lang', pick.value); } catch (x) {} location.replace((pick.value === 'en' ? '' : '/' + pick.value) + '/account/'); return; }
+        if (j && j.ok) { location.replace((pick.value === 'en' ? '' : '/' + pick.value) + '/account/'); return; }
         lsave.disabled = false; lerr.textContent = L.eFail; lerr.hidden = false;
       })
       .catch(function (x) { if (x === 0) return; lsave.disabled = false; lerr.textContent = L.eFail; lerr.hidden = false; });

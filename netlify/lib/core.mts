@@ -777,15 +777,9 @@ export function sessionCookie(sid: string | null) {
 }
 
 // The account language, readable by the site's own scripts so every page can follow it (not a secret, so not HttpOnly).
-// nf_country is set alongside so Netlify's homepage country routing (netlify.toml) agrees with the account choice.
 export const LANG_COOKIE = "fm_lang";
 export function langCookies(lang: Lang | null): string[] {
-  const age = lang ? 31536000 : 0;
-  const country = lang === "br" ? "BR" : lang === "pt" ? "PT" : "ZZ";
-  return [
-    `${LANG_COOKIE}=${lang || ""}; Path=/; Max-Age=${age}; Secure; SameSite=Lax`,
-    `nf_country=${lang ? country : ""}; Path=/; Max-Age=${age}; Secure; SameSite=Lax`,
-  ];
+  return [`${LANG_COOKIE}=${lang || ""}; Path=/; Max-Age=${lang ? 31536000 : 0}; Secure; SameSite=Lax`];
 }
 // Headers for a session response: the session cookie plus the account-language cookies.
 export function sessionHeaders(base: Record<string, string>, sid: string | null, lang: Lang | null): Headers {
