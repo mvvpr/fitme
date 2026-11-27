@@ -60,3 +60,18 @@ footer a { color: var(--muted); }
 .sh-toast { margin: 10px 0 0; font-size: 14px; color: var(--accent); font-weight: 600; }
 .sh-toast a { color: var(--accent); margin-left: 4px; }
 .sh-url { display:block; width:100%; margin-top: 6px; font: inherit; font-size: 13px; font-weight: 400; padding: 8px 10px; border:1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); }
+/* Guides and About (built by scripts/build-recipes.mjs from scripts/guides-content.mjs) */
+.guide h2 { margin-top: 30px; }
+.guide ul { padding-left: 20px; }
+.guide li { margin: 6px 0; }
+.guide-cta { margin: 18px 0 22px; }
+.table-wrap { overflow-x: auto; margin: 12px 0 6px; }
+.guide table { border-collapse: collapse; width: 100%; font-size: 14.5px; background: var(--surface); border-radius: 10px; overflow: hidden; }
+.guide th, .guide td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.guide th { font-weight: 600; background: var(--bg); }
+.guide tr:last-child td { border-bottom: 0; }
+.sources { font-size: 14px; color: var(--muted); }
+.guide-list { list-style: none; padding: 0; margin: 18px 0; display: grid; gap: 12px; }
+.guide-list a { display: block; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; text-decoration: none; color: var(--ink); }
+.guide-list .card-name { display: block; font-family: var(--font-display); font-weight: 700; font-size: 18px; }
+.guide-list .card-meta { display: block; color: var(--muted); font-size: 14px; margin-top: 4px; }

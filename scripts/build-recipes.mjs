@@ -6,6 +6,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { HUB, RECIPES as ALL_RECIPES, SCHEMA } from './recipes-content.mjs';
+import { GUIDES, GUIDE_HUB, ABOUT } from './guides-content.mjs';
 
 // Draft pages (draft: true) are left out of the live build. DRAFTS=1 node scripts/build-recipes.mjs --out=<dir>
 // builds everything, drafts included, into another folder for review; never commit that output.
@@ -135,7 +136,7 @@ ${alt}
   <nav class="lang-switch" aria-label="Language / Idioma">${switcher}</nav>
 </header>
 ${body}
-<footer><a href="${HUB[lang].path}">${L[lang].recipes}</a> · <a href="${PRIVACY[lang]}">${L[lang].privacy}</a></footer>
+<footer><a href="${HUB[lang].path}">${L[lang].recipes}</a> · <a href="${GUIDE_HUB[lang].path}">${GUIDE_HUB[lang].label}</a> · <a href="${ABOUT[lang].path}">${ABOUT[lang].label}</a> · <a href="${PRIVACY[lang]}">${L[lang].privacy}</a></footer>
 </div>
 <script src="/track.js"></script>
 <script src="/share.js" defer></script>
@@ -243,6 +244,108 @@ ${group('snack')}
   return page({ lang, title: h.title, description: h.description, canonical: h.path, alternates, ogImage: `/img/og/fitme-${lang}.jpg`, body, jsonld });
 }
 
+// ---------- Guides (pillar articles) and About ----------
+const GUIDE_TXT = {
+  en: { home: 'Home', hubH1: 'Weight loss guides', hubTitle: 'Weight loss guides: calorie deficit, protein and meal plans | FitMe', hubDesc: 'Plain guides to losing weight with a calorie deficit: how it works, how fast to go and what to eat. Written from experience, with sources.', hubIntro: 'Guides to losing weight without guessing, written from experience and backed by public health guidance.', updated: 'Updated', read: 'Read the guide' },
+  pt: { home: 'Início', hubH1: 'Guias para emagrecer', hubTitle: 'Guias para emagrecer: défice calórico, proteína e planos | FitMe', hubDesc: 'Guias simples para emagrecer com um défice calórico: como funciona, a que ritmo ir e o que comer. Escritos a partir da experiência, com fontes.', hubIntro: 'Guias para emagrecer sem adivinhar, escritos a partir da experiência e apoiados nas recomendações de saúde pública.', updated: 'Atualizado a', read: 'Ler o guia' },
+  br: { home: 'Início', hubH1: 'Guias para emagrecer', hubTitle: 'Guias para emagrecer: déficit calórico, proteína e cardápios | FitMe', hubDesc: 'Guias simples para emagrecer com déficit calórico: como funciona, em que ritmo ir e o que comer. Escritos a partir da experiência, com fontes.', hubIntro: 'Guias para emagrecer sem chutar, escritos a partir da experiência e apoiados nas recomendações de saúde pública.', updated: 'Atualizado em', read: 'Ler o guia' },
+};
+const DATE_FMT = { en: 'en-GB', pt: 'pt-PT', br: 'pt-BR' };
+const fmtDate = (d, lang) => new Date(d + 'T12:00:00Z').toLocaleDateString(DATE_FMT[lang], { day: 'numeric', month: 'long', year: 'numeric' });
+const guideUrl = (lang, slug) => GUIDE_HUB[lang].path + slug + '/';
+
+// Small Markdown subset -> HTML (see guides-content.mjs). Returns { html, faq: [[q, a], ...] }.
+function inlineMd(t) {
+  return esc(t)
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+    .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (m, a, h) => `<a href="${h}">${a}</a>`);
+}
+const plain = (t) => t.replace(/\*\*([^*]+)\*\*/g, '$1').replace(/\*([^*]+)\*/g, '$1').replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+const slugify = (t) => t.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+function renderMd(md, lang, faqHeading) {
+  const blocks = md.trim().split(/\n\s*\n/);
+  const out = [], faq = []; let inFaq = false;
+  for (const b of blocks) {
+    const lines = b.split('\n');
+    if (b.startsWith('### ')) { const h = b.slice(4).trim(); inFaq = h === faqHeading; out.push(`<h2 id="${slugify(h)}">${inlineMd(h)}</h2>`); continue; }
+    const cta = b.match(/^\[\[cta:(.+)\]\]$/);
+    if (cta) { out.push(`<p class="guide-cta"><a class="btn" href="${HOME[lang]}">${esc(cta[1])}</a></p>`); continue; }
+    if (lines.every((l) => l.startsWith('- '))) { out.push('<ul>' + lines.map((l) => `<li>${inlineMd(l.slice(2))}</li>`).join('') + '</ul>'); continue; }
+    if (lines.every((l) => l.startsWith('|'))) {
+      const cells = (l) => l.slice(1, -1).split('|').map((c) => c.trim());
+      const [head, , ...rows] = lines;
+      out.push(`<div class="table-wrap"><table><thead><tr>${cells(head).map((c) => `<th scope="col">${inlineMd(c)}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr>${cells(r).map((c) => `<td>${inlineMd(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`);
+      continue;
+    }
+    const text = lines.join(' ');
+    const q = inFaq && text.match(/^\*\*(.+?\?)\*\*\s+(.+)$/);
+    if (q) faq.push([q[1], plain(q[2])]);
+    out.push(`<p>${inlineMd(text)}</p>`);
+  }
+  return { html: out.join('\n'), faq };
+}
+
+function guidePage(g, lang) {
+  const c = g[lang], t = GUIDE_TXT[lang];
+  const alternates = LANGS.map((l) => [l, guideUrl(l, g[l].slug)]);
+  const { html, faq } = renderMd(c.body, lang, c.faqHeading);
+  const crumbs = `<nav class="crumbs" aria-label="breadcrumb"><a href="${HOME[lang]}">${t.home}</a> › <a href="${GUIDE_HUB[lang].path}">${GUIDE_HUB[lang].label}</a></nav>`;
+  const sources = g.sources.length ? `<h2>${esc(c.sourcesLabel)}</h2>\n<ul class="sources">${g.sources.map(([n, u]) => `<li><a href="${u}" rel="noopener">${esc(n)}</a></li>`).join('')}</ul>` : '';
+  const body = `<main>
+${crumbs}
+<article class="guide">
+<h1>${esc(c.h1)}</h1>
+<p class="note">${t.updated} <time datetime="${g.updated}">${fmtDate(g.updated, lang)}</time> · <a href="${ABOUT[lang].path}">FitMe</a></p>
+${html}
+${sources}
+</article>
+</main>`;
+  const link = SITE + guideUrl(lang, c.slug);
+  const jsonld = [{
+    '@context': 'https://schema.org', '@type': 'Article', headline: c.h1, description: c.description, inLanguage: HTML_LANG[lang],
+    datePublished: g.published, dateModified: g.updated, mainEntityOfPage: link, image: [`${SITE}/img/og/fitme-${lang}.jpg`],
+    author: { '@type': 'Organization', name: 'FitMe', url: SITE + ABOUT[lang].path }, publisher: { '@type': 'Organization', name: 'FitMe', url: SITE, logo: { '@type': 'ImageObject', url: `${SITE}/brand/fitme-icon-512.png` } },
+  }, {
+    '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [
+      { '@type': 'ListItem', position: 1, name: t.home, item: SITE + HOME[lang] },
+      { '@type': 'ListItem', position: 2, name: GUIDE_HUB[lang].label, item: SITE + GUIDE_HUB[lang].path },
+      { '@type': 'ListItem', position: 3, name: c.h1, item: link },
+    ],
+  }];
+  if (faq.length) jsonld.push({ '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faq.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) });
+  return page({ lang, title: c.title, description: c.description, canonical: guideUrl(lang, c.slug), alternates, ogImage: `/img/og/fitme-${lang}.jpg`, body, jsonld, ogType: 'article' });
+}
+
+function guideHubPage(lang) {
+  const t = GUIDE_TXT[lang];
+  const alternates = LANGS.map((l) => [l, GUIDE_HUB[l].path]);
+  const items = GUIDES.map((g) => `<li><a href="${guideUrl(lang, g[lang].slug)}"><span class="card-name">${esc(g[lang].h1)}</span><span class="card-meta">${esc(g[lang].description)}</span></a></li>`).join('');
+  const body = `<main>
+<h1>${esc(t.hubH1)}</h1>
+<p class="lead">${esc(t.hubIntro)}</p>
+<ul class="guide-list">${items}</ul>
+<div class="cta"><p>${esc(HUB[lang].cta)}</p><a class="btn" href="${HUB[lang].ctaHref}">${L[lang].cta}</a></div>
+</main>`;
+  const jsonld = { '@context': 'https://schema.org', '@type': 'ItemList', name: t.hubH1, itemListElement: GUIDES.map((g, i) => ({ '@type': 'ListItem', position: i + 1, url: SITE + guideUrl(lang, g[lang].slug) })) };
+  return page({ lang, title: t.hubTitle, description: t.hubDesc, canonical: GUIDE_HUB[lang].path, alternates, ogImage: `/img/og/fitme-${lang}.jpg`, body, jsonld });
+}
+
+function aboutPage(lang) {
+  const a = ABOUT[lang];
+  const alternates = LANGS.map((l) => [l, ABOUT[l].path]);
+  const { html } = renderMd(a.body, lang, null);
+  const body = `<main>
+<article class="guide">
+<h1>${esc(a.h1)}</h1>
+${html}
+</article>
+</main>`;
+  const jsonld = { '@context': 'https://schema.org', '@type': 'AboutPage', name: a.h1, inLanguage: HTML_LANG[lang], url: SITE + a.path,
+    about: { '@type': 'Organization', name: 'FitMe', url: SITE, logo: `${SITE}/brand/fitme-icon-512.png` } };
+  return page({ lang, title: a.title, description: a.description, canonical: a.path, alternates, ogImage: `/img/og/fitme-${lang}.jpg`, body, jsonld });
+}
+
 function write(rel, html) {
   const file = path.join(PUB, rel, 'index.html');
   fs.mkdirSync(path.dirname(file), { recursive: true });
@@ -256,23 +359,27 @@ const TODAY = new Date().toISOString().slice(0, 10);
 const prevHtml = new Map(), prevMod = new Map();
 const oldMap = path.join(PUB, 'sitemap.xml');
 if (fs.existsSync(oldMap)) for (const m of fs.readFileSync(oldMap, 'utf8').matchAll(/<loc>([^<]+)<\/loc>(?:.*?<lastmod>([^<]+)<\/lastmod>)?/g)) prevMod.set(m[1], m[2]);
-for (const dir of ['recipes', 'pt/receitas', 'br/receitas']) {
+for (const dir of ['recipes', 'pt/receitas', 'br/receitas', 'guides', 'pt/guias', 'br/guias', 'about', 'pt/sobre', 'br/sobre']) {
   const walk = (d) => { if (!fs.existsSync(d)) return; for (const e of fs.readdirSync(d, { withFileTypes: true })) { const f = path.join(d, e.name); if (e.isDirectory()) walk(f); else if (e.name === 'index.html') prevHtml.set('/' + path.relative(PUB, path.dirname(f)).split(path.sep).join('/') + '/', fs.readFileSync(f, 'utf8')); } };
   walk(path.join(PUB, dir));
 }
 const HTML_OUT = new Map();
 
 // Clean previous output so a removed recipe doesn't linger.
-for (const dir of ['recipes', 'pt/receitas', 'br/receitas']) fs.rmSync(path.join(PUB, dir), { recursive: true, force: true });
+for (const dir of ['recipes', 'pt/receitas', 'br/receitas', 'guides', 'pt/guias', 'br/guias', 'about', 'pt/sobre', 'br/sobre']) fs.rmSync(path.join(PUB, dir), { recursive: true, force: true });
 
 const written = [];
 for (const lang of LANGS) {
   written.push(write(HUB[lang].path, hubPage(lang)));
   for (const r of RECIPES) written.push(write(url(lang, r[lang].slug), recipePage(r, lang)));
+  written.push(write(GUIDE_HUB[lang].path, guideHubPage(lang)));
+  for (const g of GUIDES) written.push(write(guideUrl(lang, g[lang].slug), guidePage(g, lang)));
+  written.push(write(ABOUT[lang].path, aboutPage(lang)));
 }
 
 // Sitemap: home pages + hubs + recipes, each with its language alternates.
-const groups = [LANGS.map((l) => HOME[l]), LANGS.map((l) => HUB[l].path), ...RECIPES.map((r) => LANGS.map((l) => url(l, r[l].slug)))];
+const groups = [LANGS.map((l) => HOME[l]), LANGS.map((l) => HUB[l].path), ...RECIPES.map((r) => LANGS.map((l) => url(l, r[l].slug))),
+  LANGS.map((l) => GUIDE_HUB[l].path), ...GUIDES.map((g) => LANGS.map((l) => guideUrl(l, g[l].slug))), LANGS.map((l) => ABOUT[l].path)];
 // Built pages: today if new or changed, else the old date. Home pages (not built here) keep any old date.
 const lastmod = (h) => { const out = HTML_OUT.get(h); if (!out) return prevMod.get(SITE + h); const was = prevHtml.get(h); return was === out && prevMod.get(SITE + h) ? prevMod.get(SITE + h) : TODAY; };
 const alts = (g) => g.map((h, i) => `<xhtml:link rel="alternate" hreflang="${HREFLANG[LANGS[i]]}" href="${SITE}${h}"/>`).join('');

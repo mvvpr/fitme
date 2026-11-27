@@ -67,6 +67,7 @@ export default async (req: Request, context: Context) => {
     // Quiet homepage links: point them at this language's pages for crawlers that don't run the page script
     // (the words stay English here; the page script translates them, and keeps them right when the visitor switches language).
     .replace('href="/recipes/" data-href-en', `href="/${lang}/receitas/" data-href-en`)
+    .replace('href="/guides/calorie-deficit/" data-href-en', `href="/${lang}/guias/${lang === "br" ? "deficit-calorico" : "defice-calorico"}/" data-href-en`)
     .replace('href="/privacy.html" data-href-en', `href="/${lang}/privacy.html" data-href-en`)
     .replace('href="/login/" data-href-en', `href="/${lang}/login/" data-href-en`)
     .replace(/<html lang="en">/, `<html lang="${lang === "br" ? "pt-BR" : "pt-PT"}">`);
