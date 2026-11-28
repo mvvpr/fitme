@@ -411,6 +411,8 @@ tbody tr.goal td { font-weight: 500; color: var(--accent); }
 /* Logged-in, confirmed users: the boxes become "update my plan" (no email field, no consent box). */
 .sub-box:not(.known) .when-known, .sub-box.known .when-new { display: none; }
 .sub-box.known .sub-row .box { display: none; }
+/* Logged in and the plan on screen is the one already saved: nothing to update. */
+.sub-box.known.same { display: none; }
 .sub-box.known .sub-row button { padding: 11px 18px; }
 .sub-box .sub-me { color: var(--ink, inherit); font-weight: 600; word-break: break-all; }
 .sub-row button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -1284,6 +1286,24 @@ thead th { background: var(--start-card); }
     subState = { intake: Math.round(T), prot: protTarget, units: state.units, lang: LANG, diet: state.diet };
     var pp = prefs(); document.querySelectorAll('.prot-chips [data-prot]').forEach(function (b) { if (!b.disabled) b.setAttribute('aria-pressed', String(pp.indexOf(b.dataset.prot) >= 0)); });
     document.querySelectorAll('.sub-kcal').forEach(function (el) { el.textContent = kcal(T) + L.aDay; });
+    syncSaved();
+  }
+  // Logged-in users: the "Update your daily emails" box only shows when the plan on screen differs from the saved one
+  // (calories, protein target, protein picks or units). savedPlan comes from /api/me and is refreshed after an update.
+  var savedPlan = null;
+  function planKey(p) {
+    var prots = Array.isArray(p.prots) && p.prots.length ? p.prots : (p.diet === 'veg' ? ['eggs', 'tofu', 'beans'] : ['chicken', 'beef', 'eggs']);
+    return [Math.round(p.intake), Math.round(p.prot), p.units || 'metric', prots.slice().sort().join(',')].join('|');
+  }
+  function syncSaved() {
+    if (!savedPlan || !subState) return;
+    var same = planKey(savedPlan) === planKey({ intake: subState.intake, prot: subState.prot, units: subState.units, prots: prefs() });
+    document.querySelectorAll('.sub-box.known').forEach(function (box) {
+      // Keep a box that is showing its "Done" message until the plan changes again.
+      if (same && box.classList.contains('just-saved')) return;
+      box.classList.remove('just-saved');
+      box.classList.toggle('same', same);
+    });
   }
   function renderShop(T, P) {
     var list = M.shoppingList(T, P, LANG, imp(), prefs());
@@ -1357,6 +1377,7 @@ thead th { background: var(--start-card); }
       var e = form.querySelector('.sub-email'); if (e) e.value = me.email;
       var c = form.querySelector('.sub-consent'); if (c) c.closest('label').hidden = true;
     });
+    if (me.plan) { savedPlan = me.plan; syncSaved(); }
   }).catch(function () {});
   document.querySelectorAll('.sub-form').forEach(function (form) {
     var q = function (c) { return form.querySelector(c); };
@@ -1398,7 +1419,10 @@ thead th { background: var(--start-card); }
       fetch('/api/subscribe', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
         .then(function (res) { return res.json().catch(function () { return { ok: false, error: res.status === 429 ? 'rate' : 'unknown' }; }); })
         .then(function (data) {
-          if (data && data.ok) { subMsg(data.applied ? (form.dataset.known ? MSG.updated : MSG.applied) : MSG.ok, 'ok'); form.reset(); if (form.dataset.email) q('.sub-email').value = form.dataset.email; if (window.FITME_TRACK && data.lead) FITME_TRACK.leadDone(meta); }
+          if (data && data.ok) { subMsg(data.applied ? (form.dataset.known ? MSG.updated : MSG.applied) : MSG.ok, 'ok'); form.reset(); if (form.dataset.email) q('.sub-email').value = form.dataset.email; if (window.FITME_TRACK && data.lead) FITME_TRACK.leadDone(meta);
+            // A logged-in update is saved at once: remember it, so the boxes hide once the "Done" message has been seen.
+            if (form.dataset.known && data.applied) { savedPlan = { intake: payload.intake, prot: payload.prot, units: payload.units, prots: payload.prots, diet: payload.diet }; document.querySelectorAll('.sub-box.known').forEach(function (b) { b.classList.add('just-saved'); }); }
+          }
           else if (data && data.error === 'typo' && data.suggest) askFix(email, data.suggest);
           else subMsg(data && data.error === 'rate' ? MSG.rate : (MSG[data && data.error] || MSG.error), 'err');
         })
