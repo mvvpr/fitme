@@ -43,7 +43,8 @@ export type Subscriber = {
   // Random code in the Saturday email's "Open my list" link: opens only this person's shopping list (lst/<token>), no log-in.
   listToken?: string;
   // Set only when the visitor accepted Meta cookies at sign-up; removed once CompleteRegistration is sent.
-  meta?: { fbp?: string; fbc?: string; url?: string } | null;
+  // epik = Pinterest click id (_epik cookie), same consent.
+  meta?: { fbp?: string; fbc?: string; epik?: string; url?: string } | null;
   // Which ad link brought them (utm_* labels from the URL at first sign-up) and their country then. First-party only.
   src?: { source?: string; medium?: string; campaign?: string; content?: string; term?: string } | null;
   country?: string;
@@ -397,6 +398,72 @@ export async function sendMetaEvents(events: MetaEvent[]) {
     if (!res.ok) console.error("Meta CAPI", res.status, (await res.text()).slice(0, 300));
   } catch (err) {
     console.error("Meta CAPI failed", err);
+  }
+}
+
+// ---------- Pinterest Conversions API ----------
+// Same events and event_ids as the browser Pinterest tag, so Pinterest deduplicates them (48 h window).
+// The ad account id and conversion token are Netlify env vars; missing either = Pinterest CAPI is skipped silently.
+export function pinConfig() {
+  const token = Netlify.env.get("PINTEREST_CAPI_TOKEN");
+  const account = Netlify.env.get("PINTEREST_AD_ACCOUNT_ID");
+  if (!token || !account || !/^\d{6,20}$/.test(account)) return null;
+  return { token, account, test: Netlify.env.get("PINTEREST_TEST") === "true" };
+}
+
+// _epik click id (set by the tag from ?epik= on Pinterest ad clicks).
+export const EPIK_RE = /^[A-Za-z0-9_\-.=]{10,600}$/;
+
+// FitMe event name -> Pinterest standard event name (Conversions API). The tag uses the same events (see track.js).
+// Step events are Meta/GTM only.
+export const PIN_EVENTS: Record<string, string> = {
+  PageView: "page_visit",
+  ViewContent: "view_category",
+  Lead: "lead",
+  CompleteRegistration: "signup",
+};
+
+export type PinUser = { em?: string; external_id?: string; click_id?: string; client_ip_address?: string; client_user_agent?: string };
+export type PinEvent = { event_name: string; event_id: string; event_time?: number; event_source_url?: string; user_data: PinUser; custom_data?: Record<string, unknown> };
+
+// Sends events to Pinterest. Takes FitMe event names; anything not in PIN_EVENTS is dropped. Never throws.
+export async function sendPinterestEvents(events: PinEvent[]) {
+  const cfg = pinConfig();
+  if (!cfg) return;
+  const data = events.filter((e) => PIN_EVENTS[e.event_name]).map((e) => {
+    const user: Record<string, unknown> = {};
+    if (e.user_data.em) user.em = [e.user_data.em];
+    if (e.user_data.external_id) user.external_id = [e.user_data.external_id];
+    if (e.user_data.click_id) user.click_id = e.user_data.click_id;
+    if (e.user_data.client_ip_address) user.client_ip_address = e.user_data.client_ip_address;
+    if (e.user_data.client_user_agent) user.client_user_agent = e.user_data.client_user_agent;
+    // Pinterest needs an email or both IP and user agent.
+    if (!user.em && !(user.client_ip_address && user.client_user_agent)) return null;
+    const custom: Record<string, unknown> = {};
+    const c = e.custom_data || {};
+    if (typeof c.content_name === "string") custom.content_name = c.content_name;
+    if (typeof c.content_category === "string") custom.content_category = c.content_category;
+    return {
+      event_name: PIN_EVENTS[e.event_name],
+      event_id: e.event_id,
+      event_time: e.event_time || Math.floor(Date.now() / 1000),
+      action_source: "web",
+      partner_name: "direct",
+      ...(e.event_source_url ? { event_source_url: e.event_source_url } : {}),
+      user_data: user,
+      ...(Object.keys(custom).length ? { custom_data: custom } : {}),
+    };
+  }).filter(Boolean);
+  if (!data.length) return;
+  try {
+    const res = await fetch(`https://api.pinterest.com/v5/ad_accounts/${cfg.account}/events${cfg.test ? "?test=true" : ""}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${cfg.token}` },
+      body: JSON.stringify({ data }),
+    });
+    if (!res.ok) console.error("Pinterest CAPI", res.status, (await res.text()).slice(0, 300));
+  } catch (err) {
+    console.error("Pinterest CAPI failed", err);
   }
 }
 

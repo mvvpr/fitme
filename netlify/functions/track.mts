@@ -1,7 +1,7 @@
-// POST /api/track — server copy of browser Pixel events (Conversions API), deduplicated by event_id.
+// POST /api/track — server copy of browser Pixel/Pinterest tag events (Conversions APIs), deduplicated by event_id.
 // The browser only calls this after the visitor accepted Meta cookies.
 import type { Config, Context } from "@netlify/functions";
-import { sendMetaEvents, requestUser, FBP_RE, FBC_RE, EVENT_ID_RE } from "../lib/core.mts";
+import { sendMetaEvents, sendPinterestEvents, requestUser, FBP_RE, FBC_RE, EPIK_RE, EVENT_ID_RE } from "../lib/core.mts";
 
 // Standard events plus one custom event per step of the journey.
 const ALLOWED = new Set(["PageView", "ViewContent", "Share", "Step1_About", "Step2_Goal", "Step3_Plan", "Step4_Meals", "Step4_Proteins"]);
@@ -26,6 +26,7 @@ export default async (req: Request, context: Context) => {
 
   const fbp = typeof input?.fbp === "string" && FBP_RE.test(input.fbp) ? input.fbp : undefined;
   const fbc = typeof input?.fbc === "string" && FBC_RE.test(input.fbc) ? input.fbc : undefined;
+  const epik = typeof input?.epik === "string" && EPIK_RE.test(input.epik) ? input.epik : undefined;
 
   const custom: Record<string, string> = {};
   if (name !== "PageView") {
@@ -36,13 +37,12 @@ export default async (req: Request, context: Context) => {
     if (c.lang === "en" || c.lang === "pt" || c.lang === "br") custom.lang = c.lang;
   }
 
-  const send = sendMetaEvents([{
-    event_name: name,
-    event_id: id,
-    event_source_url: url,
-    user_data: { fbp, fbc, ...requestUser(req, context) },
-    custom_data: custom,
-  }]);
+  const who = requestUser(req, context);
+  const send = Promise.all([
+    sendMetaEvents([{ event_name: name, event_id: id, event_source_url: url, user_data: { fbp, fbc, ...who }, custom_data: custom }]),
+    // Pinterest gets PageView and ViewContent only (sendPinterestEvents drops the rest).
+    sendPinterestEvents([{ event_name: name, event_id: id, event_source_url: url, user_data: { click_id: epik, ...who }, custom_data: custom }]),
+  ]);
   if (typeof (context as any).waitUntil === "function") (context as any).waitUntil(send); else await send;
   return new Response(null, { status: 204 });
 };
