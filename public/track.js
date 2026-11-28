@@ -27,7 +27,7 @@
   var PIXEL_ID = '1320302420180623';
   var GTM_ID = 'GTM-MR4N337L';
   // Pinterest tag id (Ads Manager -> Conversions -> Tag manager). Empty = the Pinterest tag doesn't load.
-  var PIN_TAG_ID = '';
+  var PIN_TAG_ID = '2612823466483';
   var PIN_TAG_EVENTS = { PageView: 'pagevisit', ViewContent: 'viewcategory', Lead: 'lead' };
   // Google Ads: tag + Sign-up conversion, fired in code on a new sign-up (same moment as Meta's Lead).
   var ADS_ID = 'AW-18588647321';
