@@ -55,7 +55,7 @@ Until `MAILGUN_API_KEY` and `MAILGUN_DOMAIN` are set, sign-up shows "opens soon"
   - `Lead`: new email sign-up, Pixel + CAPI from `/api/subscribe` (hashed email)
   - `CompleteRegistration`: double opt-in confirmed, CAPI only from `/api/confirm`
   - Custom step events, once per browser session, Pixel + CAPI: `Step1_About` (1), `Step2_Goal` (2), `Step3_Plan` (3), `Step4_Proteins` (4), `Step4_Meals` (5; name kept for continuity) (custom_data: step, content_name, lang)
-- Google Tag Manager (`GTM-MR4N337L`) loads from `track.js` only after consent, like the Pixel; tracked events are pushed to the dataLayer with the same names (PageView, ViewContent, Step…, Lead) and their custom data as `fitme_*`. The consent key is `fitme-consent-v2` (bumped when Google was added). Don't add a Meta Pixel tag inside GTM. The Google Ads tag (`AW-18588647321`) and its Sign-up conversion are in `track.js` (fired with Lead, `transaction_id` = event id), so don't also add a Sign-up conversion tag in GTM.
+- Google Tag Manager (`GTM-MR4N337L`) loads from `track.js` only after consent, like the Pixel; tracked events are pushed to the dataLayer with the same names (PageView, ViewContent, Step…, Lead) and their custom data as `fitme_*`. The consent key is `fitme-consent-v3` (bumped when Google, then Pinterest, was added). Don't add a Meta Pixel tag inside GTM. The Google Ads tag (`AW-18588647321`) and its Sign-up conversion are in `track.js` (fired with Lead, `transaction_id` = event id), so don't also add a Sign-up conversion tag in GTM.
 - The Pixel's own history-change PageViews are off (`fbq.disablePushState`): the steps change the URL hash, and only the page-load PageView (with its server copy) should count.
 - Privacy policy (EN/PT): `public/privacy.html`, served at `/privacy.html` and `/pt/privacy.html`; linked from the banner, the footers and the sign-up consent line. Unconfirmed sign-ups are deleted after 30 days by `send-daily`.
 - Server events are sent only for visitors who accepted cookies. `fbp`/`fbc` are kept on the subscriber record until confirmation, then deleted.
@@ -66,6 +66,18 @@ Until `MAILGUN_API_KEY` and `MAILGUN_DOMAIN` are set, sign-up shows "opens soon"
 | `META_PIXEL_ID` | Optional, defaults to `1320302420180623` |
 | `META_TEST_EVENT_CODE` | Optional: set to the code from Events Manager → Test events while testing, then remove |
 | `META_GRAPH_VERSION` | Optional, defaults to `v24.0` |
+
+## Pinterest tag + Conversions API
+
+- Same consent and the same `event_id`s as Meta, so Pinterest deduplicates browser and server copies. Tag id: `PIN_TAG_ID` in `public/track.js` (empty = the tag doesn't load).
+- Events: `PageView` → `pagevisit`/`page_visit`, `ViewContent` → `viewcategory`/`view_category` (tag + CAPI via `/api/track`); `Lead` → `lead` (tag + CAPI from `/api/subscribe`, hashed email); `CompleteRegistration` → `signup` (CAPI only, from `/api/confirm`). Step events are not sent to Pinterest.
+- The `_epik` click id (from `?epik=` on ad clicks) is sent as `click_id` and kept on the sign-up (`meta.epik`) until confirmation, like `_fbp`/`_fbc`.
+
+| Env var | |
+|---|---|
+| `PINTEREST_AD_ACCOUNT_ID` | Ad account id (digits). Without it, Pinterest CAPI is skipped. |
+| `PINTEREST_CAPI_TOKEN` | Conversion access token from Ads Manager → Conversions → Conversions API (mark as secret). |
+| `PINTEREST_TEST` | Optional: `true` sends CAPI events to Pinterest's test mode only; remove when done |
 
 ## Brand
 

@@ -1,5 +1,6 @@
-/* FitMe measurement: Meta Pixel (browser) + Conversions API relay (server) + Google Tag Manager, gated on cookie consent.
-   Nothing from Meta or Google loads, and no _fbp/_fbc/_ga cookies are set, until the visitor accepts.
+/* FitMe measurement: Meta Pixel + Pinterest tag (browser), their Conversions APIs (server) and Google Tag Manager, gated on cookie consent.
+   Nothing from Meta, Pinterest or Google loads, and no _fbp/_fbc/_epik/_ga cookies are set, until the visitor accepts.
+   Pinterest gets PageView (pagevisit), ViewContent (viewcategory) and Lead (lead) with the same event_id as Meta; the server adds signup.
    Tracked events are also pushed to the GTM dataLayer (event = the same name: PageView, ViewContent, Step1_About, ..., Lead),
    so tags in GTM can use them. Don't add a Meta Pixel tag in GTM: it is already here, with server-side deduplication.
    Every browser event carries an event_id; the server sends the same id so Meta counts it once. */
@@ -25,11 +26,14 @@
   'use strict';
   var PIXEL_ID = '1320302420180623';
   var GTM_ID = 'GTM-MR4N337L';
+  // Pinterest tag id (Ads Manager -> Conversions -> Tag manager). Empty = the Pinterest tag doesn't load.
+  var PIN_TAG_ID = '';
+  var PIN_TAG_EVENTS = { PageView: 'pagevisit', ViewContent: 'viewcategory', Lead: 'lead' };
   // Google Ads: tag + Sign-up conversion, fired in code on a new sign-up (same moment as Meta's Lead).
   var ADS_ID = 'AW-18588647321';
   var ADS_SIGNUP = ADS_ID + '/xGGECKyq-LwdEJn_4J9F';
-  // v2 since Google Tag Manager was added (22 Nov 2026): earlier choices only covered Meta, so everyone is asked again.
-  var KEY = 'fitme-consent-v2';
+  // v2 since Google Tag Manager was added (22 Nov 2026); v3 since Pinterest was added (28 Nov 2026). Each new vendor asks everyone again.
+  var KEY = 'fitme-consent-v3';
   var TXT = {
     en: {
       text: 'We use cookies to measure our ads and improve FitMe. They only load if you accept.',
@@ -79,7 +83,11 @@
     var fbclid = new URLSearchParams(location.search).get('fbclid');
     var fbc = readCookie('_fbc');
     if (fbclid && (!fbc || fbc.split('.').slice(3).join('.') !== fbclid)) { fbc = 'fb.1.' + Date.now() + '.' + fbclid; writeCookie('_fbc', fbc, 90); }
-    return { fbp: fbp, fbc: fbc };
+    // Pinterest click id: ?epik= on ad clicks, kept as the first-party _epik cookie (the Pinterest tag reads the same cookie).
+    var epikQ = new URLSearchParams(location.search).get('epik');
+    var epik = readCookie('_epik');
+    if (epikQ && epikQ !== epik) { epik = epikQ; writeCookie('_epik', epik, 365); }
+    return { fbp: fbp, fbc: fbc, epik: epik };
   }
 
   // Google Tag Manager (only after consent). Consent Mode is set to granted because nothing loads before the visitor accepts.
@@ -110,9 +118,37 @@
     });
   }
 
+  // Pinterest tag (only after consent).
+  var pinLoaded = false;
+  function loadPinterest() {
+    if (pinLoaded || !PIN_TAG_ID) return; pinLoaded = true;
+    !function (e) {
+      if (!window.pintrk) {
+        window.pintrk = function () { window.pintrk.queue.push(Array.prototype.slice.call(arguments)); };
+        var n = window.pintrk; n.queue = []; n.version = '3.0';
+        var t = document.createElement('script'); t.async = !0; t.src = e;
+        var r = document.getElementsByTagName('script')[0]; r.parentNode.insertBefore(t, r);
+      }
+    }('https://s.pinimg.com/ct/core.js');
+    window.pintrk('load', PIN_TAG_ID);
+    window.pintrk('page');
+  }
+  function pin(name, id, custom) {
+    if (!pinLoaded || !PIN_TAG_EVENTS[name]) return;
+    var d = { event_id: id }; if (custom && custom.content_category) d.content_category = custom.content_category;
+    window.pintrk('track', PIN_TAG_EVENTS[name], d);
+  }
+  function clearPinCookies() {
+    ['_epik', '_derived_epik', '_pin_unauth', '_pinterest_ct_ua'].forEach(function (n) {
+      clearCookie(n);
+      document.cookie = n + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.' + location.hostname.replace(/^www\./, '');
+    });
+  }
+
   var loaded = false;
   function loadPixel() {
     loadGTM();
+    loadPinterest();
     if (loaded) return; loaded = true;
     /* Meta Pixel base code */
     !function (f, b, e, v, n, t, s) {
@@ -134,11 +170,12 @@
     var ids = ensureIds();
     var id = newId();
     window.fbq(STANDARD[name] ? 'track' : 'trackCustom', name, custom || {}, { eventID: id });
+    pin(name, id, custom);
     var d = { event: name, event_id: id }; for (var k in (custom || {})) d['fitme_' + k] = custom[k]; dl(d);
     try {
       fetch('/api/track', {
         method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ event_name: name, event_id: id, event_source_url: location.href, fbp: ids.fbp, fbc: ids.fbc || '', custom_data: custom || {} })
+        body: JSON.stringify({ event_name: name, event_id: id, event_source_url: location.href, fbp: ids.fbp, fbc: ids.fbc || '', epik: ids.epik || '', custom_data: custom || {} })
       }).catch(function () {});
     } catch (e) {}
     return id;
@@ -149,10 +186,11 @@
     if (!granted()) return null;
     loadPixel();
     var ids = ensureIds();
-    return { event_id: newId(), fbp: ids.fbp, fbc: ids.fbc || '', url: location.href };
+    return { event_id: newId(), fbp: ids.fbp, fbc: ids.fbc || '', epik: ids.epik || '', url: location.href };
   }
   function leadDone(ctx) {
     if (ctx && granted() && window.fbq) window.fbq('track', 'Lead', ctx.placement ? { content_category: ctx.placement } : {}, { eventID: ctx.event_id });
+    if (ctx && granted()) pin('Lead', ctx.event_id, ctx.placement ? { content_category: ctx.placement } : null);
     if (ctx && granted()) {
       dl({ event: 'Lead', event_id: ctx.event_id, fitme_content_category: ctx.placement || '' });
       // Google Ads Sign-up conversion; transaction_id stops it counting twice.
@@ -217,7 +255,7 @@
     if (v === 'denied' && was === 'granted') {
       if (window.fbq) window.fbq('consent', 'revoke');
       if (gtmLoaded) gtag('consent', 'update', { ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied', analytics_storage: 'denied' });
-      clearCookie('_fbp'); clearCookie('_fbc'); clearGoogleCookies();
+      clearCookie('_fbp'); clearCookie('_fbc'); clearGoogleCookies(); clearPinCookies();
     }
   }
 

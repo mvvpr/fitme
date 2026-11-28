@@ -1,7 +1,7 @@
 // POST /api/subscribe — store a pending subscriber and send a double opt-in email.
 import type { Config, Context } from "@netlify/functions";
 import "../../public/email-check.js";
-import { subscribers, sha256, subKey, tokKey, unsKey, newToken, validTimeZone, mailConfig, sendMail, renderConfirmEmail, sendMetaEvents, requestUser, FBP_RE, FBC_RE, EVENT_ID_RE, asLang, cleanProts, cleanSrc, countryOf, currentUser, renderPlanUpdatedEmail, type Subscriber } from "../lib/core.mts";
+import { subscribers, sha256, subKey, tokKey, unsKey, newToken, validTimeZone, mailConfig, sendMail, renderConfirmEmail, sendMetaEvents, sendPinterestEvents, requestUser, FBP_RE, FBC_RE, EPIK_RE, EVENT_ID_RE, asLang, cleanProts, cleanSrc, countryOf, currentUser, renderPlanUpdatedEmail, type Subscriber } from "../lib/core.mts";
 
 const CONSENT_TEXT = "I agree to receive a daily meal-plan email from FitMe. We store your email, time zone and calorie settings to send it, and you can unsubscribe at any time. (privacy policy version 2026-11-13)";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -37,6 +37,7 @@ export default async (req: Request, context: Context) => {
         event_id: String(m.event_id),
         fbp: typeof m.fbp === "string" && FBP_RE.test(m.fbp) ? m.fbp : undefined,
         fbc: typeof m.fbc === "string" && FBC_RE.test(m.fbc) ? m.fbc : undefined,
+        epik: typeof m.epik === "string" && EPIK_RE.test(m.epik) ? m.epik : undefined,
         url: typeof m.url === "string" ? m.url.split("#")[0].slice(0, 500) : undefined,
         placement: ["plan", "meals-top", "meals-bottom"].includes(m.placement) ? m.placement : undefined,
       }
@@ -78,7 +79,7 @@ export default async (req: Request, context: Context) => {
   if (existing?.confirmToken) await store.delete(tokKey(existing.confirmToken));
   const confirmToken = newToken();
 
-  const metaKeep = meta ? { fbp: meta.fbp, fbc: meta.fbc, url: meta.url } : null;
+  const metaKeep = meta ? { fbp: meta.fbp, fbc: meta.fbc, epik: meta.epik, url: meta.url } : null;
   const record: Subscriber = {
         email,
         status: "pending",
@@ -114,13 +115,13 @@ export default async (req: Request, context: Context) => {
   // browser Pixel event. The response says whether it was a lead, so the browser fires its copy only then.
   const isLead = !existing;
   if (meta && isLead) {
-    const send = sendMetaEvents([{
-      event_name: "Lead",
-      event_id: meta.event_id,
-      event_source_url: meta.url && meta.url.startsWith(siteUrl) ? meta.url : siteUrl,
-      user_data: { em: hash, external_id: hash, fbp: meta.fbp, fbc: meta.fbc, ...requestUser(req, context) },
-      custom_data: { content_name: "Daily meal plan email", ...(meta.placement ? { content_category: meta.placement } : {}) },
-    }]);
+    const leadUrl = meta.url && meta.url.startsWith(siteUrl) ? meta.url : siteUrl;
+    const who = requestUser(req, context);
+    const leadData = { content_name: "Daily meal plan email", ...(meta.placement ? { content_category: meta.placement } : {}) };
+    const send = Promise.all([
+      sendMetaEvents([{ event_name: "Lead", event_id: meta.event_id, event_source_url: leadUrl, user_data: { em: hash, external_id: hash, fbp: meta.fbp, fbc: meta.fbc, ...who }, custom_data: leadData }]),
+      sendPinterestEvents([{ event_name: "Lead", event_id: meta.event_id, event_source_url: leadUrl, user_data: { em: hash, external_id: hash, click_id: meta.epik, ...who }, custom_data: leadData }]),
+    ]);
     if (typeof (context as any).waitUntil === "function") (context as any).waitUntil(send); else await send;
   }
   return Response.json({ ok: true, lead: isLead });
